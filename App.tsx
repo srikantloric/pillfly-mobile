@@ -1,29 +1,24 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import RNBootSplash from "react-native-bootsplash";
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { enableScreens } from 'react-native-screens';
+import RNBootSplash from 'react-native-bootsplash';
+import { RootNavigator } from './src/navigation/RootNavigator';
+
+enableScreens();
 
 function App() {
-
-    useEffect(() => {
+  useEffect(() => {
     RNBootSplash.hide({ fade: true });
-  }, []); 
+  }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Hi there 👋</Text>
-    </View>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <RootNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 24,
-  },
-});
 
 export default App;
