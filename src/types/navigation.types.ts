@@ -12,12 +12,25 @@ export type MainTabParamList = {
   Savings: undefined;
 };
 
+export type ProfileStackParamList = {
+  ProfileMain: undefined;
+};
+
+export type SearchStackParamList = {
+  SearchHome: undefined;
+  SearchResults: { query: string };
+};
+
+export type CartStackParamList = {
+  CartMain: undefined;
+  Checkout: undefined;
+};
+
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
-  /** Shared shell routes (opened from tab headers / global actions). */
-  Profile: undefined;
-  Search: undefined;
-  Cart: undefined;
+  Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
+  Search: NavigatorScreenParams<SearchStackParamList> | undefined;
+  Cart: NavigatorScreenParams<CartStackParamList> | undefined;
 };
 
 export type RootStackParamList = {

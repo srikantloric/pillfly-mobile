@@ -7,21 +7,22 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { SearchStackParamList } from '../../types/navigation.types';
 import { colors, spacing } from '../../theme';
 
-/**
- * Shared search — medicines, categories, lab tests, brands.
- * Registered on AppStack (not inside bottom tabs).
- */
-export function SearchScreen() {
+type Props = NativeStackScreenProps<SearchStackParamList, 'SearchHome'>;
+
+export function SearchHomeScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
 
   const onSubmit = useCallback(() => {
-    if (!query.trim()) {
+    const q = query.trim();
+    if (!q) {
       return;
     }
-    // Hook API / navigation to results in a later iteration.
-  }, [query]);
+    navigation.navigate('SearchResults', { query: q });
+  }, [navigation, query]);
 
   return (
     <View style={styles.screen}>

@@ -1,12 +1,12 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { CartStackParamList } from '../../types/navigation.types';
 import { colors, spacing } from '../../theme';
 
-/**
- * Shared cart — line items, prescriptions, checkout entry.
- * Registered on AppStack (not inside bottom tabs).
- */
-export function CartScreen() {
+type Props = NativeStackScreenProps<CartStackParamList, 'CartMain'>;
+
+export function CartScreen({ navigation }: Props) {
   return (
     <ScrollView
       style={styles.scroll}
@@ -22,6 +22,15 @@ export function CartScreen() {
         <Text style={styles.emptyTitle}>Nothing here yet</Text>
         <Text style={styles.emptyBody}>Add items from home, categories, or search.</Text>
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Continue to checkout"
+        onPress={() => navigation.navigate('Checkout')}
+        style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
+      >
+        <Text style={styles.ctaLabel}>Checkout</Text>
+      </Pressable>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Checkout readiness</Text>
@@ -65,7 +74,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 16,
     padding: spacing.xl,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     alignItems: 'center',
@@ -81,6 +90,22 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  cta: {
+    marginBottom: spacing.xl,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+  },
+  ctaPressed: {
+    opacity: 0.92,
+  },
+  ctaLabel: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 16,
   },
   section: {
     marginBottom: spacing.xl,
