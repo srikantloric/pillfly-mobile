@@ -14,6 +14,10 @@ export type MainTabParamList = {
 
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
+  /** Shared shell routes (opened from tab headers / global actions). */
+  Profile: undefined;
+  Search: undefined;
+  Cart: undefined;
 };
 
 export type RootStackParamList = {
