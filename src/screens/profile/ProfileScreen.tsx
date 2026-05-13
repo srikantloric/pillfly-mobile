@@ -2,10 +2,6 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '../../theme';
 
-/**
- * Shared profile hub — account, orders, addresses, health records.
- * Registered on AppStack (not inside bottom tabs).
- */
 export function ProfileScreen() {
   return (
     <ScrollView

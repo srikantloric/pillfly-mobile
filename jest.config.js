@@ -3,8 +3,9 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '\\.css$': '<rootDir>/__mocks__/fileMock.js',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
-  /** Allow transforming packages that ship modern JS (React Navigation, screens, etc.). */
+  // Transpile packages that ship untranspiled modern JS
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|react-native-screens|react-native-safe-area-context|nativewind|react-native-css-interop)/)',
   ],

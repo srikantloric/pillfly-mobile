@@ -1,7 +1,6 @@
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import type { AppStackParamList } from '../types/navigation.types';
 
-/** Shell routes registered beside `MainTabs` on `AppStackNavigator`. */
 export type SharedAppRoute = keyof Pick<AppStackParamList, 'Profile' | 'Search' | 'Cart'>;
 
 type AppNavigation = NavigationProp<AppStackParamList>;

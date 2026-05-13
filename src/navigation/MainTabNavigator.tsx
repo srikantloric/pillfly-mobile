@@ -14,10 +14,6 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 type IconProps = { color: string; size: number; focused: boolean };
 
-/**
- * Tab icons: per-family scoped packages (`@react-native-vector-icons/*`),
- * not the deprecated monolithic `react-native-vector-icons`.
- */
 export function MainTabNavigator() {
   return (
     <Tab.Navigator
