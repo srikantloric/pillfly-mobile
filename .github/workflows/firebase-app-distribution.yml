@@ -33,7 +33,7 @@ jobs:
 
       - name: Build release APK
         working-directory: android
-        run: ./gradlew assembleRelease
+        run: bash ./gradlew assembleRelease
 
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
