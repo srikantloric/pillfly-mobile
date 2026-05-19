@@ -1,6 +1,5 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MaterialDesignIcons } from '@react-native-vector-icons/material-design-icons';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import type { MainTabParamList } from '../types/navigation.types';
@@ -50,8 +49,8 @@ export function MainTabNavigator() {
 
 function TabHomeIcon({ color, size, focused }: IconProps) {
   return (
-    <MaterialDesignIcons
-      name={focused ? 'home-plus' : 'home-plus-outline'}
+    <Ionicons
+      name={focused ? 'home' : 'home-outline'}
       size={focused ? size + 2 : size}
       color={color}
     />

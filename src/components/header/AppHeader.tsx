@@ -12,13 +12,7 @@ import {
   HEADER_ICON_SLOT_CLASS,
 } from './appHeader.constants';
 import type { AppHeaderProps } from './appHeader.types';
-
-function formatBadge(count: number): string {
-  if (count > 99) {
-    return '99+';
-  }
-  return String(count);
-}
+import { formatCartBadgeCount } from './header.utils';
 
 export function AppHeader({
   showProfile = false,
@@ -128,7 +122,7 @@ function HeaderCartButton({
       {badgeCount != null && badgeCount > 0 ? (
         <View className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-red-600 px-1 py-0.5">
           <Text className="text-center text-[11px] font-bold text-white">
-            {formatBadge(badgeCount)}
+            {formatCartBadgeCount(badgeCount)}
           </Text>
         </View>
       ) : null}

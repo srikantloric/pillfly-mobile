@@ -17,6 +17,8 @@ module.exports = {
           'brand-teal-dark': '#0D5C56',
           'brand-purple': '#5B21B6',
           section: '#0F5C4F',
+          'savings-header': '#106853',
+          'savings-gold': '#F5C842',
           'promo-pink': '#FCE7F3',
           'promo-red': '#BE123C',
           auth: {

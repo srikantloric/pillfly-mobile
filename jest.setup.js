@@ -21,6 +21,3 @@ jest.mock('@react-native-vector-icons/octicons', () => ({
 jest.mock('@react-native-vector-icons/ionicons', () => ({
   Ionicons: MockIcon,
 }));
-jest.mock('@react-native-vector-icons/material-design-icons', () => ({
-  MaterialDesignIcons: MockIcon,
-}));

@@ -12,4 +12,10 @@ export const homeHeaderStyles = StyleSheet.create({
   cartRevealClip: {
     overflow: 'hidden',
   },
+  savingsTitleClip: {
+    overflow: 'hidden',
+  },
+  savingsIconRow: {
+    zIndex: 2,
+  },
 });

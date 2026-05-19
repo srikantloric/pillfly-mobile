@@ -1,5 +1,13 @@
 export const HOME_HEADER_SCROLL = { collapseStart: 0, collapseEnd: 88 } as const;
 
+
+export const SAVINGS_HEADER_SCROLL = {
+  collapseStart: 0,
+  collapseEnd: 72,
+  titleExpandedHeight: 92,
+  bottomRadiusExpanded: 28,
+} as const;
+
 export const DEFAULT_SEARCH_PLACEHOLDER = 'Search medicines & healthcare';
 
 export const SEARCH_PLACEHOLDERS = {
