@@ -31,3 +31,4 @@ export const APP_HEADER_VARIANT_ICON_COLOR = {
 
 export const HEADER_HIT_SLOP = 10;
 export const HEADER_ICON_SLOT_CLASS = 'h-11 w-11';
+export const HEADER_ICON_BUTTON_RADIUS = 15;

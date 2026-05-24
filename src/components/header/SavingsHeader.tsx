@@ -105,7 +105,7 @@ const HeaderIconButton = memo(function HeaderIconButton({
       accessibilityLabel={accessibilityLabel}
       hitSlop={HEADER_HIT_SLOP}
       onPress={onPress}
-      className="relative h-11 w-11 items-center justify-center rounded-full active:opacity-85"
+      className="relative h-11 w-11 items-center justify-center active:opacity-85"
       style={savingsHeaderStyles.iconButton}
     >
       {icon}

@@ -1,5 +1,7 @@
 import { StyleSheet } from 'react-native';
 
+import { HEADER_ICON_BUTTON_RADIUS } from '../header/appHeader.constants';
+
 export const SAVINGS_CONTENT_PADDING = 16;
 
 export const savingsColors = {
@@ -33,6 +35,7 @@ export const savingsCardShadow = StyleSheet.create({
 export const savingsHeaderStyles = StyleSheet.create({
   iconButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    borderRadius: HEADER_ICON_BUTTON_RADIUS,
   },
   title: {
     color: savingsColors.titleGold,

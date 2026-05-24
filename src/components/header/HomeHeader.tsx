@@ -64,14 +64,15 @@ export function HomeHeader({
               maxHeight: topRowHeight,
             },
           ]}
-          className="flex-row items-center px-4 pt-1"
+          className="flex-row items-center gap-3 px-4 pt-1"
         >
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Profile"
             hitSlop={HEADER_HIT_SLOP}
             onPress={() => go('Profile')}
-            className="h-11 w-11 items-center justify-center rounded-full active:bg-white/10"
+            className="h-11 w-11 shrink-0 items-center justify-center active:opacity-85"
+            style={homeHeaderStyles.iconButtonOnTeal}
           >
             <Feather name="user" size={22} color="#FFFFFF" />
           </Pressable>
@@ -80,7 +81,7 @@ export function HomeHeader({
             accessibilityRole="button"
             accessibilityHint="Coming soon"
             onPress={() => {}}
-            className="min-h-11 flex-1 flex-row items-center justify-center px-2 active:opacity-80"
+            className="min-h-11 min-w-0 flex-1 flex-row items-center justify-center px-1 active:opacity-80"
           >
             <Feather name="map-pin" size={16} color="#FFFFFF" />
             <View className="ml-1.5 flex-1">
@@ -99,15 +100,16 @@ export function HomeHeader({
             accessibilityLabel="Cart"
             hitSlop={HEADER_HIT_SLOP}
             onPress={() => go('Cart')}
-            className="relative h-11 w-11 items-center justify-center rounded-full active:bg-white/10"
+            className="relative h-11 w-11 shrink-0 items-center justify-center active:opacity-85"
+            style={homeHeaderStyles.iconButtonOnTeal}
           >
             <Feather name="shopping-cart" size={22} color="#FFFFFF" />
           </Pressable>
         </Animated.View>
 
-        <View className="flex-row items-center gap-2 px-4 pb-3 pt-1">
+        <View className="flex-row items-center gap-3 px-4 pb-3 pt-2">
           <Animated.View
-            className="min-h-[46px] flex-1 flex-row items-center rounded-2xl bg-white px-3 shadow-sm"
+            className="min-h-[46px] min-w-0 flex-1 flex-row items-center rounded-2xl bg-white px-3 shadow-sm"
             style={homeHeaderStyles.searchBarAndroid}
           >
             <Pressable
@@ -153,7 +155,8 @@ export function HomeHeader({
               accessibilityLabel={`Cart, ${cartBadgeCount} items`}
               hitSlop={HEADER_HIT_SLOP}
               onPress={() => go('Cart')}
-              className="relative h-11 w-11 items-center justify-center rounded-full active:bg-slate-100"
+              className="relative h-11 w-11 shrink-0 items-center justify-center active:bg-slate-100"
+              style={homeHeaderStyles.iconButtonOnSurface}
             >
               <Feather name="shopping-cart" size={24} color={colors.textPrimary} />
               {cartBadgeCount > 0 ? (
