@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import {
   Animated,
   Image,
@@ -11,7 +11,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { NavigationProp, ParamListBase } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@react-native-vector-icons/feather';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
@@ -21,6 +21,7 @@ import { CategoryShopGrid, categoryGridTileWidth } from '../../components/catego
 import { HomePromoBanner, homePromoBannerAssets } from '../../components/home/HomePromoBanner';
 import { CATEGORIES } from '../../mocks/categories.mock';
 import { colors } from '../../theme';
+import type { MainTabParamList } from '../../types/navigation.types';
 
 import { homeScreenStyles } from './homeScreen.styles';
 
@@ -59,10 +60,14 @@ function DividerLabel({ label }: { label: string }) {
 }
 
 export function HomeScreen() {
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList, 'Home'>>();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  const onPressDiagBogo = useCallback(() => {
+    navigation.navigate('Offer');
+  }, [navigation]);
 
   const categoryGridTileW = categoryGridTileWidth(windowWidth);
 
@@ -145,7 +150,12 @@ export function HomeScreen() {
           />
         </View>
 
-        <Pressable className="mb-8 mt-2 active:opacity-95">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="View buy one get one free lab offers"
+          onPress={onPressDiagBogo}
+          className="mb-8 mt-2 active:opacity-95"
+        >
           <HomePromoBanner source={homePromoBannerAssets.diagBogo} />
         </Pressable>
 

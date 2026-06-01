@@ -28,3 +28,10 @@ export interface HomeHeaderProps {
   navigation: NavigationProp<ParamListBase>;
   cartBadgeCount?: number;
 }
+
+export interface SavingsHeaderProps {
+  scrollY: Animated.Value;
+  insets: EdgeInsets;
+  navigation: NavigationProp<ParamListBase>;
+  cartBadgeCount?: number;
+}

@@ -1,5 +1,13 @@
 export const HOME_HEADER_SCROLL = { collapseStart: 0, collapseEnd: 88 } as const;
 
+
+export const SAVINGS_HEADER_SCROLL = {
+  collapseStart: 0,
+  collapseEnd: 72,
+  titleExpandedHeight: 92,
+  bottomRadiusExpanded: 28,
+} as const;
+
 export const DEFAULT_SEARCH_PLACEHOLDER = 'Search medicines & healthcare';
 
 export const SEARCH_PLACEHOLDERS = {
@@ -23,3 +31,4 @@ export const APP_HEADER_VARIANT_ICON_COLOR = {
 
 export const HEADER_HIT_SLOP = 10;
 export const HEADER_ICON_SLOT_CLASS = 'h-11 w-11';
+export const HEADER_ICON_BUTTON_RADIUS = 15;
