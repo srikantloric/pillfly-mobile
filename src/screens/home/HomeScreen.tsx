@@ -80,6 +80,8 @@ export function HomeScreen() {
     [insets.bottom],
   );
 
+
+
   return (
     <View className="flex-1 bg-pillfly-background">
       <HomeHeader

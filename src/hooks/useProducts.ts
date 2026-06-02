@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
-import type { Product } from "@/types/product";
 import { productService } from "@/services/product.service";
+
+import type { Product } from "@/types/product";
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -11,30 +12,39 @@ export function useProducts() {
   useEffect(() => {
     let cancelled = false;
 
-    setLoading(true);
-    productService
-      .getProducts()
-      .then((data) => {
+    async function loadProducts() {
+      try {
+        setLoading(true);
+
+        const data = await productService.getProducts();
+
         if (!cancelled) {
           setProducts(data);
           setError(null);
         }
-      })
-      .catch((e: unknown) => {
+      } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e : new Error(String(e)));
+          setError(
+            e instanceof Error ? e : new Error("Failed to load products"),
+          );
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) {
           setLoading(false);
         }
-      });
+      }
+    }
+
+    loadProducts();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return { products, loading, error };
+  return {
+    products,
+    loading,
+    error,
+  };
 }
