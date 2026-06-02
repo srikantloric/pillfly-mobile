@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Image,
@@ -24,6 +24,7 @@ import { colors } from '../../theme';
 import type { MainTabParamList } from '../../types/navigation.types';
 
 import { homeScreenStyles } from './homeScreen.styles';
+
 
 const MOCK_CART_COUNT = 2;
 const PLACEHOLDER_WHATSAPP = 'https://wa.me/911234567890';
