@@ -1,85 +1,125 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from '../../theme';
+import React, { useCallback, useEffect, useRef } from 'react';
+import {
+  Alert,
+  Animated,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  Text,
+  View,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import {
+  PlusMembershipBanner,
+  PROFILE_APP_VERSION,
+  ProfileHeader,
+  ProfileMenuList,
+  UserInfoCard,
+  profileColors,
+} from '../../components/profile';
+import { useSharedHeaderNavigation } from '../../components/header';
+import { MOCK_PROFILE_USER } from '../../mocks/profile.mock';
 
 export function ProfileScreen() {
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const insets = useSafeAreaInsets();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const { onPressSearch, onPressCart } = useSharedHeaderNavigation(navigation);
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim]);
+
+  const onPressBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [navigation]);
+
+  const onPressEdit = useCallback(() => {
+    Alert.alert('Edit profile', 'Profile editing will be available soon.');
+  }, []);
+
+  const onPressPlus = useCallback(() => {
+    Alert.alert('Plus membership', 'Membership details will open here.');
+  }, []);
+
+  const onPressLogout = useCallback(() => {
+    Alert.alert('Log out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log Out', style: 'destructive' },
+    ]);
+  }, []);
+
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.headline}>Profile</Text>
-      <Text style={styles.subtitle}>Manage your account and healthcare preferences.</Text>
+    <View className="flex-1" style={{ backgroundColor: profileColors.screenBg }}>
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={profileColors.statusBar}
+        translucent={false}
+      />
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-        <PlaceholderRow label="Personal details" />
-        <PlaceholderRow label="Saved addresses" />
-        <PlaceholderRow label="Payment methods" />
-      </View>
+      <ProfileHeader
+        cartBadgeCount={MOCK_PROFILE_USER.cartCount}
+        onPressBack={onPressBack}
+        onPressSearch={onPressSearch}
+        onPressCart={onPressCart}
+      />
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Orders</Text>
-        <PlaceholderRow label="Medicines & wellness" />
-        <PlaceholderRow label="Lab tests & diagnostics" />
-      </View>
-    </ScrollView>
-  );
-}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: insets.bottom + 28,
+        }}
+      >
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <UserInfoCard
+            phone={MOCK_PROFILE_USER.phone}
+            totalSavings={MOCK_PROFILE_USER.totalSavings}
+            onPressEdit={onPressEdit}
+          />
 
-function PlaceholderRow({ label }: { label: string }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
+          <View className="mt-3">
+            <PlusMembershipBanner onPress={onPressPlus} />
+          </View>
+
+          <ProfileMenuList dynamicBadges={MOCK_PROFILE_USER.dynamicMenuBadges} />
+
+          <View className="mt-6 flex-row items-center justify-between px-1">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Log out"
+              onPress={onPressLogout}
+              hitSlop={8}
+              className="active:opacity-70"
+            >
+              <Text
+                className="text-[15px] font-medium"
+                style={{ color: profileColors.logout }}
+              >
+                Log Out
+              </Text>
+            </Pressable>
+
+            <Text
+              className="text-[12px]"
+              style={{ color: profileColors.version }}
+            >
+              Version: {PROFILE_APP_VERSION}
+            </Text>
+          </View>
+        </Animated.View>
+      </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl * 2,
-  },
-  headline: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    marginBottom: spacing.xl,
-    lineHeight: 22,
-  },
-  section: {
-    marginBottom: spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.md,
-  },
-  row: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.sm,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-  },
-  rowLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-});
