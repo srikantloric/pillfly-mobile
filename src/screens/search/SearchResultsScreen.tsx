@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   FlatList,
-  Image,
   Pressable,
   ScrollView,
   Text,
@@ -12,7 +12,11 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { SearchBar } from "../../components/search";
+import {
+  ProductImageWithPlaceholder,
+  SearchBar,
+  SearchResultProductCard,
+} from "../../components/search";
 import { MOCK_CART_SUMMARY } from "../../mocks/search.mock";
 import { navigateToSharedRoute } from "../../navigation/navigateShared";
 import type { SearchStackParamList } from "../../types/navigation.types";
@@ -21,9 +25,8 @@ import { colors } from "../../theme";
 
 import {
   formatInr,
-  getDiscountPercent,
   getProductImageUrl,
-  getProductMrp,
+  getProductPricing,
   getResultsForSearch,
   getUnitPriceLabel,
   isMedicineProduct,
@@ -36,75 +39,27 @@ type ResultFilter = "all" | "substitute";
 const GRID_GAP = 12;
 const GRID_PADDING = 16;
 
-function ResultProductCard({
-  product,
-  width,
-  onPress,
-}: {
-  product: Product;
-  width: number;
-  onPress: () => void;
-}) {
-  const imageUrl = getProductImageUrl(product);
-  const mrp = getProductMrp(product);
-  const discount = getDiscountPercent(product);
-  const isRx = isMedicineProduct(product) && product.isPrescriptionRequired;
-  const salePrice =
-    mrp != null && discount != null && discount > 0
-      ? mrp * (1 - discount / 100)
-      : mrp;
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={{ width }}
-      className="mb-3 overflow-hidden rounded-xl border border-pillfly-line bg-pillfly-surface active:opacity-95"
-    >
-      <View className="relative h-[120px] items-center justify-center bg-pillfly-background px-2 pt-2">
-        {isRx ? (
-          <View className="absolute right-2 top-2 z-10 rounded bg-pillfly-muted/20 px-1.5 py-0.5">
-            <Text className="text-[10px] font-bold text-pillfly-muted">Rx</Text>
-          </View>
-        ) : null}
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} className="h-full w-full" resizeMode="contain" />
-        ) : (
-          <Feather name="package" size={32} color={colors.textSecondary} />
-        )}
-      </View>
-      <View className="px-2.5 pb-3 pt-2">
-        <Text className="text-[13px] font-bold leading-[18px] text-pillfly-ink" numberOfLines={3}>
-          {product.title}
-        </Text>
-        {salePrice != null ? (
-          <Text className="mt-1.5 text-[14px] font-bold text-pillfly-ink">
-            {formatInr(salePrice)}
-          </Text>
-        ) : null}
-      </View>
-    </Pressable>
-  );
-}
-
 function ComparisonCard({
   product,
   highlighted,
   savingsLabel,
+  onAddToCart,
 }: {
   product: MedicineProduct;
   highlighted?: boolean;
   savingsLabel?: string;
+  onAddToCart: (product: Product) => void;
 }) {
-  const mrp = product.mrp;
-  const discount = product.discount ?? 22;
-  const salePrice = mrp * (1 - discount / 100);
+  const pricing = getProductPricing(product);
+  const mrp = pricing?.mrp ?? product.mrp;
+  const discount = pricing?.discountPercent ?? 22;
+  const salePrice = pricing?.salePrice ?? product.mrp;
   const imageUrl = getProductImageUrl(product);
   const unitLabel = getUnitPriceLabel(product);
 
   return (
     <View
-      className={`relative flex-1 overflow-hidden rounded-xl border p-2.5 ${
+      className={`relative flex-1 flex-col overflow-hidden rounded-xl border p-2.5 ${
         highlighted
           ? "border-blue-400 bg-blue-50"
           : "border-pillfly-line bg-pillfly-surface"
@@ -115,38 +70,41 @@ function ComparisonCard({
           <Text className="text-[10px] font-bold text-white">{savingsLabel}</Text>
         </View>
       ) : null}
-      <View className={`items-center ${savingsLabel ? "mt-6" : ""}`}>
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} className="h-16 w-16" resizeMode="contain" />
-        ) : null}
-        {product.isPrescriptionRequired ? (
-          <Text className="absolute right-1 top-6 text-[10px] font-bold text-pillfly-muted">
-            Rx
-          </Text>
+
+      <View className="flex-1">
+        <View className={`items-center ${savingsLabel ? "mt-6" : ""}`}>
+          <ProductImageWithPlaceholder uri={imageUrl} className="h-16 w-16" />
+          {product.isPrescriptionRequired ? (
+            <Text className="absolute right-1 top-6 text-[10px] font-bold text-pillfly-muted">
+              Rx
+            </Text>
+          ) : null}
+        </View>
+        <Text className="mt-2 text-[12px] font-bold text-pillfly-ink" numberOfLines={2}>
+          {product.title}
+        </Text>
+        <Text className="mt-0.5 text-[10px] text-pillfly-muted">
+          {product.medicineDetails.packSize}
+        </Text>
+        <Text className="mt-1 text-[10px] text-pillfly-muted" numberOfLines={1}>
+          {product.medicineDetails.manufacturer}
+        </Text>
+        <Text className="mt-1 text-[11px] text-pillfly-muted line-through">
+          {formatInr(mrp)}
+        </Text>
+        <Text className="text-[14px] font-bold text-pillfly-ink">{formatInr(salePrice)}</Text>
+        <Text className="text-[11px] font-semibold text-red-600">{discount}% OFF</Text>
+        {unitLabel ? (
+          <View className="mt-1 self-start rounded bg-pillfly-line/50 px-1.5 py-0.5">
+            <Text className="text-[9px] text-pillfly-muted">{unitLabel}</Text>
+          </View>
         ) : null}
       </View>
-      <Text className="mt-2 text-[12px] font-bold text-pillfly-ink" numberOfLines={2}>
-        {product.title}
-      </Text>
-      <Text className="mt-0.5 text-[10px] text-pillfly-muted">
-        {product.medicineDetails.packSize}
-      </Text>
-      <Text className="mt-1 text-[10px] text-pillfly-muted" numberOfLines={1}>
-        {product.medicineDetails.manufacturer}
-      </Text>
-      <Text className="mt-1 text-[11px] text-pillfly-muted line-through">
-        {formatInr(mrp)}
-      </Text>
-      <Text className="text-[14px] font-bold text-pillfly-ink">{formatInr(salePrice)}</Text>
-      <Text className="text-[11px] font-semibold text-red-600">{discount}% OFF</Text>
-      {unitLabel ? (
-        <View className="mt-1 self-start rounded bg-pillfly-line/50 px-1.5 py-0.5">
-          <Text className="text-[9px] text-pillfly-muted">{unitLabel}</Text>
-        </View>
-      ) : null}
+
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Add to cart"
+        onPress={() => onAddToCart(product)}
         className={`mt-2 items-center rounded-lg py-2 ${
           highlighted ? "bg-pillfly-primary" : "border border-pillfly-primary"
         }`}
@@ -229,15 +187,38 @@ export function SearchResultsScreen({ navigation, route }: Props) {
     }
   }, [navigation]);
 
+  const showFeatureComingSoon = useCallback(() => {
+    Alert.alert("Coming soon", "This feature will be available soon.", [
+      { text: "OK" },
+    ]);
+  }, []);
+
+  const onAddToCart = useCallback(
+    (_product: Product) => {
+      showFeatureComingSoon();
+      // Wire to cart store / API when available.
+    },
+    [showFeatureComingSoon],
+  );
+
+  const onNotify = useCallback(
+    (_product: Product) => {
+      showFeatureComingSoon();
+      // Wire to notify-me API when available.
+    },
+    [showFeatureComingSoon],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: Product }) => (
-      <ResultProductCard
+      <SearchResultProductCard
         product={item}
         width={cardWidth}
-        onPress={() => {}}
+        onAddToCart={onAddToCart}
+        onNotify={onNotify}
       />
     ),
-    [cardWidth],
+    [cardWidth, onAddToCart, onNotify],
   );
 
   const listHeader = (
@@ -295,7 +276,7 @@ export function SearchResultsScreen({ navigation, route }: Props) {
             </Text>
           </View>
           <View className="flex-row items-stretch gap-2">
-            <ComparisonCard product={comparisonPair[0]} />
+            <ComparisonCard product={comparisonPair[0]} onAddToCart={onAddToCart} />
             <View className="items-center justify-center">
               <View className="rounded-full bg-pillfly-surface px-2 py-1">
                 <Text className="text-[10px] font-bold text-pillfly-muted">VS</Text>
@@ -305,6 +286,7 @@ export function SearchResultsScreen({ navigation, route }: Props) {
               product={comparisonPair[1]}
               highlighted
               savingsLabel="67% SAVINGS"
+              onAddToCart={onAddToCart}
             />
           </View>
         </View>
@@ -339,6 +321,7 @@ export function SearchResultsScreen({ navigation, route }: Props) {
         columnWrapperStyle={{
           gap: GRID_GAP,
           paddingHorizontal: GRID_PADDING,
+          alignItems: "stretch",
         }}
         ListHeaderComponent={listHeader}
         contentContainerStyle={{

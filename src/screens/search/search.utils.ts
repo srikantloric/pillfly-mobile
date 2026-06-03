@@ -4,6 +4,19 @@ import {
 } from "@/mocks/search.mock";
 import { productService } from "@/services/product.service";
 import type { MedicineProduct, Product } from "@/types/product";
+import { formatInr } from "@/utils/productDisplay";
+
+export {
+  formatInr,
+  getProductImageUrl,
+  getProductPackLabel,
+  getProductMrp,
+  getProductPricing,
+  getProductRating,
+  getProductStock,
+  isMedicineProduct,
+  isProductInStock,
+} from "@/utils/productDisplay";
 
 export function getKeywordSuggestions(query: string, limit = 5): string[] {
   const normalized = query.trim().toLowerCase();
@@ -65,48 +78,6 @@ export function getResultsForSearch(params: {
   return productService.searchProducts(query);
 }
 
-export function isMedicineProduct(product: Product): product is MedicineProduct {
-  return product.productType === "MEDICINE";
-}
-
-export function getProductImageUrl(product: Product): string | undefined {
-  if (product.productType === "MEDICINE") {
-    return product.images[0]?.url;
-  }
-
-  const variant =
-    product.variants.find((v) => v.isDefault) ?? product.variants[0];
-  return variant?.images[0]?.url;
-}
-
-export function getProductPackLabel(product: Product): string | undefined {
-  if (product.productType === "MEDICINE") {
-    return product.medicineDetails.packSize;
-  }
-
-  const variant =
-    product.variants.find((v) => v.isDefault) ?? product.variants[0];
-  if (!variant) {
-    return undefined;
-  }
-
-  const sizeOption = product.variantOptions.find((opt) => opt.id === "size");
-  const sizeValue = sizeOption?.values.find((v) =>
-    variant.optionValueIds.includes(v.id),
-  );
-  return sizeValue?.value;
-}
-
-export function getProductMrp(product: Product): number | undefined {
-  if (product.productType === "MEDICINE") {
-    return product.mrp;
-  }
-
-  const variant =
-    product.variants.find((v) => v.isDefault) ?? product.variants[0];
-  return variant?.mrp;
-}
-
 export function getDiscountPercent(product: Product): number | undefined {
   if (product.productType === "MEDICINE" && product.discount != null) {
     return product.discount;
@@ -114,16 +85,13 @@ export function getDiscountPercent(product: Product): number | undefined {
   return undefined;
 }
 
-export function formatInr(amount: number): string {
-  return `₹${amount.toFixed(2)}`;
-}
-
 export function getUnitPriceLabel(product: Product): string | undefined {
-  if (!isMedicineProduct(product)) {
+  if (product.productType !== "MEDICINE") {
     return undefined;
   }
 
-  const pack = product.medicineDetails.packSize;
+  const medicine = product as MedicineProduct;
+  const pack = medicine.medicineDetails.packSize;
   const countMatch = pack.match(/(\d+)/);
   const count = countMatch ? Number(countMatch[1]) : 0;
   if (count <= 0) {
@@ -131,11 +99,11 @@ export function getUnitPriceLabel(product: Product): string | undefined {
   }
 
   const unit =
-    product.medicineDetails.dosageForm === "TABLET"
+    medicine.medicineDetails.dosageForm === "TABLET"
       ? "tablet"
-      : product.medicineDetails.dosageForm === "CAPSULE"
+      : medicine.medicineDetails.dosageForm === "CAPSULE"
         ? "capsule"
         : "unit";
 
-  return `${formatInr(product.mrp / count)}/${unit}`;
+  return `${formatInr(medicine.mrp / count)}/${unit}`;
 }

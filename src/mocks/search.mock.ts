@@ -53,6 +53,15 @@ export const PREVIOUSLY_BOUGHT_PRODUCT_IDS: readonly string[] = [
 export const SEARCH_PROMO_BANNER: ImageRequireSource = homePromoBannerAssets.diagBogo;
 
 export const MOCK_CART_SUMMARY = {
-  itemCount: 0,
+  itemCount: 2,
   label: "In cart",
 } as const;
+
+/** Optional ratings for search result cards until API provides them on Product. */
+export const PRODUCT_SEARCH_RATINGS: Readonly<Partial<Record<string, number>>> = {
+  "med-001": 4.8,
+  "med-018": 4.6,
+  "med-016": 4.5,
+  "hlth-006": 4.7,
+  "hlth-001": 4.4,
+};
