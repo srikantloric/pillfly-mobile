@@ -17,7 +17,7 @@ export type ProfileStackParamList = {
 
 export type SearchStackParamList = {
   SearchHome: undefined;
-  SearchResults: { query: string };
+  SearchResults: { query: string; categoryId?: string };
 };
 
 export type CartStackParamList = {
