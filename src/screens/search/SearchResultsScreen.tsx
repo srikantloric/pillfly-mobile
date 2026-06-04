@@ -209,16 +209,24 @@ export function SearchResultsScreen({ navigation, route }: Props) {
     [showFeatureComingSoon],
   );
 
+  const onOpenProduct = useCallback(
+    (product: Product) => {
+      navigation.getParent()?.navigate("ProductDetail", { productId: product.id });
+    },
+    [navigation],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: Product }) => (
       <SearchResultProductCard
         product={item}
         width={cardWidth}
+        onPress={() => onOpenProduct(item)}
         onAddToCart={onAddToCart}
         onNotify={onNotify}
       />
     ),
-    [cardWidth, onAddToCart, onNotify],
+    [cardWidth, onAddToCart, onNotify, onOpenProduct],
   );
 
   const listHeader = (

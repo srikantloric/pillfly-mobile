@@ -30,6 +30,7 @@ export type AppStackParamList = {
   Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
   Search: NavigatorScreenParams<SearchStackParamList> | undefined;
   Cart: NavigatorScreenParams<CartStackParamList> | undefined;
+  ProductDetail: { productId: string };
 };
 
 export type RootStackParamList = {
