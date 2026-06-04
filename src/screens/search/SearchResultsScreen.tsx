@@ -12,11 +12,13 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { CartStickyBar } from "../../components/cart";
 import {
   ProductImageWithPlaceholder,
   SearchBar,
   SearchResultProductCard,
 } from "../../components/search";
+import { PrimaryButton, OutlineButton } from "../../components/ui";
 import { MOCK_CART_SUMMARY } from "../../mocks/search.mock";
 import { navigateToSharedRoute } from "../../navigation/navigateShared";
 import type { SearchStackParamList } from "../../types/navigation.types";
@@ -101,22 +103,25 @@ function ComparisonCard({
         ) : null}
       </View>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Add to cart"
-        onPress={() => onAddToCart(product)}
-        className={`mt-2 items-center rounded-lg py-2 ${
-          highlighted ? "bg-pillfly-primary" : "border border-pillfly-primary"
-        }`}
-      >
-        <Text
-          className={`text-[12px] font-bold ${
-            highlighted ? "text-white" : "text-pillfly-primary"
-          }`}
-        >
-          Add To Cart
-        </Text>
-      </Pressable>
+      <View className="mt-2">
+        {highlighted ? (
+          <PrimaryButton
+            label="Add To Cart"
+            size="sm"
+            accessibilityLabel="Add to cart"
+            onPress={() => onAddToCart(product)}
+            className="w-full rounded-lg"
+          />
+        ) : (
+          <OutlineButton
+            label="Add To Cart"
+            size="sm"
+            accessibilityLabel="Add to cart"
+            onPress={() => onAddToCart(product)}
+            className="w-full rounded-lg"
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -340,26 +345,11 @@ export function SearchResultsScreen({ navigation, route }: Props) {
         keyboardShouldPersistTaps="handled"
       />
 
-      <View
-        className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between border-t border-pillfly-line bg-pillfly-surface px-4 py-3"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
-        <View>
-          <Text className="text-[14px] font-bold text-pillfly-ink">
-            {MOCK_CART_SUMMARY.itemCount} items
-          </Text>
-          <Text className="text-[12px] text-pillfly-muted">{MOCK_CART_SUMMARY.label}</Text>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="View cart"
-          onPress={onViewCart}
-          className="flex-row items-center gap-2 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
-        >
-          <Text className="text-[15px] font-bold text-white">View Cart</Text>
-          <Feather name="shopping-cart" size={18} color="#FFFFFF" />
-        </Pressable>
-      </View>
+      <CartStickyBar
+        itemCount={MOCK_CART_SUMMARY.itemCount}
+        label={MOCK_CART_SUMMARY.label}
+        onPressViewCart={onViewCart}
+      />
     </View>
   );
 }

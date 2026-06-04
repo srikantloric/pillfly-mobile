@@ -58,7 +58,11 @@ export const medicineProducts: MedicineProduct[] = [
     stock: 140,
     sku: "MED-002-DOLO650",
     isPrescriptionRequired: false,
-    images: [{ url: "https://images.pexels.com/photos/139398/pexels-photo-139398.jpeg", type: "PRIMARY" }],
+    images: [
+      { url: "https://images.pexels.com/photos/139398/pexels-photo-139398.jpeg", type: "PRIMARY", order: 0 },
+      { url: "https://images.pexels.com/photos/593451/pexels-photo-593451.jpeg", type: "SECONDARY", order: 1 },
+      { url: "https://images.pexels.com/photos/66134/pexels-photo-66134.jpeg", type: "SECONDARY", order: 2 },
+    ],
     medicineDetails: {
       manufacturer: "Micro Labs Ltd",
       dosageForm: "TABLET",

@@ -12,6 +12,8 @@ import {
   isMedicineProduct,
   isProductInStock,
 } from "@/utils/productDisplay";
+import { OutlineButton, PrimaryButton } from "@/components/ui";
+
 import { ProductImageWithPlaceholder } from "./ProductImageWithPlaceholder";
 
 const TITLE_LINE_HEIGHT = 18;
@@ -135,23 +137,21 @@ export const SearchResultProductCard = memo(function SearchResultProductCard({
 
       <View className="px-2.5 pb-2.5 pt-1">
         {inStock ? (
-          <Pressable
-            accessibilityRole="button"
+          <PrimaryButton
+            label="Add to cart"
+            size="sm"
             accessibilityLabel={`Add ${product.title} to cart`}
             onPress={handlePrimaryAction}
-            className="items-center rounded-lg bg-pillfly-primary py-2.5 active:opacity-90"
-          >
-            <Text className="text-[13px] font-bold text-white">Add to cart</Text>
-          </Pressable>
+            className="w-full rounded-lg"
+          />
         ) : (
-          <Pressable
-            accessibilityRole="button"
+          <OutlineButton
+            label="Notify"
+            size="sm"
             accessibilityLabel={`Notify when ${product.title} is available`}
             onPress={handlePrimaryAction}
-            className="items-center rounded-lg border border-pillfly-primary bg-pillfly-surface py-2.5 active:opacity-90"
-          >
-            <Text className="text-[13px] font-bold text-pillfly-primary">Notify</Text>
-          </Pressable>
+            className="w-full rounded-lg"
+          />
         )}
       </View>
     </View>

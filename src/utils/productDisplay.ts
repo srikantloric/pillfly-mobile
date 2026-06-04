@@ -146,3 +146,65 @@ export function formatInr(amount: number): string {
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
+
+export function getProductImages(product: Product): string[] {
+  if (isMedicineProduct(product)) {
+    const urls = product.images.map((image) => image.url).filter(Boolean);
+    return urls.length > 0 ? urls : [];
+  }
+
+  const variant = getDefaultVariant(product);
+  const urls = variant?.images.map((image) => image.url).filter(Boolean) ?? [];
+  return urls;
+}
+
+export function getProductManufacturerLabel(product: Product): string | undefined {
+  if (isMedicineProduct(product)) {
+    return product.medicineDetails.manufacturer;
+  }
+
+  return product.brand;
+}
+
+export function getProductPackLabelDisplay(product: Product): string | undefined {
+  const label = getProductPackLabel(product);
+  return label ? label.toUpperCase() : undefined;
+}
+
+/** Per-unit sale price for medicine packs, with tax disclaimer suffix for PDP. */
+export function getProductUnitPriceDetail(product: Product): string | undefined {
+  if (!isMedicineProduct(product)) {
+    return undefined;
+  }
+
+  const pricing = getProductPricing(product);
+  if (!pricing) {
+    return undefined;
+  }
+
+  const countMatch = product.medicineDetails.packSize.match(/(\d+)/);
+  const count = countMatch ? Number(countMatch[1]) : 0;
+  if (count <= 0) {
+    return undefined;
+  }
+
+  const unit =
+    product.medicineDetails.dosageForm === "TABLET"
+      ? "tablet"
+      : product.medicineDetails.dosageForm === "CAPSULE"
+        ? "capsule"
+        : "unit";
+
+  const perUnit = roundMoney(pricing.salePrice / count);
+  return `${formatInr(perUnit)}/${unit} (Inclusive of all taxes)`;
+}
+
+/** Approximate PLUS credits shown on PDP membership strip. */
+export function getProductPlusCreditsAmount(product: Product): number {
+  const pricing = getProductPricing(product);
+  if (!pricing) {
+    return 2;
+  }
+
+  return Math.max(1, Math.round(pricing.salePrice * 0.08));
+}

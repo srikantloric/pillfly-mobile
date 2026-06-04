@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,8 +12,10 @@ import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HomePromoBanner } from "../../components/home/HomePromoBanner";
+import { ProductListRow } from "../../components/product";
 import { ShopTile } from "../../components/category/ShopTile";
-import { SearchBar } from "../../components/search";
+import { ProductImageWithPlaceholder, SearchBar } from "../../components/search";
+import { HorizontalScrollRow, SectionTitle } from "../../components/ui";
 import { CATEGORIES } from "../../mocks/categories.mock";
 import {
   RECENT_SEARCHES,
@@ -33,12 +34,6 @@ import {
 } from "./search.utils";
 
 type Props = NativeStackScreenProps<SearchStackParamList, "SearchHome">;
-
-function SectionTitle({ title }: { title: string }) {
-  return (
-    <Text className="mb-3 text-[15px] font-bold text-pillfly-ink">{title}</Text>
-  );
-}
 
 export function SearchHomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -144,15 +139,7 @@ export function SearchHomeScreen({ navigation }: Props) {
             className="flex-row items-center gap-3 border-b border-pillfly-line/60 px-4 py-3 active:bg-pillfly-background"
           >
             <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-pillfly-line bg-pillfly-surface">
-              {imageUrl ? (
-                <Image
-                  source={{ uri: imageUrl }}
-                  className="h-full w-full"
-                  resizeMode="contain"
-                />
-              ) : (
-                <Feather name="package" size={22} color={colors.textSecondary} />
-              )}
+              <ProductImageWithPlaceholder uri={imageUrl ?? undefined} className="h-full w-full" />
             </View>
             <View className="min-w-0 flex-1">
               <Text className="text-[14px] font-bold text-pillfly-ink" numberOfLines={2}>
@@ -199,12 +186,8 @@ export function SearchHomeScreen({ navigation }: Props) {
       contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
     >
       <View className="px-4 pt-4">
-        <SectionTitle title="Recent searches" />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="gap-2 pb-1"
-        >
+        <SectionTitle title="Recent searches" variant="plain" />
+        <HorizontalScrollRow contentClassName="gap-2 pb-1" gapClassName="gap-2">
           {RECENT_SEARCHES.map((term) => (
             <Pressable
               key={term}
@@ -218,16 +201,12 @@ export function SearchHomeScreen({ navigation }: Props) {
               </Text>
             </Pressable>
           ))}
-        </ScrollView>
+        </HorizontalScrollRow>
       </View>
 
       <View className="mt-6 px-4">
-        <SectionTitle title="Top categories" />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="gap-3 pb-1"
-        >
+        <SectionTitle title="Top categories" variant="plain" />
+        <HorizontalScrollRow contentClassName="pb-1" gapClassName="gap-3">
           {topCategories.map((category) => (
             <Pressable
               key={category.id}
@@ -244,7 +223,7 @@ export function SearchHomeScreen({ navigation }: Props) {
               />
             </Pressable>
           ))}
-        </ScrollView>
+        </HorizontalScrollRow>
       </View>
 
       <View className="mt-6 px-4">
@@ -252,35 +231,18 @@ export function SearchHomeScreen({ navigation }: Props) {
       </View>
 
       <View className="mt-6 px-4">
-        <SectionTitle title="Previously bought items" />
+        <SectionTitle title="Previously bought items" variant="plain" />
         {previouslyBought.length === 0 ? (
           <Text className="text-[14px] text-pillfly-muted">No purchase history yet.</Text>
         ) : (
-          previouslyBought.map((product) => {
-            const imageUrl = getProductImageUrl(product);
-            return (
-              <Pressable
-                key={product.id}
-                accessibilityRole="button"
-                onPress={() => goToResults(product.title)}
-                className="mb-3 flex-row items-center gap-3 rounded-xl border border-pillfly-line bg-pillfly-surface p-3 active:bg-pillfly-background"
-              >
-                <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-pillfly-line bg-white">
-                  {imageUrl ? (
-                    <Image
-                      source={{ uri: imageUrl }}
-                      className="h-full w-full"
-                      resizeMode="contain"
-                    />
-                  ) : null}
-                </View>
-                <Text className="flex-1 text-[14px] font-semibold text-pillfly-ink" numberOfLines={2}>
-                  {product.title}
-                </Text>
-                <Feather name="chevron-right" size={20} color={colors.textSecondary} />
-              </Pressable>
-            );
-          })
+          previouslyBought.map((product) => (
+            <ProductListRow
+              key={product.id}
+              title={product.title}
+              imageUrl={getProductImageUrl(product)}
+              onPress={() => goToResults(product.title)}
+            />
+          ))
         )}
       </View>
     </ScrollView>
