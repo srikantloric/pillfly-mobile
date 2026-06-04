@@ -1,15 +1,9 @@
-import React, { memo, useCallback, useMemo, useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  View,
-  useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from "react-native";
+import React, { memo, useCallback, useMemo } from "react";
+import { Pressable, View, useWindowDimensions } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 
 import { ProductImageWithPlaceholder } from "@/components/search/ProductImageWithPlaceholder";
+import { CarouselDots, HorizontalPager } from "@/components/ui";
 import type { Product } from "@/types/product";
 import { getProductImages, isProductInStock } from "@/utils/productDisplay";
 import { colors } from "@/theme";
@@ -34,16 +28,15 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
 
   const imageUrls = useMemo(() => getProductImages(product), [product]);
   const slides = imageUrls.length > 0 ? imageUrls : [undefined];
-  const [activeIndex, setActiveIndex] = useState(0);
   const inStock = isProductInStock(product);
 
-  const onScrollEnd = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const index = Math.round(event.nativeEvent.contentOffset.x / slideWidth);
-      setActiveIndex(Math.min(Math.max(index, 0), slides.length - 1));
-    },
-    [slideWidth, slides.length],
-  );
+  const fabShadowStyle = {
+    shadowColor: colors.textPrimary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  };
 
   const renderSlide = useCallback(
     ({ item }: { item: string | undefined }) => (
@@ -63,22 +56,21 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
 
   return (
     <View className="relative bg-pillfly-surface">
-      <FlatList
+      <HorizontalPager
         data={slides}
         keyExtractor={(_, index) => `slide-${index}`}
-        renderItem={renderSlide}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={onScrollEnd}
-        bounces={slides.length > 1}
-        scrollEnabled={slides.length > 1}
-        getItemLayout={(_, index) => ({
-          length: slideWidth,
-          offset: slideWidth * index,
-          index,
-        })}
-      />
+        renderItem={({ item }) => renderSlide({ item })}
+        slideWidth={slideWidth}
+      >
+        {({ activeIndex }) => (
+          <CarouselDots
+            count={slides.length}
+            activeIndex={activeIndex}
+            variant="primary"
+            className="absolute bottom-3 left-0 right-0"
+          />
+        )}
+      </HorizontalPager>
 
       <View
         className="absolute right-3 gap-2.5"
@@ -92,11 +84,7 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
           style={{
             width: FAB_SIZE,
             height: FAB_SIZE,
-            shadowColor: "#0F172A",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.08,
-            shadowRadius: 4,
-            elevation: 2,
+            ...fabShadowStyle,
           }}
         >
           <Feather name="heart" size={20} color={colors.textSecondary} />
@@ -110,34 +98,12 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
           style={{
             width: FAB_SIZE,
             height: FAB_SIZE,
-            shadowColor: "#0F172A",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.08,
-            shadowRadius: 4,
-            elevation: 2,
+            ...fabShadowStyle,
           }}
         >
           <Feather name="share-2" size={20} color={colors.textSecondary} />
         </Pressable>
       </View>
-
-      {slides.length > 1 ? (
-        <View className="absolute bottom-3 left-0 right-0 flex-row items-center justify-center gap-1.5">
-          {slides.map((_, index) => {
-            const active = index === activeIndex;
-            return (
-              <View
-                key={index}
-                className={active ? "rounded-full bg-pillfly-primary" : "rounded-full bg-pillfly-line"}
-                style={{
-                  width: active ? 18 : 6,
-                  height: 6,
-                }}
-              />
-            );
-          })}
-        </View>
-      ) : null}
     </View>
   );
 });

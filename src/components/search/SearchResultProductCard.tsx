@@ -25,6 +25,7 @@ const PRICE_BLOCK_HEIGHT = 44;
 type Props = {
   product: Product;
   width: number;
+  containerClassName?: string;
   onPress?: () => void;
   onAddToCart?: (product: Product) => void;
   onNotify?: (product: Product) => void;
@@ -33,6 +34,7 @@ type Props = {
 export const SearchResultProductCard = memo(function SearchResultProductCard({
   product,
   width,
+  containerClassName = "",
   onPress,
   onAddToCart,
   onNotify,
@@ -55,7 +57,7 @@ export const SearchResultProductCard = memo(function SearchResultProductCard({
   return (
     <View
       style={{ width, flex: 1 }}
-      className="flex-col overflow-hidden border border-pillfly-line bg-pillfly-surface"
+      className={`flex-col overflow-hidden border border-pillfly-line bg-pillfly-surface ${containerClassName}`.trim()}
     >
       <Pressable
         accessibilityRole="button"

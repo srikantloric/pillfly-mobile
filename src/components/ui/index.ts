@@ -1,5 +1,9 @@
 export { Accordion } from "./Accordion";
+export { CarouselDots } from "./CarouselDots";
+export type { CarouselDotsVariant } from "./CarouselDots";
+export { HorizontalPager } from "./HorizontalPager";
 export { HorizontalScrollRow } from "./HorizontalScrollRow";
+export { useHorizontalPager } from "./useHorizontalPager";
 export { IconTextRow } from "./IconTextRow";
 export { LinkRow } from "./LinkRow";
 export { OutlineButton } from "./OutlineButton";

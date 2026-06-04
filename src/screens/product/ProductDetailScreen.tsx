@@ -1,19 +1,21 @@
 import React, { useCallback } from "react";
 import { ActivityIndicator, Alert, ScrollView, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CartStickyBar } from "@/components/cart";
 import {
   ProductDetailHeader,
   ProductDetailMembershipBanner,
+  ProductDetailMetaSections,
+  ProductDetailProductCarousels,
   ProductImageCarousel,
   ProductInformationCard,
 } from "@/components/product";
 import { useProductDetail } from "@/hooks/useProductDetail";
 import { MOCK_CART_SUMMARY } from "@/mocks/search.mock";
 import type { AppStackParamList } from "@/types/navigation.types";
+import type { Product } from "@/types/product";
 import { getProductPlusCreditsAmount } from "@/utils/productDisplay";
 import { colors, spacing } from "@/theme";
 
@@ -22,8 +24,7 @@ type Props = NativeStackScreenProps<AppStackParamList, "ProductDetail">;
 const STICKY_FOOTER_HEIGHT = 64;
 const HEADER_BODY_HEIGHT = 48;
 
-export function ProductDetailScreen({ route }: Props) {
-  const navigation = useNavigation();
+export function ProductDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { product, loading, error } = useProductDetail(route.params.productId);
 
@@ -40,6 +41,20 @@ export function ProductDetailScreen({ route }: Props) {
   const onAddToCart = useCallback(() => {
     showFeatureComingSoon();
   }, [showFeatureComingSoon]);
+
+  const onAddCarouselProductToCart = useCallback(
+    (_item: Product) => {
+      showFeatureComingSoon();
+    },
+    [showFeatureComingSoon],
+  );
+
+  const onOpenProduct = useCallback(
+    (item: Product) => {
+      navigation.navigate("ProductDetail", { productId: item.id });
+    },
+    [navigation],
+  );
 
   const plusCredits = product ? getProductPlusCreditsAmount(product) : 2;
 
@@ -89,13 +104,30 @@ export function ProductDetailScreen({ route }: Props) {
               onAddToCart={onAddToCart}
               onNotify={showFeatureComingSoon}
             />
-            <View className="bg-pillfly-surface px-4 pb-6">
+            <View className="bg-pillfly-surface px-4 pb-4">
               <ProductDetailMembershipBanner
                 creditsAmount={plusCredits}
                 onPressViewBenefits={showFeatureComingSoon}
                 onPressAddPlus={showFeatureComingSoon}
               />
             </View>
+
+            <ProductDetailMetaSections
+              product={product}
+              onPressChangePincode={showFeatureComingSoon}
+              onPressReturnPolicy={showFeatureComingSoon}
+              onPressComposition={showFeatureComingSoon}
+              onPressTherapeutic={showFeatureComingSoon}
+              onPressPromoCta={showFeatureComingSoon}
+            />
+
+            <ProductDetailProductCarousels
+              productId={product.id}
+              onPressViewAll={showFeatureComingSoon}
+              onPressProduct={onOpenProduct}
+              onAddToCart={onAddCarouselProductToCart}
+              onNotify={showFeatureComingSoon}
+            />
           </>
         ) : null}
       </ScrollView>

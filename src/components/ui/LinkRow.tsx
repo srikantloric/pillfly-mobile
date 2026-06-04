@@ -9,25 +9,51 @@ type Props = {
   title: string;
   subtitle?: string;
   onPress?: () => void;
+  titleClassName?: string;
+  subtitleClassName?: string;
+  containerClassName?: string;
+  borderClassName?: string;
+  iconWrapperClassName?: string;
+  showChevron?: boolean;
 };
 
-export const LinkRow = memo(function LinkRow({ icon, title, subtitle, onPress }: Props) {
+const DEFAULT_TITLE_CLASS = "text-[14px] font-semibold text-pillfly-primary";
+const DEFAULT_SUBTITLE_CLASS = "mt-0.5 text-[12px] text-pillfly-muted";
+const DEFAULT_BORDER_CLASS = "border-b border-pillfly-line/60";
+const DEFAULT_CONTAINER_CLASS =
+  "flex-row items-center px-4 py-3.5 active:bg-pillfly-background";
+const DEFAULT_ICON_WRAPPER_CLASS = "mr-3 h-8 w-8 items-center justify-center";
+
+export const LinkRow = memo(function LinkRow({
+  icon,
+  title,
+  subtitle,
+  onPress,
+  titleClassName = DEFAULT_TITLE_CLASS,
+  subtitleClassName = DEFAULT_SUBTITLE_CLASS,
+  containerClassName = DEFAULT_CONTAINER_CLASS,
+  borderClassName = DEFAULT_BORDER_CLASS,
+  iconWrapperClassName = DEFAULT_ICON_WRAPPER_CLASS,
+  showChevron = true,
+}: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      className="flex-row items-center border-b border-pillfly-line/60 px-4 py-3.5 active:bg-pillfly-background"
+      className={`${containerClassName} ${borderClassName}`.trim()}
     >
-      <View className="mr-3 h-8 w-8 items-center justify-center">{icon}</View>
-      <View className="min-w-0 flex-1">
-        <Text className="text-[14px] font-semibold text-pillfly-primary">{title}</Text>
+      <View className={iconWrapperClassName}>{icon}</View>
+      <View className="min-w-0 flex-1 pr-2">
+        <Text className={titleClassName}>{title}</Text>
         {subtitle ? (
-          <Text className="mt-0.5 text-[12px] text-pillfly-muted" numberOfLines={2}>
+          <Text className={subtitleClassName} numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}
       </View>
-      <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+      {showChevron ? (
+        <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+      ) : null}
     </Pressable>
   );
 });

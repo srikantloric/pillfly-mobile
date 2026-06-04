@@ -12,4 +12,10 @@ export const colors = {
   sectionHeading: '#0F5C4F',
   promoPink: '#FCE7F3',
   promoRed: '#BE123C',
+  iconGreen: '#16A34A',
+  bannerCta: '#1E3A8A',
+  imageOverlay: 'rgba(15, 23, 42, 0.35)',
+  onImageText: 'rgba(255, 255, 255, 0.95)',
+  onImageTextMuted: 'rgba(255, 255, 255, 0.85)',
+  onImageTextSubtle: 'rgba(255, 255, 255, 0.9)',
 } as const;

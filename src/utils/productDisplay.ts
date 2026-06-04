@@ -199,6 +199,33 @@ export function getProductUnitPriceDetail(product: Product): string | undefined 
   return `${formatInr(perUnit)}/${unit} (Inclusive of all taxes)`;
 }
 
+export function getProductSaltCompositionDisplay(product: Product): string | undefined {
+  if (!isMedicineProduct(product)) {
+    return undefined;
+  }
+
+  const salt = product.medicineDetails.saltComposition.trim();
+  if (!salt) {
+    return undefined;
+  }
+
+  const mgMatch = salt.match(/(\d+(?:\.\d+)?)\s*mg/i);
+  if (mgMatch && /paracetamol/i.test(salt)) {
+    return `Paracetamol / Acetaminophen(${mgMatch[1]}.0 Mg)`;
+  }
+
+  return salt;
+}
+
+export function getProductTherapeuticClassDisplay(product: Product): string | undefined {
+  if (!isMedicineProduct(product)) {
+    return undefined;
+  }
+
+  const therapy = product.medicineDetails.therapy.trim();
+  return therapy ? therapy.toUpperCase() : undefined;
+}
+
 /** Approximate PLUS credits shown on PDP membership strip. */
 export function getProductPlusCreditsAmount(product: Product): number {
   const pricing = getProductPricing(product);
