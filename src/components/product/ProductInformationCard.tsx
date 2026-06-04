@@ -12,6 +12,14 @@ import {
   isProductInStock,
 } from "@/utils/productDisplay";
 
+import {
+  PDP_HORIZONTAL_PADDING,
+  PDP_SHEET_RADIUS,
+  PDP_SHEET_SHADOW,
+  PDP_SUBTITLE_CLASS,
+  PDP_SURFACE_RADIUS,
+} from "./productDetail.constants";
+
 type Props = {
   product: Product;
   onAddToCart?: (product: Product) => void;
@@ -39,35 +47,26 @@ export const ProductInformationCard = memo(function ProductInformationCard({
 
   return (
     <View
-      className="-mt-1 rounded-t-2xl bg-pillfly-surface px-4 pb-4 pt-4"
-      style={{
-        shadowColor: "#0F172A",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 4,
-      }}
+      className={`-mt-1 ${PDP_SHEET_RADIUS} bg-pillfly-surface ${PDP_HORIZONTAL_PADDING} pb-4 pt-4`}
+      style={PDP_SHEET_SHADOW}
     >
       <Text className="text-[17px] font-bold leading-[22px] text-pillfly-ink">{product.title}</Text>
 
       {manufacturer ? (
-        <Text className="mt-1 text-[12px] font-semibold uppercase tracking-wide text-pillfly-muted">
-          By {manufacturer}
-        </Text>
+        <Text className={`mt-1 ${PDP_SUBTITLE_CLASS}`}>By {manufacturer}</Text>
       ) : null}
 
       {packLabel ? (
-        <Text className="mt-0.5 text-[12px] font-semibold uppercase tracking-wide text-pillfly-muted">
-          {packLabel}
-        </Text>
+        <Text className={`mt-0.5 ${PDP_SUBTITLE_CLASS}`}>{packLabel}</Text>
       ) : null}
 
       {pricing ? (
-        <View className="mt-4 flex-row items-stretch gap-3 rounded-xl border border-pillfly-line p-3">
-          <View className="min-w-0 flex-1 justify-center">
+        <View
+          className={`mt-4 flex-row gap-3 border border-pillfly-line ${PDP_SURFACE_RADIUS} p-3`}
+        >
+          <View className="min-w-0 flex-1 justify-end">
             <Text className="text-[12px] text-pillfly-muted">
-              MRP{" "}
-              <Text className="line-through">{formatInr(pricing.mrp)}</Text>
+              MRP <Text className="line-through">{formatInr(pricing.mrp)}</Text>
             </Text>
 
             <View className="mt-1 flex-row flex-wrap items-baseline gap-1.5">
@@ -82,20 +81,20 @@ export const ProductInformationCard = memo(function ProductInformationCard({
             </View>
 
             {unitPriceDetail ? (
-              <Text className="mt-1 text-[11px] leading-[15px] text-pillfly-muted">
+              <Text className={`mt-1 text-[11px] leading-[15px] text-pillfly-muted`}>
                 {unitPriceDetail}
               </Text>
             ) : null}
           </View>
 
-          <View className="justify-center">
+          <View className="justify-end">
             {inStock ? (
               <PrimaryButton
                 label="Add to Cart"
                 size="sm"
                 accessibilityLabel={`Add ${product.title} to cart`}
                 onPress={handlePrimaryAction}
-                className="min-w-[108px] rounded-lg px-4"
+                className="min-w-[108px] rounded-xl px-4"
               />
             ) : (
               <OutlineButton
@@ -103,7 +102,7 @@ export const ProductInformationCard = memo(function ProductInformationCard({
                 size="sm"
                 accessibilityLabel={`Notify when ${product.title} is available`}
                 onPress={handlePrimaryAction}
-                className="min-w-[108px] rounded-lg px-4"
+                className="min-w-[108px] rounded-xl px-4"
               />
             )}
           </View>

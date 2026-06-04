@@ -12,7 +12,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CartStickyBar } from "../../components/cart";
+import { CART_STICKY_BAR_SCROLL_PADDING, CartStickyBar } from "../../components/cart";
 import {
   ProductImageWithPlaceholder,
   SearchBar,
@@ -338,7 +338,7 @@ export function SearchResultsScreen({ navigation, route }: Props) {
         }}
         ListHeaderComponent={listHeader}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 88,
+          paddingBottom: insets.bottom + CART_STICKY_BAR_SCROLL_PADDING,
           gap: GRID_GAP,
         }}
         showsVerticalScrollIndicator={false}

@@ -8,17 +8,22 @@ import type { Product } from "@/types/product";
 import { getProductImages, isProductInStock } from "@/utils/productDisplay";
 import { colors } from "@/theme";
 
+import { PDP_FAB_SHADOW } from "./productDetail.constants";
+
 const IMAGE_ASPECT = 0.88;
 const FAB_SIZE = 40;
 
 type Props = {
   product: Product;
+  /** Height of the overlay header so FABs sit below it. */
+  headerOverlayHeight?: number;
   onPressWishlist?: () => void;
   onPressShare?: () => void;
 };
 
 export const ProductImageCarousel = memo(function ProductImageCarousel({
   product,
+  headerOverlayHeight = 0,
   onPressWishlist,
   onPressShare,
 }: Props) {
@@ -29,14 +34,6 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
   const imageUrls = useMemo(() => getProductImages(product), [product]);
   const slides = imageUrls.length > 0 ? imageUrls : [undefined];
   const inStock = isProductInStock(product);
-
-  const fabShadowStyle = {
-    shadowColor: colors.textPrimary,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  };
 
   const renderSlide = useCallback(
     ({ item }: { item: string | undefined }) => (
@@ -73,8 +70,8 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
       </HorizontalPager>
 
       <View
-        className="absolute right-3 gap-2.5"
-        style={{ top: slideHeight * 0.38 }}
+        className="absolute right-4 gap-2.5"
+        style={{ top: Math.max(headerOverlayHeight + 8, slideHeight * 0.36) }}
       >
         <Pressable
           accessibilityRole="button"
@@ -84,10 +81,16 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
           style={{
             width: FAB_SIZE,
             height: FAB_SIZE,
-            ...fabShadowStyle,
+            ...PDP_FAB_SHADOW,
           }}
         >
-          <Feather name="heart" size={20} color={colors.textSecondary} />
+          <Feather
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            name="heart"
+            size={20}
+            color={colors.textSecondary}
+          />
         </Pressable>
 
         <Pressable
@@ -98,10 +101,16 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
           style={{
             width: FAB_SIZE,
             height: FAB_SIZE,
-            ...fabShadowStyle,
+            ...PDP_FAB_SHADOW,
           }}
         >
-          <Feather name="share-2" size={20} color={colors.textSecondary} />
+          <Feather
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            name="share-2"
+            size={20}
+            color={colors.textSecondary}
+          />
         </Pressable>
       </View>
     </View>

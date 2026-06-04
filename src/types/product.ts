@@ -60,10 +60,14 @@ export interface MedicineDetails {
 
   saltComposition: string;
   uses: string;
+  contraindications?: string;
   therapy: string;
   sideEffects: string;
 
   warnings?: string;
+  additionalInformation?: string;
+  faq?: ReadonlyArray<{ question: string; answer: string }>;
+  references?: string;
   prescriptionRequired?: boolean;
 }
 

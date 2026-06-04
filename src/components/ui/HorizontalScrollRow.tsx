@@ -17,6 +17,7 @@ export const HorizontalScrollRow = memo(function HorizontalScrollRow({
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerClassName={`${contentClassName} ${gapClassName}`}
+      contentContainerStyle={{ alignItems: "flex-start" }}
     >
       {children}
     </ScrollView>

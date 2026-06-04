@@ -21,10 +21,24 @@ const TITLE_MAX_LINES = 2;
 const TITLE_BLOCK_HEIGHT = TITLE_LINE_HEIGHT * TITLE_MAX_LINES;
 const PACK_LINE_HEIGHT = 16;
 const PRICE_BLOCK_HEIGHT = 44;
+const IMAGE_BLOCK_HEIGHT = 130;
+const CONTENT_VERTICAL_PADDING = 16;
+const BUTTON_BLOCK_HEIGHT = 48;
+
+/** Intrinsic height for PDP horizontal carousels (do not use flex stretch). */
+export const SEARCH_RESULT_PRODUCT_CARD_INTRINSIC_HEIGHT =
+  IMAGE_BLOCK_HEIGHT +
+  CONTENT_VERTICAL_PADDING +
+  TITLE_BLOCK_HEIGHT +
+  PACK_LINE_HEIGHT +
+  PRICE_BLOCK_HEIGHT +
+  BUTTON_BLOCK_HEIGHT;
 
 type Props = {
   product: Product;
   width: number;
+  /** When true (search grid), card stretches to row height. When false (PDP carousel), uses fixed height. */
+  fillHeight?: boolean;
   containerClassName?: string;
   onPress?: () => void;
   onAddToCart?: (product: Product) => void;
@@ -34,6 +48,7 @@ type Props = {
 export const SearchResultProductCard = memo(function SearchResultProductCard({
   product,
   width,
+  fillHeight = true,
   containerClassName = "",
   onPress,
   onAddToCart,
@@ -56,16 +71,23 @@ export const SearchResultProductCard = memo(function SearchResultProductCard({
 
   return (
     <View
-      style={{ width, flex: 1 }}
+      style={
+        fillHeight
+          ? { width, flex: 1 }
+          : { width, height: SEARCH_RESULT_PRODUCT_CARD_INTRINSIC_HEIGHT }
+      }
       className={`flex-col overflow-hidden border border-pillfly-line bg-pillfly-surface ${containerClassName}`.trim()}
     >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={product.title}
         onPress={onPress}
-        className="flex-1 active:opacity-95"
+        className={fillHeight ? "flex-1 active:opacity-95" : "active:opacity-95"}
       >
-        <View className="relative h-[130px] bg-pillfly-background px-2 pt-2">
+        <View
+          className="relative bg-pillfly-background px-2 pt-2"
+          style={{ height: IMAGE_BLOCK_HEIGHT }}
+        >
           {rating != null ? (
             <View className="absolute left-2 top-2 z-20 flex-row items-center gap-0.5 rounded bg-pillfly-surface px-1.5 py-0.5 shadow-sm">
               <Feather name="star" size={10} color="#EAB308" />
@@ -92,7 +114,7 @@ export const SearchResultProductCard = memo(function SearchResultProductCard({
           ) : null}
         </View>
 
-        <View className="flex-1 px-2.5 pb-2 pt-2">
+        <View className={fillHeight ? "flex-1 px-2.5 pb-2 pt-2" : "px-2.5 pb-2 pt-2"}>
           <Text
             className="text-[13px] font-bold text-pillfly-ink"
             numberOfLines={TITLE_MAX_LINES}

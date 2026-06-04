@@ -49,7 +49,7 @@ export const ProductDetailPromoCarousel = memo(function ProductDetailPromoCarous
   );
 
   return (
-    <View className="mt-4 pb-2">
+    <View className="mt-4 bg-pillfly-background pb-2">
       <HorizontalPager
         data={slides}
         keyExtractor={(item) => item.id}
@@ -65,7 +65,7 @@ export const ProductDetailPromoCarousel = memo(function ProductDetailPromoCarous
           <CarouselDots
             count={slides.length}
             activeIndex={activeIndex}
-            variant="ink"
+            variant="primary"
             className="mt-3"
           />
         )}

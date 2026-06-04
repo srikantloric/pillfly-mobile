@@ -47,7 +47,8 @@ export const medicineProducts: MedicineProduct[] = [
     productType: "MEDICINE",
     title: "Dolo 650",
     slug: "dolo-650-micro-labs",
-    description: "High-strength paracetamol tablet for fever and moderate body pain.",
+    description:
+      "Dolo 650 Tablet is a widely used and trusted medicine for relieving pain and reducing fever. It contains paracetamol (acetaminophen) as its main ingredient, which helps manage various types of pain and fever safely when taken as directed.",
     brand: "Micro Labs",
     tax: defaultTax,
     status: "ACTIVE",
@@ -71,10 +72,36 @@ export const medicineProducts: MedicineProduct[] = [
       batches: [{ batchNumber: "BATCH-MED-002", expiryDate: "2028-10-31", stock: 140, purchasePrice: 21 }],
       purchasePrice: 21,
       saltComposition: "Paracetamol 650mg",
-      uses: "Fever, post-vaccination fever, muscle pain",
+      uses:
+        "Dolo 650 is primarily used as an effective fever reducer for adults and children above 12 years.\nDolo 650 helps relieve mild to moderate pain including headache, toothache, and body ache.\nIt can be used for post-vaccination fever and muscle pain.\nIt provides symptomatic relief when other NSAIDs are not suitable.",
+      contraindications:
+        "It is advised not to use Dolo 650 if you have an allergy to paracetamol.\nAvoid use in severe liver disease unless prescribed by a doctor.\nDo not combine with other paracetamol-containing products.",
       therapy: "Analgesic/Antipyretic",
-      sideEffects: "Stomach discomfort, allergic rash",
-      warnings: "Use with caution in liver disease",
+      sideEffects:
+        "Stomach discomfort may occur in some patients.\nAllergic rash is rare but requires medical attention if severe.\nNausea or vomiting may happen with overdose.",
+      warnings:
+        "Use with caution in liver disease.\nDo not exceed the recommended dose.\nAvoid alcohol while taking this medicine.\nConsult a doctor if fever persists beyond 3 days.",
+      additionalInformation:
+        "Store in a cool, dry place away from direct sunlight. Keep out of reach of children. Do not use if the strip is damaged or past expiry.",
+      faq: [
+        {
+          question: "How should I take Dolo 650?",
+          answer:
+            "Take one tablet with water after food or as directed by your doctor. Do not exceed the recommended daily dose.",
+        },
+        {
+          question: "Can I take Dolo 650 on an empty stomach?",
+          answer:
+            "It can be taken with or without food. Taking it after meals may reduce stomach discomfort.",
+        },
+        {
+          question: "Is Dolo 650 safe during pregnancy?",
+          answer:
+            "Consult your doctor before use during pregnancy or breastfeeding.",
+        },
+      ],
+      references:
+        "Indian Pharmacopoeia — Paracetamol monograph.\nWHO Model List of Essential Medicines.\nMicro Labs Ltd product literature.",
       prescriptionRequired: false,
     },
   },

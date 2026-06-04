@@ -67,6 +67,10 @@ function HorizontalPagerComponent<T>({
         bounces={bounces ?? data.length > 1}
         scrollEnabled={canScroll}
         getItemLayout={getItemLayout}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        removeClippedSubviews
         contentContainerClassName={contentContainerClassName}
       />
       {children?.({ activeIndex })}

@@ -9,6 +9,7 @@ type Props = {
   title: string;
   subtitle?: string;
   onPress?: () => void;
+  accessibilityLabel?: string;
   titleClassName?: string;
   subtitleClassName?: string;
   containerClassName?: string;
@@ -29,6 +30,7 @@ export const LinkRow = memo(function LinkRow({
   title,
   subtitle,
   onPress,
+  accessibilityLabel,
   titleClassName = DEFAULT_TITLE_CLASS,
   subtitleClassName = DEFAULT_SUBTITLE_CLASS,
   containerClassName = DEFAULT_CONTAINER_CLASS,
@@ -39,10 +41,13 @@ export const LinkRow = memo(function LinkRow({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
       onPress={onPress}
       className={`${containerClassName} ${borderClassName}`.trim()}
     >
-      <View className={iconWrapperClassName}>{icon}</View>
+      <View accessible={false} importantForAccessibility="no-hide-descendants" className={iconWrapperClassName}>
+        {icon}
+      </View>
       <View className="min-w-0 flex-1 pr-2">
         <Text className={titleClassName}>{title}</Text>
         {subtitle ? (
@@ -52,7 +57,13 @@ export const LinkRow = memo(function LinkRow({
         ) : null}
       </View>
       {showChevron ? (
-        <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+        <Feather
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          name="chevron-right"
+          size={20}
+          color={colors.textSecondary}
+        />
       ) : null}
     </Pressable>
   );
