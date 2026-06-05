@@ -6,6 +6,6 @@ export { ProductDetailMembershipBanner } from "./ProductDetailMembershipBanner";
 export { ProductDetailOfferFootnote } from "./ProductDetailOfferFootnote";
 export { ProductDetailMetaSections } from "./ProductDetailMetaSections";
 export { ProductDetailProductCarousels } from "./ProductDetailProductCarousels";
-export { ProductImageCarousel } from "./ProductImageCarousel";
+export { ProductImageCarousel, getPdpHeroImageHeight } from "./ProductImageCarousel";
 export { ProductInformationCard } from "./ProductInformationCard";
 export { ProductListRow } from "./ProductListRow";

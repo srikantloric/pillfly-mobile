@@ -75,7 +75,14 @@ export const ProductDetailHeader = memo(function ProductDetailHeader({
   });
 
   return (
-    <View style={{ paddingTop: insets.top, backgroundColor: "transparent" }}>
+    <View
+      style={{
+        paddingTop: insets.top,
+        backgroundColor: colors.surface,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: colors.border,
+      }}
+    >
       <Animated.View
         pointerEvents="none"
         style={[
@@ -83,8 +90,6 @@ export const ProductDetailHeader = memo(function ProductDetailHeader({
           {
             backgroundColor: colors.surface,
             opacity: headerSurfaceOpacity,
-            borderBottomWidth: StyleSheet.hairlineWidth,
-            borderBottomColor: colors.border,
           },
         ]}
       />

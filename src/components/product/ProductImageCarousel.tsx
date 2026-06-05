@@ -8,18 +8,25 @@ import type { Product } from "@/types/product";
 import { getProductImages, isProductInStock } from "@/utils/productDisplay";
 import { colors } from "@/theme";
 
-import { PDP_FAB_SHADOW } from "./productDetail.constants";
+import {
+  PDP_FAB_SHADOW,
+  PDP_HERO_IMAGE_ASPECT,
+  PDP_HERO_IMAGE_HORIZONTAL_PADDING,
+} from "./productDetail.constants";
 
-const IMAGE_ASPECT = 0.88;
 const FAB_SIZE = 40;
 
 type Props = {
   product: Product;
-  /** Height of the overlay header so FABs sit below it. */
+  /** Sticky header height — reserved as white toolbar space (reference 1.jpeg). */
   headerOverlayHeight?: number;
   onPressWishlist?: () => void;
   onPressShare?: () => void;
 };
+
+export function getPdpHeroImageHeight(windowWidth: number): number {
+  return Math.round(windowWidth * PDP_HERO_IMAGE_ASPECT);
+}
 
 export const ProductImageCarousel = memo(function ProductImageCarousel({
   product,
@@ -29,7 +36,8 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
 }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const slideWidth = windowWidth;
-  const slideHeight = Math.round(slideWidth * IMAGE_ASPECT);
+  const imageHeight = getPdpHeroImageHeight(windowWidth);
+  const imageContentWidth = slideWidth - PDP_HERO_IMAGE_HORIZONTAL_PADDING * 2;
 
   const imageUrls = useMemo(() => getProductImages(product), [product]);
   const slides = imageUrls.length > 0 ? imageUrls : [undefined];
@@ -38,80 +46,89 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
   const renderSlide = useCallback(
     ({ item }: { item: string | undefined }) => (
       <View
-        style={{ width: slideWidth, height: slideHeight }}
+        style={{ width: slideWidth, height: imageHeight }}
         className="items-center justify-center bg-pillfly-surface"
       >
         <ProductImageWithPlaceholder
           uri={item}
           dimmed={!inStock}
-          className="h-full w-full px-6"
+          className=""
+          style={{ width: imageContentWidth, height: imageHeight }}
+          resizeMode="contain"
         />
       </View>
     ),
-    [inStock, slideHeight, slideWidth],
+    [imageContentWidth, imageHeight, inStock, slideWidth],
   );
 
   return (
-    <View className="relative bg-pillfly-surface">
-      <HorizontalPager
-        data={slides}
-        keyExtractor={(_, index) => `slide-${index}`}
-        renderItem={({ item }) => renderSlide({ item })}
-        slideWidth={slideWidth}
-      >
-        {({ activeIndex }) => (
-          <CarouselDots
-            count={slides.length}
-            activeIndex={activeIndex}
-            variant="primary"
-            className="absolute bottom-3 left-0 right-0"
-          />
-        )}
-      </HorizontalPager>
+    <View className="bg-pillfly-surface">
+      {/* White header reserve — icons overlay this, not the product photo (ref 1.jpeg). */}
+      {headerOverlayHeight > 0 ? (
+        <View style={{ height: headerOverlayHeight }} className="bg-pillfly-surface" />
+      ) : null}
 
-      <View
-        className="absolute right-4 gap-2.5"
-        style={{ top: Math.max(headerOverlayHeight + 8, slideHeight * 0.36) }}
-      >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Add to wishlist"
-          onPress={onPressWishlist}
-          className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
-          style={{
-            width: FAB_SIZE,
-            height: FAB_SIZE,
-            ...PDP_FAB_SHADOW,
-          }}
+      <View className="relative bg-pillfly-surface">
+        <HorizontalPager
+          data={slides}
+          keyExtractor={(_, index) => `slide-${index}`}
+          renderItem={({ item }) => renderSlide({ item })}
+          slideWidth={slideWidth}
         >
-          <Feather
-            accessible={false}
-            importantForAccessibility="no-hide-descendants"
-            name="heart"
-            size={20}
-            color={colors.textSecondary}
-          />
-        </Pressable>
+          {({ activeIndex }) => (
+            <CarouselDots
+              count={slides.length}
+              activeIndex={activeIndex}
+              variant="primary"
+              className="absolute bottom-3 left-0 right-0"
+            />
+          )}
+        </HorizontalPager>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Share product"
-          onPress={onPressShare}
-          className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
-          style={{
-            width: FAB_SIZE,
-            height: FAB_SIZE,
-            ...PDP_FAB_SHADOW,
-          }}
+        <View
+          className="absolute right-4 gap-2.5"
+          style={{ top: imageHeight * 0.28 }}
         >
-          <Feather
-            accessible={false}
-            importantForAccessibility="no-hide-descendants"
-            name="share-2"
-            size={20}
-            color={colors.textSecondary}
-          />
-        </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add to wishlist"
+            onPress={onPressWishlist}
+            className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
+            style={{
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              ...PDP_FAB_SHADOW,
+            }}
+          >
+            <Feather
+              accessible={false}
+              importantForAccessibility="no-hide-descendants"
+              name="heart"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Share product"
+            onPress={onPressShare}
+            className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
+            style={{
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              ...PDP_FAB_SHADOW,
+            }}
+          >
+            <Feather
+              accessible={false}
+              importantForAccessibility="no-hide-descendants"
+              name="share-2"
+              size={20}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+        </View>
       </View>
     </View>
   );

@@ -11,6 +11,7 @@ type Props = {
   style?: StyleProp<ImageStyle>;
   className?: string;
   dimmed?: boolean;
+  resizeMode?: "cover" | "contain" | "stretch" | "center";
 };
 
 export const ProductImageWithPlaceholder = memo(function ProductImageWithPlaceholder({
@@ -18,6 +19,7 @@ export const ProductImageWithPlaceholder = memo(function ProductImageWithPlaceho
   style,
   className = "h-full w-full",
   dimmed = false,
+  resizeMode = "contain",
 }: Props) {
   const [phase, setPhase] = useState<"loading" | "loaded" | "error">(
     uri ? "loading" : "error",
@@ -48,7 +50,7 @@ export const ProductImageWithPlaceholder = memo(function ProductImageWithPlaceho
         <Image
           source={{ uri }}
           className="absolute inset-0 h-full w-full"
-          resizeMode="contain"
+          resizeMode={resizeMode}
           onLoad={onLoad}
           onError={onError}
           style={{

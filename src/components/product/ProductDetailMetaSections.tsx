@@ -50,9 +50,9 @@ export const ProductDetailMetaSections = memo(function ProductDetailMetaSections
   const therapeuticClass = getProductTherapeuticClassDisplay(product);
   const showMedicineMeta = isMedicineProduct(product) && saltComposition && therapeuticClass;
 
-  const pincodeLine = useMemo(() => {
+  const locationLine = useMemo(() => {
     const { pincode, areaLabel } = MOCK_DELIVERY_INFO;
-    return areaLabel ? `${pincode} · ${areaLabel}` : pincode;
+    return areaLabel ? `${pincode}, ${areaLabel}` : pincode;
   }, []);
 
   return (
@@ -68,35 +68,35 @@ export const ProductDetailMetaSections = memo(function ProductDetailMetaSections
               <Feather name="zap" size={20} color={colors.primary} />
             </View>
 
-            <View className="min-w-0 flex-1 pr-3">
-              <Text className="text-[14px] font-bold leading-[20px] text-pillfly-ink">
-                {MOCK_DELIVERY_INFO.etaLabel}
-              </Text>
-              {MOCK_DELIVERY_INFO.subtitle ? (
-                <Text className={`mt-0.5 ${PDP_SUBTITLE_CLASS}`}>
-                  {MOCK_DELIVERY_INFO.subtitle}
+            <View className="min-w-0 flex-1">
+              <Text className="text-[14px] leading-[20px]">
+                <Text className="font-bold text-pillfly-ink">Delivery by </Text>
+                <Text className="font-semibold text-pillfly-primary">
+                  {MOCK_DELIVERY_INFO.etaTime}
                 </Text>
-              ) : null}
-            </View>
+              </Text>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Change delivery pincode ${MOCK_DELIVERY_INFO.pincode}`}
-              onPress={onPressChangePincode}
-              className="min-h-[44px] shrink-0 items-end justify-center active:opacity-80"
-            >
-              <Text className="text-[13px] font-semibold text-pillfly-ink">{pincodeLine}</Text>
-              <View className="mt-0.5 flex-row items-center gap-0.5">
-                <Text className="text-[12px] text-pillfly-primary">Change</Text>
-                <Feather
-                  accessible={false}
-                  importantForAccessibility="no-hide-descendants"
-                  name="chevron-right"
-                  size={PDP_CHEVRON_SIZE}
-                  color={colors.textSecondary}
-                />
+              <View className="flex-row items-center">
+                <Text className={PDP_SUBTITLE_CLASS}>Location: </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Change delivery location ${locationLine}`}
+                  onPress={onPressChangePincode}
+                  className="flex-row items-center active:opacity-80"
+                >
+                  <Text className="text-[13px] font-semibold text-pillfly-ink underline">
+                    {locationLine}
+                  </Text>
+                  <Feather
+                    accessible={false}
+                    importantForAccessibility="no-hide-descendants"
+                    name="chevron-right"
+                    size={PDP_CHEVRON_SIZE}
+                    color={colors.textSecondary}
+                  />
+                </Pressable>
               </View>
-            </Pressable>
+            </View>
           </View>
         </View>
 

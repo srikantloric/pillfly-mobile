@@ -60,7 +60,7 @@ export const medicineProducts: MedicineProduct[] = [
     sku: "MED-002-DOLO650",
     isPrescriptionRequired: false,
     images: [
-      { url: "https://images.pexels.com/photos/139398/pexels-photo-139398.jpeg", type: "PRIMARY", order: 0 },
+      { url: "https://5.imimg.com/data5/SELLER/Default/2024/5/420344701/PF/LS/HF/33400885/dolo-650-mg-paracetamol-tablet-1000x1000.jpeg", type: "PRIMARY", order: 0 },
       { url: "https://images.pexels.com/photos/593451/pexels-photo-593451.jpeg", type: "SECONDARY", order: 1 },
       { url: "https://images.pexels.com/photos/66134/pexels-photo-66134.jpeg", type: "SECONDARY", order: 2 },
     ],

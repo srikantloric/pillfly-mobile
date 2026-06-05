@@ -25,6 +25,7 @@ import {
   ProductDetailProductCarousels,
   ProductImageCarousel,
   ProductInformationCard,
+  getPdpHeroImageHeight,
 } from "@/components/product";
 import {
   PDP_HEADER_COLLAPSE_END,
@@ -43,8 +44,6 @@ import { getProductPlusCreditsAmount } from "@/utils/productDisplay";
 import { shareProductOnChannel } from "@/utils/shareProduct";
 
 type Props = NativeStackScreenProps<AppStackParamList, "ProductDetail">;
-
-const IMAGE_ASPECT = 0.88;
 
 export function ProductDetailScreen({ route, navigation }: Props) {
   const { width: windowWidth } = useWindowDimensions();
@@ -70,8 +69,8 @@ export function ProductDetailScreen({ route, navigation }: Props) {
   const scrollPaddingBottom = insets.bottom + CART_STICKY_BAR_SCROLL_PADDING;
 
   const collapseThreshold = useMemo(() => {
-    const imageHeight = Math.round(windowWidth * IMAGE_ASPECT);
-    return Math.min(PDP_HEADER_COLLAPSE_END, Math.max(96, imageHeight - stickyHeaderHeight - 48));
+    const heroHeight = stickyHeaderHeight + getPdpHeroImageHeight(windowWidth);
+    return Math.min(PDP_HEADER_COLLAPSE_END, Math.max(96, heroHeight - stickyHeaderHeight - 48));
   }, [stickyHeaderHeight, windowWidth]);
 
   useEffect(() => {

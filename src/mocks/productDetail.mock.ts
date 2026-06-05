@@ -4,8 +4,7 @@ import { homePromoBannerAssets } from "@/components/home/HomePromoBanner";
 import { PDP_SHARE_BRAND_COLORS } from "@/components/product/productDetail.constants";
 
 export const MOCK_DELIVERY_INFO = {
-  etaLabel: "Delivery by Tomorrow, 10 PM",
-  subtitle: "Order within 2 hrs 14 mins",
+  etaTime: "Tomorrow, 8:00 pm - 10:00 pm",
   pincode: "400001",
   areaLabel: "Mumbai",
 } as const;

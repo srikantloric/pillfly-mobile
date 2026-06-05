@@ -34,6 +34,12 @@ export const PDP_CAROUSEL_CARD_GAP = "gap-2.5";
 
 export const PDP_HEADER_BODY_HEIGHT = 48;
 
+/** Product image zone below the header toolbar (reference 1.jpeg). */
+export const PDP_HERO_IMAGE_ASPECT = 0.75;
+
+/** Symmetric inset so the pack shot sits centred on white. */
+export const PDP_HERO_IMAGE_HORIZONTAL_PADDING = 24;
+
 export const PDP_HEADER_COLLAPSE_START = 72;
 
 export const PDP_HEADER_COLLAPSE_END = 128;
