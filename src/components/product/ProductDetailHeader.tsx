@@ -3,6 +3,8 @@ import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@react-native-vector-icons/feather";
 
+import OfferIcon from "@/assets/icons/offerIcon.svg";
+
 import {
   HEADER_HIT_SLOP,
   HEADER_ICON_SLOT_CLASS,
@@ -110,11 +112,20 @@ export const ProductDetailHeader = memo(function ProductDetailHeader({
           </Pressable>
 
           <View className="flex-row items-center">
-            <HeaderIconButton
+            <Pressable
+              accessibilityRole="button"
               accessibilityLabel="Offers"
-              icon="percent"
+              hitSlop={HEADER_HIT_SLOP}
               onPress={onPressOffers}
-            />
+              className={`${HEADER_ICON_SLOT_CLASS} items-center justify-center active:opacity-75`}
+            >
+              <OfferIcon
+                accessible={false}
+                importantForAccessibility="no-hide-descendants"
+                width={30}
+                height={30}
+              />
+            </Pressable>
             <HeaderIconButton
               accessibilityLabel="Search"
               icon="search"
