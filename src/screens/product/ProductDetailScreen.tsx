@@ -107,10 +107,7 @@ export function ProductDetailScreen({ route, navigation }: Props) {
   );
 
   const onViewCart = useCallback(() => {
-    const parent = navigation.getParent();
-    if (parent) {
-      navigateToSharedRoute(parent, "Cart");
-    }
+    navigateToSharedRoute(navigation, "Cart");
   }, [navigation]);
 
   const onPressShareChannel = useCallback(

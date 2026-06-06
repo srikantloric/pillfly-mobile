@@ -186,10 +186,7 @@ export function SearchResultsScreen({ navigation, route }: Props) {
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
 
   const onViewCart = useCallback(() => {
-    const parent = navigation.getParent();
-    if (parent) {
-      navigateToSharedRoute(parent, "Cart");
-    }
+    navigateToSharedRoute(navigation, "Cart");
   }, [navigation]);
 
   const showFeatureComingSoon = useCallback(() => {

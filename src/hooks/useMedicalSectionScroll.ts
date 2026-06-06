@@ -17,12 +17,13 @@ export function useMedicalSectionScroll({ scrollRef }: Options) {
   const stickyHeaderHeight = useRef(0);
   const medicalTabsHeight = useRef(0);
 
+
   const onMedicalAnchorLayout = useCallback((y: number) => {
     medicalAnchorY.current = y;
-    sectionOffsets.current = {};
   }, []);
 
   const onMedicalSectionLayout = useCallback((tabId: MedicalInfoTabId, sectionY: number) => {
+    console.log("SECTION LAYOUT:", tabId, sectionY);
     sectionOffsets.current[tabId] = medicalAnchorY.current + sectionY;
   }, []);
 
@@ -30,14 +31,17 @@ export function useMedicalSectionScroll({ scrollRef }: Options) {
     stickyHeaderHeight.current = height;
   }, []);
 
+
   const onMedicalTabsLayout = useCallback((height: number) => {
     medicalTabsHeight.current = height;
-    sectionOffsets.current = {};
   }, []);
 
   const scrollToMedicalSection = useCallback((tabId: MedicalInfoTabId) => {
+    console.log("TAB CLICK:", tabId);
+    console.log("TARGET:", sectionOffsets.current[tabId]);
     const sectionY = sectionOffsets.current[tabId];
     if (sectionY == null) {
+      console.log("NO POSITION FOUND");
       return;
     }
 
