@@ -21,6 +21,8 @@ module.exports = {
           'savings-gold': '#F5C842',
           'promo-pink': '#FCE7F3',
           'promo-red': '#BE123C',
+          'icon-green': '#16A34A',
+          'banner-cta': '#1E3A8A',
           auth: {
             primary: '#0B9444',
             light: '#8EDB92',

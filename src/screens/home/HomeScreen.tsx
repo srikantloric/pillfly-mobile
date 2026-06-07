@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Image,
@@ -19,33 +19,17 @@ import DeliveryBoy from '../../assets/icons/deliveryBoy.svg';
 import { HomeHeader } from '../../components/header';
 import { CategoryShopGrid, categoryGridTileWidth } from '../../components/category';
 import { HomePromoBanner, homePromoBannerAssets } from '../../components/home/HomePromoBanner';
+import { SectionTitle } from '../../components/ui';
 import { CATEGORIES } from '../../mocks/categories.mock';
 import { colors } from '../../theme';
 import type { MainTabParamList } from '../../types/navigation.types';
 
 import { homeScreenStyles } from './homeScreen.styles';
 
+
 const MOCK_CART_COUNT = 2;
 const PLACEHOLDER_WHATSAPP = 'https://wa.me/911234567890';
 const PLACEHOLDER_PHONE = 'tel:+912212345678';
-
-function SectionTitle({
-  title,
-  underlineWidth = 40,
-}: {
-  title: string;
-  underlineWidth?: number;
-}) {
-  return (
-    <View className="mb-3 flex-row items-center">
-      <Text className="text-[13px] font-bold tracking-wide text-pillfly-section">{title}</Text>
-      <View
-        className="ml-2 h-0.5 flex-1 rounded-full bg-pillfly-primary"
-        style={{ maxWidth: underlineWidth }}
-      />
-    </View>
-  );
-}
 
 function DividerLabel({ label }: { label: string }) {
   return (
@@ -79,6 +63,8 @@ export function HomeScreen() {
     [insets.bottom],
   );
 
+
+  
   return (
     <View className="flex-1 bg-pillfly-background">
       <HomeHeader

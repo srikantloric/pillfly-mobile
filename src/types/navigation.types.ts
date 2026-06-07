@@ -17,7 +17,7 @@ export type ProfileStackParamList = {
 
 export type SearchStackParamList = {
   SearchHome: undefined;
-  SearchResults: { query: string };
+  SearchResults: { query: string; categoryId?: string };
 };
 
 export type CartStackParamList = {
@@ -30,6 +30,7 @@ export type AppStackParamList = {
   Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
   Search: NavigatorScreenParams<SearchStackParamList> | undefined;
   Cart: NavigatorScreenParams<CartStackParamList> | undefined;
+  ProductDetail: { productId: string };
 };
 
 export type RootStackParamList = {
