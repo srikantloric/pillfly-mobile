@@ -27,8 +27,8 @@ import {
 } from "@/features/product/components";
 import { PDP_HEADER_COLLAPSE_END, PDP_HORIZONTAL_PADDING } from "@/features/product/constants/productDetail.constants";
 import { useMedicalSectionScroll } from "@/features/product/hooks/useMedicalSectionScroll";
+import { useCartActions, useCartSummary } from "@/features/cart";
 import type { ProductDetailShareChannelId } from "@/features/product/mocks/detail.mock";
-import { MOCK_CART_SUMMARY } from "@/features/search/mocks/search.mock";
 import type { SavingsCoupon } from "@/mocks/savings.mock";
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { AppStackParamList } from "@/types/navigation.types";
@@ -90,6 +90,9 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
     return cancelSchedule;
   }, [product.id, scrollY, signalReady]);
 
+  const { itemCount, stickyLabel } = useCartSummary();
+  const { addToCart } = useCartActions();
+
   const showFeatureComingSoon = useCallback(() => {
     Alert.alert("Coming soon", "This feature will be available soon.");
   }, []);
@@ -98,15 +101,23 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
     navigation.goBack();
   }, [navigation]);
 
+  const onPressSearch = useCallback(() => {
+    navigateToSharedRoute(navigation, "Search");
+  }, [navigation]);
+
+  const onPressCart = useCallback(() => {
+    navigateToSharedRoute(navigation, "Cart");
+  }, [navigation]);
+
   const onAddToCart = useCallback(() => {
-    showFeatureComingSoon();
-  }, [showFeatureComingSoon]);
+    addToCart(product.id);
+  }, [addToCart, product.id]);
 
   const onAddCarouselProductToCart = useCallback(
-    (_item: Product) => {
-      showFeatureComingSoon();
+    (item: Product) => {
+      addToCart(item.id);
     },
-    [showFeatureComingSoon],
+    [addToCart],
   );
 
   const onOpenProduct = useCallback(
@@ -182,11 +193,11 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
           scrollY={scrollY}
           headerCollapsed={headerCollapsed}
           product={product}
-          cartBadgeCount={MOCK_CART_SUMMARY.itemCount}
+          cartBadgeCount={itemCount}
           onPressBack={onPressBack}
           onPressOffers={showFeatureComingSoon}
-          onPressSearch={showFeatureComingSoon}
-          onPressCart={showFeatureComingSoon}
+          onPressSearch={onPressSearch}
+          onPressCart={onPressCart}
           onAddToCart={onAddToCart}
           onNotify={showFeatureComingSoon}
         />
@@ -258,11 +269,13 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
         />
       </Animated.ScrollView>
 
-      <CartStickyBar
-        itemCount={MOCK_CART_SUMMARY.itemCount}
-        label={MOCK_CART_SUMMARY.label}
-        onPressViewCart={onViewCart}
-      />
+      {itemCount > 0 ? (
+        <CartStickyBar
+          itemCount={itemCount}
+          label={stickyLabel}
+          onPressViewCart={onViewCart}
+        />
+      ) : null}
     </View>
   );
 }

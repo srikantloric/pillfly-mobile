@@ -19,7 +19,7 @@ import {
   SearchResultProductCard,
 } from "@/features/search/components";
 import { PrimaryButton, OutlineButton } from "@/components/ui";
-import { MOCK_CART_SUMMARY } from "@/features/search/mocks/search.mock";
+import { useCartActions, useCartSummary } from "@/features/cart";
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { SearchStackParamList } from "@/types/navigation.types";
 import type { MedicineProduct, Product } from "@/features/product";
@@ -189,6 +189,9 @@ export function SearchResultsScreen({ navigation, route }: Props) {
     navigateToSharedRoute(navigation, "Cart");
   }, [navigation]);
 
+  const { itemCount, stickyLabel } = useCartSummary();
+  const { addToCart } = useCartActions();
+
   const showFeatureComingSoon = useCallback(() => {
     Alert.alert("Coming soon", "This feature will be available soon.", [
       { text: "OK" },
@@ -196,11 +199,10 @@ export function SearchResultsScreen({ navigation, route }: Props) {
   }, []);
 
   const onAddToCart = useCallback(
-    (_product: Product) => {
-      showFeatureComingSoon();
-      // Wire to cart store / API when available.
+    (cartProduct: Product) => {
+      addToCart(cartProduct.id);
     },
-    [showFeatureComingSoon],
+    [addToCart],
   );
 
   const onNotify = useCallback(
@@ -342,11 +344,13 @@ export function SearchResultsScreen({ navigation, route }: Props) {
         keyboardShouldPersistTaps="handled"
       />
 
-      <CartStickyBar
-        itemCount={MOCK_CART_SUMMARY.itemCount}
-        label={MOCK_CART_SUMMARY.label}
-        onPressViewCart={onViewCart}
-      />
+      {itemCount > 0 ? (
+        <CartStickyBar
+          itemCount={itemCount}
+          label={stickyLabel}
+          onPressViewCart={onViewCart}
+        />
+      ) : null}
     </View>
   );
 }

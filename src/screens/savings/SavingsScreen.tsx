@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useCartSummary } from '@/hooks/useCartSummary';
 import { SavingsHeader } from '../../components/header';
 import {
   SavingsCouponListItem,
@@ -17,7 +18,6 @@ import {
   type SavingsCouponCategory,
 } from '../../mocks/savings.mock';
 
-const MOCK_CART_COUNT = 2;
 const SUBSCRIPTION_ROW_ID = 'subscription-banner';
 const SUBSCRIPTION_INSERT_INDEX = 2;
 
@@ -48,6 +48,7 @@ function buildListData(coupons: SavingsCoupon[]): SavingsListRow[] {
 export function SavingsScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const insets = useSafeAreaInsets();
+  const { itemCount } = useCartSummary();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [activeCategory, setActiveCategory] = useState<SavingsCouponCategory>('all');
 
@@ -104,7 +105,7 @@ export function SavingsScreen() {
         scrollY={scrollY}
         insets={insets}
         navigation={navigation}
-        cartBadgeCount={MOCK_CART_COUNT}
+        cartBadgeCount={itemCount}
       />
 
       <Animated.FlatList

@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@react-native-vector-icons/feather';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import DeliveryBoy from '../../assets/icons/deliveryBoy.svg';
+import { useCartSummary } from '@/hooks/useCartSummary';
 import { HomeHeader } from '../../components/header';
 import { CategoryShopGrid, categoryGridTileWidth } from '../../components/category';
 import { HomePromoBanner, homePromoBannerAssets } from '../../components/home/HomePromoBanner';
@@ -27,7 +28,6 @@ import type { MainTabParamList } from '../../types/navigation.types';
 import { homeScreenStyles } from './homeScreen.styles';
 
 
-const MOCK_CART_COUNT = 2;
 const PLACEHOLDER_WHATSAPP = 'https://wa.me/911234567890';
 const PLACEHOLDER_PHONE = 'tel:+912212345678';
 
@@ -45,6 +45,7 @@ function DividerLabel({ label }: { label: string }) {
 
 export function HomeScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList, 'Home'>>();
+  const { itemCount } = useCartSummary();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -71,7 +72,7 @@ export function HomeScreen() {
         scrollY={scrollY}
         insets={insets}
         navigation={navigation}
-        cartBadgeCount={MOCK_CART_COUNT}
+        cartBadgeCount={itemCount}
       />
 
       <Animated.ScrollView
