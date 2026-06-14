@@ -25,7 +25,6 @@ export const MEDICAL_INFO_TABS: readonly MedicalInfoTab[] = [
   { id: "precautions", label: "Precautions & Warnings" },
 ] as const;
 
-/** Splits API copy into bullet lines (newline preferred, comma fallback). */
 export function parseBulletList(content: string | undefined): string[] {
   if (!content?.trim()) {
     return [];

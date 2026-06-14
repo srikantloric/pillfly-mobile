@@ -1,7 +1,5 @@
 import { colors } from "@/theme";
 
-/** Shared PDP layout tokens — visual rhythm and grid (16px horizontal). */
-
 export const PDP_HORIZONTAL_PADDING = "px-4";
 
 export const PDP_SECTION_SPACING = "mt-4";
@@ -27,24 +25,20 @@ export const PDP_CHEVRON_SIZE = 18;
 
 export const PDP_ICON_SLOT = "h-8 w-8 items-center justify-center";
 
-/** Horizontal mini product card (reference ~132px). */
 export const PDP_CAROUSEL_CARD_WIDTH = 132;
 
 export const PDP_CAROUSEL_CARD_GAP = "gap-2.5";
 
 export const PDP_HEADER_BODY_HEIGHT = 48;
 
-/** Product image zone below the header toolbar (reference 1.jpeg). */
 export const PDP_HERO_IMAGE_ASPECT = 0.75;
 
-/** Symmetric inset so the pack shot sits centred on white. */
 export const PDP_HERO_IMAGE_HORIZONTAL_PADDING = 24;
 
 export const PDP_HEADER_COLLAPSE_START = 72;
 
 export const PDP_HEADER_COLLAPSE_END = 128;
 
-/** Official brand colors for share actions (not theme tokens). */
 export const PDP_SHARE_BRAND_COLORS = {
   whatsapp: "#25D366",
   facebook: "#1877F2",

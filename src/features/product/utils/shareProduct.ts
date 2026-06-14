@@ -36,7 +36,6 @@ export async function shareProductOnChannel(
         return;
       }
     } catch {
-      // Fall through to system share sheet.
     }
   }
 

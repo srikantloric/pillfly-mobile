@@ -18,7 +18,6 @@ const FAB_SIZE = 40;
 
 type Props = {
   product: Product;
-  /** Sticky header height — reserved as white toolbar space (reference 1.jpeg). */
   headerOverlayHeight?: number;
   onPressWishlist?: () => void;
   onPressShare?: () => void;
@@ -63,7 +62,6 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
 
   return (
     <View className="bg-pillfly-surface">
-      {/* White header reserve — icons overlay this, not the product photo (ref 1.jpeg). */}
       {headerOverlayHeight > 0 ? (
         <View style={{ height: headerOverlayHeight }} className="bg-pillfly-surface" />
       ) : null}

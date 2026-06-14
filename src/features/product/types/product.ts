@@ -161,7 +161,6 @@ export interface VariantRowForm {
   stock: number;
 }
 
-// Stub until HSN/SAC picker exists
 export interface HsnSacFormValues {
   hsnCode: string;
 }

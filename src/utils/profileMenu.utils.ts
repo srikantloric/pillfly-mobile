@@ -22,7 +22,6 @@ function resolveBadge(
   return { kind: 'count', value };
 }
 
-/** Merges static menu config with runtime badge values (notifications count, etc.). */
 export function resolveProfileMenuEntries(
   dynamicBadges: ProfileMenuDynamicBadges = {},
 ): ProfileMenuEntry[] {

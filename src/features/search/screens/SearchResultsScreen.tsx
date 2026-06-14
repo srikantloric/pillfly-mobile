@@ -208,7 +208,6 @@ export function SearchResultsScreen({ navigation, route }: Props) {
   const onNotify = useCallback(
     (_product: Product) => {
       showFeatureComingSoon();
-      // Wire to notify-me API when available.
     },
     [showFeatureComingSoon],
   );

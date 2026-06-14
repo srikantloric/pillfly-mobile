@@ -40,10 +40,6 @@ export const productService = {
     );
   },
 
-  /**
-   * Async wrapper.
-   * Keeps hooks compatible now and makes API migration easier later.
-   */
   async getProducts(): Promise<Product[]> {
     return Promise.resolve(mockProducts);
   },

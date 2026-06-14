@@ -25,7 +25,6 @@ const IMAGE_BLOCK_HEIGHT = 130;
 const CONTENT_VERTICAL_PADDING = 16;
 const BUTTON_BLOCK_HEIGHT = 48;
 
-/** Intrinsic height for PDP horizontal carousels (do not use flex stretch). */
 export const SEARCH_RESULT_PRODUCT_CARD_INTRINSIC_HEIGHT =
   IMAGE_BLOCK_HEIGHT +
   CONTENT_VERTICAL_PADDING +
@@ -37,7 +36,6 @@ export const SEARCH_RESULT_PRODUCT_CARD_INTRINSIC_HEIGHT =
 type Props = {
   product: Product;
   width: number;
-  /** When true (search grid), card stretches to row height. When false (PDP carousel), uses fixed height. */
   fillHeight?: boolean;
   containerClassName?: string;
   onPress?: () => void;

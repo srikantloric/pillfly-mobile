@@ -48,7 +48,7 @@ function buildListData(coupons: SavingsCoupon[]): SavingsListRow[] {
 export function SavingsScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const insets = useSafeAreaInsets();
-  const { itemCount } = useCartSummary();
+  const { lineCount } = useCartSummary();
   const scrollY = useRef(new Animated.Value(0)).current;
   const [activeCategory, setActiveCategory] = useState<SavingsCouponCategory>('all');
 
@@ -105,7 +105,7 @@ export function SavingsScreen() {
         scrollY={scrollY}
         insets={insets}
         navigation={navigation}
-        cartBadgeCount={itemCount}
+        cartBadgeCount={lineCount}
       />
 
       <Animated.FlatList

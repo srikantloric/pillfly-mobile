@@ -1,6 +1,5 @@
 import type { ProfileMenuDynamicBadges } from '../components/profile/profile.types';
 
-/** Temporary stand-in for profile API / auth user payload. */
 export type MockProfileUser = {
   phone: string;
   totalSavings: number;

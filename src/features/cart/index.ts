@@ -6,6 +6,7 @@ export {
   buildCartBill,
   formatCartTotal,
   getCartItemCount,
+  getCartLineCount,
   resolveCartLines,
 } from "./utils/cartPricing";
 

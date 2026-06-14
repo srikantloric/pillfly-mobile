@@ -12,7 +12,6 @@ function isAppStackNavigation(navigation: NavigationProp<ParamListBase>): boolea
   return APP_STACK_ROUTE_MARKERS.every((name) => routeNames.includes(name));
 }
 
-/** Walks up nested navigators until the App stack (Cart / ProductDetail live here). */
 export function getAppStackNavigation(
   navigation: NavigationProp<ParamListBase>,
 ): AppNavigation {

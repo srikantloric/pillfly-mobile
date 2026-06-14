@@ -45,7 +45,7 @@ function DividerLabel({ label }: { label: string }) {
 
 export function HomeScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList, 'Home'>>();
-  const { itemCount } = useCartSummary();
+  const { lineCount } = useCartSummary();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -65,14 +65,13 @@ export function HomeScreen() {
   );
 
 
-  
   return (
     <View className="flex-1 bg-pillfly-background">
       <HomeHeader
         scrollY={scrollY}
         insets={insets}
         navigation={navigation}
-        cartBadgeCount={itemCount}
+        cartBadgeCount={lineCount}
       />
 
       <Animated.ScrollView

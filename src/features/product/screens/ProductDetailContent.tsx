@@ -90,7 +90,7 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
     return cancelSchedule;
   }, [product.id, scrollY, signalReady]);
 
-  const { itemCount, stickyLabel } = useCartSummary();
+  const { itemCount, lineCount, stickyLabel } = useCartSummary();
   const { addToCart } = useCartActions();
 
   const showFeatureComingSoon = useCallback(() => {
@@ -193,7 +193,7 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
           scrollY={scrollY}
           headerCollapsed={headerCollapsed}
           product={product}
-          cartBadgeCount={itemCount}
+          cartBadgeCount={lineCount}
           onPressBack={onPressBack}
           onPressOffers={showFeatureComingSoon}
           onPressSearch={onPressSearch}

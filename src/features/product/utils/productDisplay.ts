@@ -1,7 +1,6 @@
 import { PRODUCT_SEARCH_RATINGS } from "@/features/search/mocks/search.mock";
 import type { HealthcareProduct, MedicineProduct, Product } from "@/features/product/types/product";
 
-/** Shown when API/catalog does not send an explicit discount yet. */
 const DEFAULT_CATALOG_DISCOUNT_PERCENT = 22;
 
 export interface ProductPricing {
@@ -30,10 +29,6 @@ export function getProductImageUrl(product: Product): string | undefined {
   return getDefaultVariant(product)?.images[0]?.url;
 }
 
-/**
- * Sellable quantity for the listing shown in search/grid.
- * Medicine: product.stock. Healthcare: default (or first) variant stock.
- */
 export function getProductStock(product: Product): number {
   if (isMedicineProduct(product)) {
     return product.stock;
@@ -111,9 +106,6 @@ export function getProductMrp(product: Product): number | undefined {
   return getDefaultVariant(product)?.mrp;
 }
 
-/**
- * Pricing for UI. When API adds `salePrice`, map it here instead of deriving from discount.
- */
 export function getProductPricing(product: Product): ProductPricing | null {
   const mrp = getProductMrp(product);
   if (mrp == null) {
@@ -171,7 +163,6 @@ export function getProductPackLabelDisplay(product: Product): string | undefined
   return label ? label.toUpperCase() : undefined;
 }
 
-/** Per-unit sale price for medicine packs, with tax disclaimer suffix for PDP. */
 export function getProductUnitPriceDetail(product: Product): string | undefined {
   if (!isMedicineProduct(product)) {
     return undefined;
@@ -226,7 +217,6 @@ export function getProductTherapeuticClassDisplay(product: Product): string | un
   return therapy ? therapy.toUpperCase() : undefined;
 }
 
-/** Approximate PLUS credits shown on PDP membership strip. */
 export function getProductPlusCreditsAmount(product: Product): number {
   const pricing = getProductPricing(product);
   if (!pricing) {

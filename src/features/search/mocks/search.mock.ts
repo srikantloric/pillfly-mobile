@@ -4,7 +4,6 @@ import type { CategoryId } from "@/types/category.types";
 
 import { homePromoBannerAssets } from "@/components/home/HomePromoBanner";
 
-/** Display labels for search home horizontal categories (reference layout). */
 export const TOP_SEARCH_CATEGORY_TILES: ReadonlyArray<{
   id: CategoryId;
   title: string;
@@ -23,7 +22,6 @@ export const RECENT_SEARCHES: readonly string[] = [
   "Accu-Chek Strips",
 ];
 
-/** Keyword suggestions shown while typing (filtered by query in search.utils). */
 export const SEARCH_KEYWORD_SUGGESTIONS: readonly string[] = [
   "Omez",
   "Omez 20",
@@ -42,7 +40,6 @@ export const SEARCH_KEYWORD_SUGGESTIONS: readonly string[] = [
   "Accu-Chek",
 ];
 
-/** Product ids for “Previously bought items” — resolved via productService.getProductById. */
 export const PREVIOUSLY_BOUGHT_PRODUCT_IDS: readonly string[] = [
   "med-018",
   "med-001",
@@ -51,7 +48,6 @@ export const PREVIOUSLY_BOUGHT_PRODUCT_IDS: readonly string[] = [
 ];
 
 export const SEARCH_PROMO_BANNER: ImageRequireSource = homePromoBannerAssets.diagBogo;
-/** Optional ratings for search result cards until API provides them on Product. */
 export const PRODUCT_SEARCH_RATINGS: Readonly<Partial<Record<string, number>>> = {
   "med-001": 4.8,
   "med-018": 4.6,

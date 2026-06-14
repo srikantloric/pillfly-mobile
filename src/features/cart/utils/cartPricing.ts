@@ -110,3 +110,7 @@ export function formatCartTotal(amount: number): string {
 export function getCartItemCount(items: readonly CartLineItem[]): number {
   return items.reduce((sum, item) => sum + item.quantity, 0);
 }
+
+export function getCartLineCount(items: readonly CartLineItem[]): number {
+  return items.length;
+}

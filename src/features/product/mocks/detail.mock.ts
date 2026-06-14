@@ -11,7 +11,6 @@ export const MOCK_DELIVERY_INFO = {
 
 export const PRODUCT_RETURN_POLICY_DAYS = 15;
 
-/** Shown below the Plus strip on PDP (reference offer footnote). */
 export const PRODUCT_DETAIL_OFFER_FOOTNOTE =
   "*Get 26% OFF on orders above Rs.1500. T&C apply.";
 
@@ -25,7 +24,6 @@ export const PRODUCT_DETAIL_PROMO_SLIDES: readonly ProductDetailPromoSlide[] = [
   { id: "diag-promo", type: "image", source: homePromoBannerAssets.diagBogo },
 ];
 
-/** Lifestyle background for pain-support PDP promo (reference banner). */
 export const PAIN_SUPPORT_BANNER_IMAGE_URI =
   "https://images.pexels.com/photos/4386466/pexels-photo-4386466.jpeg";
 
@@ -40,7 +38,6 @@ export type ProductDetailCarouselSectionConfig = {
   productIds: readonly string[];
 };
 
-/** Coupon ids from `SAVINGS_COUPONS` shown in PDP “Offers just for you”. */
 export const PRODUCT_DETAIL_OFFER_COUPON_IDS: readonly string[] = ["1", "2"];
 
 export type ProductDetailShareChannelId = "whatsapp" | "facebook" | "twitter";

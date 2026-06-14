@@ -15,7 +15,6 @@ import { HEADER_HAIRLINE_WIDTH, homeHeaderStyles } from './appHeader.styles';
 import type { HomeHeaderProps } from './appHeader.types';
 import { formatCartBadgeCount } from './header.utils';
 
-// Scroll-linked home chrome; other tabs use AppHeader (no shared scroll state).
 export function HomeHeader({
   scrollY,
   insets,
