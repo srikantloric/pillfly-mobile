@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { SearchStackParamList } from '../../types/navigation.types';
-import { SearchHomeScreen, SearchResultsScreen } from '../../screens/search';
+import { SearchHomeScreen, SearchResultsScreen } from '@/features/search';
 
 const Stack = createNativeStackNavigator<SearchStackParamList>();
 

@@ -5,7 +5,7 @@ import { MainTabNavigator } from './MainTabNavigator';
 import { ProfileStackNavigator } from './stacks/ProfileStackNavigator';
 import { SearchStackNavigator } from './stacks/SearchStackNavigator';
 import { CartStackNavigator } from './stacks/CartStackNavigator';
-import { ProductDetailScreen } from '../screens/product';
+import { ProductDetailScreen } from '@/features/product';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
 
@@ -16,7 +16,11 @@ export function AppStackNavigator() {
       <Stack.Screen name="Profile" component={ProfileStackNavigator} />
       <Stack.Screen name="Search" component={SearchStackNavigator} />
       <Stack.Screen name="Cart" component={CartStackNavigator} />
-      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+        options={{ animation: "fade", animationDuration: 250 }}
+      />
     </Stack.Navigator>
   );
 }
