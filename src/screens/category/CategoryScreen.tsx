@@ -3,8 +3,10 @@ import { ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { CategoriesHeader } from '../../components/header';
 import { CategoryShopGrid, categoryGridTileWidth } from '../../components/category';
+import { useCartSummary } from '@/hooks/useCartSummary';
 import { CATEGORIES } from '../../mocks/categories.mock';
 
 import { categoryScreenStyles } from './categoryScreen.styles';
@@ -13,6 +15,7 @@ export function CategoryScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
+  const { lineCount } = useCartSummary();
   const tileW = categoryGridTileWidth(windowWidth);
 
   const scrollContentStyle = useMemo(
@@ -22,7 +25,7 @@ export function CategoryScreen() {
 
   return (
     <View className="flex-1 bg-pillfly-background">
-      <CategoriesHeader navigation={navigation} />
+      <CategoriesHeader navigation={navigation} cartBadgeCount={lineCount} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={scrollContentStyle}
