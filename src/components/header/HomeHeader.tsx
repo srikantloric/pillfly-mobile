@@ -13,6 +13,7 @@ import { colors } from '../../theme';
 import { HEADER_HIT_SLOP, HOME_HEADER_SCROLL } from './appHeader.constants';
 import { HEADER_HAIRLINE_WIDTH, homeHeaderStyles } from './appHeader.styles';
 import type { HomeHeaderProps } from './appHeader.types';
+import { formatCartBadgeCount } from './header.utils';
 
 // Scroll-linked home chrome; other tabs use AppHeader (no shared scroll state).
 export function HomeHeader({
@@ -97,13 +98,22 @@ export function HomeHeader({
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Cart"
+            accessibilityLabel={
+              cartBadgeCount > 0 ? `Cart, ${cartBadgeCount} items` : 'Cart'
+            }
             hitSlop={HEADER_HIT_SLOP}
             onPress={() => go('Cart')}
             className="relative h-11 w-11 shrink-0 items-center justify-center active:opacity-85"
             style={homeHeaderStyles.iconButtonOnTeal}
           >
             <Feather name="shopping-cart" size={22} color="#FFFFFF" />
+            {cartBadgeCount > 0 ? (
+              <View className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-pillfly-promo-red px-1 py-0.5">
+                <Text className="text-center text-[10px] font-bold text-white">
+                  {formatCartBadgeCount(cartBadgeCount)}
+                </Text>
+              </View>
+            ) : null}
           </Pressable>
         </Animated.View>
 
@@ -162,7 +172,7 @@ export function HomeHeader({
               {cartBadgeCount > 0 ? (
                 <View className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-emerald-600 px-1 py-0.5">
                   <Text className="text-center text-[10px] font-bold text-white">
-                    {cartBadgeCount > 99 ? '99+' : String(cartBadgeCount)}
+                    {formatCartBadgeCount(cartBadgeCount)}
                   </Text>
                 </View>
               ) : null}
