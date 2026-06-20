@@ -3,7 +3,6 @@ import { Pressable, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-/** Scroll content padding below the bar (excludes safe-area inset). Matches SearchResults. */
 export const CART_STICKY_BAR_SCROLL_PADDING = 88;
 
 type Props = {

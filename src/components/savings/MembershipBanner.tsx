@@ -11,7 +11,6 @@ import {
 
 import { savingsCardShadow, SAVINGS_CONTENT_PADDING } from './savings.styles';
 
-/** Savings-only banner assets — change paths here without affecting Home. */
 export const membershipBannerAssets = {
   primary: require('../../assets/banner/7ac30788ac6-HPMKTGPYMED27.jpg'),
 } as const;

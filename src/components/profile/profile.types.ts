@@ -14,7 +14,6 @@ export type ProfileMenuBadge =
   | { kind: 'pill'; label: string; tone: ProfileMenuPillTone }
   | { kind: 'count'; value: number };
 
-/** Keys for menu badges whose values come from user/session state (API, store, mocks). */
 export type ProfileMenuBadgeSource = 'notifications';
 
 export type ProfileMenuBadgeConfig =

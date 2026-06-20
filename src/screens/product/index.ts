@@ -1,1 +1,0 @@
-export { ProductDetailScreen } from "./ProductDetailScreen";

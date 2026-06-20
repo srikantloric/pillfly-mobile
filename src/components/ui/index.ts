@@ -1,3 +1,4 @@
+export { BouncingDotsLoader } from "./BouncingDotsLoader";
 export { Accordion } from "./Accordion";
 export { BulletList } from "./BulletList";
 export { CarouselDots } from "./CarouselDots";

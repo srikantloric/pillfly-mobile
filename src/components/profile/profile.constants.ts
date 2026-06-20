@@ -1,6 +1,5 @@
 import type { ProfileMenuEntryConfig } from './profile.types';
 
-/** Shown in the profile footer; replace with native/build metadata when wired. */
 export const PROFILE_APP_VERSION = '1.0.0';
 
 export const PROFILE_MENU_ENTRIES: ProfileMenuEntryConfig[] = [

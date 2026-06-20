@@ -6,7 +6,6 @@ import { AppStackNavigator } from './AppStackNavigator';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Use Authentication here if you want the sign-in stack first.
 const INITIAL_ROUTE: keyof RootStackParamList = 'Authentication';
 
 export function RootNavigator() {

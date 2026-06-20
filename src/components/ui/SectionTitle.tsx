@@ -3,9 +3,7 @@ import { Text, View } from "react-native";
 
 type Props = {
   title: string;
-  /** Teal underline accent width (Home screen style). */
   underlineWidth?: number;
-  /** Search-style bold title without underline. */
   variant?: "accent" | "plain";
   className?: string;
 };
