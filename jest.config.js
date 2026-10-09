@@ -7,6 +7,6 @@ module.exports = {
   },
   // Transpile packages that ship untranspiled modern JS
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|react-native-screens|react-native-safe-area-context|nativewind|react-native-css-interop)/)',
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|react-native-screens|react-native-safe-area-context|react-native-keychain|nativewind|react-native-css-interop)/)',
   ],
 };

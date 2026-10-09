@@ -4,6 +4,35 @@ jest.mock('react-native-bootsplash', () => ({
   useHideAnimation: jest.fn(),
 }));
 
+jest.mock('react-native-linear-gradient', () => 'LinearGradient');
+
+
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    removeItem: jest.fn(() => Promise.resolve()),
+    mergeItem: jest.fn(() => Promise.resolve()),
+    clear: jest.fn(() => Promise.resolve()),
+    getAllKeys: jest.fn(() => Promise.resolve([])),
+    multiGet: jest.fn(() => Promise.resolve([])),
+    multiSet: jest.fn(() => Promise.resolve()),
+    multiRemove: jest.fn(() => Promise.resolve()),
+    multiMerge: jest.fn(() => Promise.resolve()),
+  },
+}));
+
+
+jest.mock('@react-native-clipboard/clipboard', () => ({
+  __esModule: true,
+  default: {
+    getString: jest.fn(() => Promise.resolve('')),
+    setString: jest.fn(),
+    hasString: jest.fn(() => Promise.resolve(false)),
+  },
+}));
+
 jest.mock('react-native-screens', () => ({
   enableScreens: jest.fn(),
 }));
