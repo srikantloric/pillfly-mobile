@@ -1,12 +1,12 @@
-import axios from 'axios';
-import {API_CONFIG} from '@/config/api.config';
+import axios from "axios";
 
+import { API_CONFIG } from "@/config/api.config";
 
-
-export const authClient = axios.create({ 
-  baseURL:API_CONFIG.BASE_URL + API_CONFIG.AUTH_BASE_PATH,
+export const authClient = axios.create({
+  baseURL: `${API_CONFIG.BASE_URL}${API_CONFIG.AUTH_BASE_PATH}`,
   timeout: API_CONFIG.TIMEOUT,
+  withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
