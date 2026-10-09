@@ -37,3 +37,6 @@ export {
   persistSessionTokens,
   setMemoryTokens,
 } from "./api/authSession";
+
+export { useAuthStore } from "./store/auth.store";
+export { useAuth } from "./hooks/useAuth";
