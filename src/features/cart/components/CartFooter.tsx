@@ -12,6 +12,7 @@ type Props = {
   onPressPrimary: () => void;
 };
 
+
 export function CartFooter({
   totalAmount,
   hasDeliveryAddress,
@@ -21,6 +22,8 @@ export function CartFooter({
   const insets = useSafeAreaInsets();
   const primaryLabel = hasDeliveryAddress ? "Proceed To Buy" : "Add Delivery Address";
 
+  console.log('hasDeliveryAddress', hasDeliveryAddress);
+  
   return (
     <View
       className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between border-t border-pillfly-line bg-pillfly-surface px-4 py-3"

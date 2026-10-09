@@ -32,16 +32,11 @@ export function MainTabNavigator() {
       }}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Home', tabBarIcon: TabHomeIcon }} />
-      <Tab.Screen
-        name="Categories"
-        component={CategoryScreen}
-        options={{ tabBarLabel: 'Categories', tabBarIcon: TabCategoriesIcon }}
+
+      <Tab.Screen name="Categories"component={CategoryScreen} options={{ tabBarLabel: 'Categories', tabBarIcon: TabCategoriesIcon }}
       />
       <Tab.Screen name="Offer" component={OfferScreen} options={{ tabBarLabel: 'Offers', tabBarIcon: TabOffersIcon }} />
-      <Tab.Screen
-        name="Savings"
-        component={SavingsScreen}
-        options={{ tabBarLabel: 'Savings', tabBarIcon: TabSavingsIcon }}
+      <Tab.Screen name="Savings" component={SavingsScreen} options={{ tabBarLabel: 'Savings', tabBarIcon: TabSavingsIcon }}
       />
     </Tab.Navigator>
   );
