@@ -20,17 +20,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Line, Path } from 'react-native-svg';
-import { Feather } from '@react-native-vector-icons/feather';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CommonActions } from '@react-navigation/native';
 import type { AuthStackParamList, RootStackParamList } from '../../types/navigation.types';
+import { useAuth } from '@/hooks/useAuth';
 import {
   authColors,
   authRadii,
   authSpacing,
   authTypography,
 } from '../../theme/authTheme';
+import { AuthGradientButton } from './AuthGradientButton';
+import { OtpBottomSheet } from './OtpBottomSheet';
 
 const LOGO_SOURCE = require('../../assets/splash/logo.png') as ImageSourcePropType;
 const DOCTOR_SOURCE = require('../../assets/icons/icon_doctor.webp') as ImageSourcePropType;
@@ -228,60 +231,6 @@ function PhoneInput({ value, onChangeText, containerStyle }: PhoneInputProps) {
   );
 }
 
-type GradientButtonProps = {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-};
-
-function GradientButton({ label, onPress, disabled }: GradientButtonProps) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      className="mx-6 overflow-hidden"
-      style={({ pressed }) => [
-        {
-          borderRadius: authRadii.button,
-          opacity: disabled ? 0.6 : 1,
-          transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
-        },
-        {
-          shadowColor: authColors.primaryGreen,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.28,
-          shadowRadius: 10,
-          elevation: 6,
-        },
-      ]}
-    >
-      <LinearGradient
-        colors={[authColors.gradientStart, authColors.gradientEnd]}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={{
-          height: authSpacing.buttonHeight,
-          borderRadius: authRadii.button,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: authSpacing.screenHorizontal,
-        }}
-      >
-        <Text
-          className="flex-1 text-center font-bold text-white"
-          style={{ fontSize: authTypography.button }}
-        >
-          {label}
-        </Text>
-        <Feather name="arrow-right" size={22} color={authColors.white} />
-      </LinearGradient>
-    </Pressable>
-  );
-}
-
 function TrustedBadge() {
   return (
     <View
@@ -361,19 +310,48 @@ function LoginScreen({ navigation }: LoginScreenProps) {
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [otpSheetVisible, setOtpSheetVisible] = useState(false);
+  const { sendOtp, isSubmitting, authError, clearAuthError, otpChallenge } = useAuth();
 
   const keyboardProgress = useRef(new Animated.Value(0)).current;
   const formTranslateY = useRef(new Animated.Value(0)).current;
 
+  const handlePhoneChange = useCallback(
+    (value: string) => {
+      setPhone(value.replace(/\D/g, '').slice(0, 10));
+      if (authError) {
+        clearAuthError();
+      }
+    },
+    [authError, clearAuthError],
+  );
+
   const enterApp = useCallback(() => {
     navigation
       .getParent<NativeStackNavigationProp<RootStackParamList>>()
-      ?.navigate('Application');
+      ?.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Application' }],
+        }),
+      );
   }, [navigation]);
 
-  const handleContinue = useCallback(() => {
-    enterApp();
-  }, [enterApp]);
+  const handleContinue = useCallback(async () => {
+    Keyboard.dismiss();
+    if (isSubmitting) {
+      return;
+    }
+
+    try {
+      if (otpChallenge?.mobile !== phone) {
+        await sendOtp(phone);
+      }
+      setOtpSheetVisible(true);
+    } catch {
+      // authError is shown from the store
+    }
+  }, [isSubmitting, otpChallenge?.mobile, phone, sendOtp]);
 
   const animateKeyboard = useCallback(
     (visible: boolean, keyboardHeight = 0, duration = KEYBOARD_ANIM_DURATION) => {
@@ -483,22 +461,6 @@ function LoginScreen({ navigation }: LoginScreenProps) {
           containerStyle={{ opacity: decorOpacity }}
         />
 
-        <Pressable
-          onPress={enterApp}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Skip"
-          className="absolute right-0 z-30 px-6"
-          style={{ top: authSpacing.screenTop }}
-        >
-          <Text
-            className="font-bold text-pillfly-auth-primary"
-            style={{ fontSize: authTypography.skip }}
-          >
-            Skip
-          </Text>
-        </Pressable>
-
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ flexGrow: 1, paddingBottom: height * 0.38 }}
@@ -592,15 +554,33 @@ function LoginScreen({ navigation }: LoginScreenProps) {
           >
             <DividerTitle title="Login to PillFly" />
 
-            <PhoneInput value={phone} onChangeText={setPhone} />
+            <PhoneInput value={phone} onChangeText={handlePhoneChange} />
+
+            {authError && !otpSheetVisible ? (
+              <Text className="mx-6 mt-3 text-[13px] text-pillfly-promo-red">{authError}</Text>
+            ) : null}
 
             <View style={{ marginTop: authSpacing.sectionVertical }}>
-              <GradientButton label="Continue" onPress={handleContinue} />
+              <AuthGradientButton
+                label="Continue"
+                onPress={() => {
+                  handleContinue().catch(() => undefined);
+                }}
+                disabled={phone.length < 10}
+                busy={isSubmitting}
+              />
             </View>
 
             <LoginFooter containerStyle={{ opacity: footerOpacity }} />
           </Animated.View>
         </Animated.View>
+
+        <OtpBottomSheet
+          visible={otpSheetVisible}
+          mobile={otpChallenge?.mobile ?? phone}
+          onClose={() => setOtpSheetVisible(false)}
+          onVerified={enterApp}
+        />
       </View>
     </SafeAreaView>
   );
