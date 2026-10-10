@@ -153,4 +153,26 @@ describe("auth interceptors", () => {
     await client.post(AUTH_PATHS.sendOtp, { mobile: "9876543210" });
     expect(authorization).toBeUndefined();
   });
+
+  it("does not refresh public OTP 401s even when the path includes the auth prefix", async () => {
+    const urls: string[] = [];
+    const client = createTestClient(async (config) => {
+      urls.push(String(config.url));
+      return {
+        status: 401,
+        data: { success: false, message: "Invalid or expired OTP" },
+      };
+    });
+
+    await expect(
+      client.post(`/api/v1/auth${AUTH_PATHS.verifyOtp}`, {
+        mobile: "9876543210",
+        otp: "000000",
+        session: "s",
+      }),
+    ).rejects.toMatchObject({
+      response: { data: { message: "Invalid or expired OTP" } },
+    });
+    expect(urls.some((url) => url.includes(AUTH_PATHS.refresh))).toBe(false);
+  });
 });

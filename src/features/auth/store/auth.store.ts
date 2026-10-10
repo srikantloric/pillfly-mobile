@@ -9,6 +9,8 @@ import {
 } from "../api/auth.api";
 import {
   clearSessionTokens,
+  getAccessToken,
+  getIdToken,
   setMemoryTokens,
   subscribeAuthTokens,
 } from "../api/authSession";
@@ -117,10 +119,12 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
 
         const { user } = await getCurrentCustomer();
         const activeUser = requireActiveCustomer(user);
+        const accessToken = getAccessToken() ?? stored.accessToken;
+        const idToken = getIdToken() ?? stored.idToken;
 
         set({
-          accessToken: stored.accessToken,
-          idToken: stored.idToken,
+          accessToken,
+          idToken,
           user: activeUser,
           isAuthenticated: true,
           isLoading: false,

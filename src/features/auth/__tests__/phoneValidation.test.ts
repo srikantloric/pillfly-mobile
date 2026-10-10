@@ -9,6 +9,7 @@ describe("normalizeIndianMobile", () => {
   it("accepts +91 and 91 prefixes with spaces", () => {
     expect(normalizeIndianMobile("+91 98765 43210")).toEqual({ ok: true, mobile: "9876543210" });
     expect(normalizeIndianMobile("919876543210")).toEqual({ ok: true, mobile: "9876543210" });
+    expect(normalizeIndianMobile("98765-43210")).toEqual({ ok: true, mobile: "9876543210" });
   });
 
   it("rejects numbers that do not start with 6-9", () => {
