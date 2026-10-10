@@ -13,6 +13,7 @@ import {
   CartHeader,
   CartItemRow,
 } from "../components";
+
 import { useCartActions } from "../hooks/useCartActions";
 import { useCartStore } from "../store/cart.store";
 import { buildCartBill, resolveCartLines } from "../utils/cartPricing";
@@ -27,6 +28,8 @@ export function CartScreen({ navigation }: Props) {
 
   const items = useCartStore((state) => state.items);
   const deliveryAddress = useCartStore((state) => state.deliveryAddress);
+  console.log('deliveryAddress', deliveryAddress);
+
   const { removeFromCart } = useCartActions();
 
   const resolvedLines = useMemo(() => resolveCartLines(items), [items]);
@@ -61,7 +64,6 @@ export function CartScreen({ navigation }: Props) {
       Alert.alert("Coming soon", "Delivery address selection will be available soon.");
       return;
     }
-
     navigation.navigate("Checkout");
   }, [deliveryAddress, navigation]);
 

@@ -16,10 +16,7 @@ export function AppStackNavigator() {
       <Stack.Screen name="Profile" component={ProfileStackNavigator} />
       <Stack.Screen name="Search" component={SearchStackNavigator} />
       <Stack.Screen name="Cart" component={CartStackNavigator} />
-      <Stack.Screen
-        name="ProductDetail"
-        component={ProductDetailScreen}
-        options={{ animation: "fade", animationDuration: 250 }}
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ animation: "fade", animationDuration: 250 }}
       />
     </Stack.Navigator>
   );
