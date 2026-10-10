@@ -21,13 +21,31 @@ import {
   profileColors,
 } from '../../components/profile';
 import { useSharedHeaderNavigation } from '../../components/header';
+import { useAuth } from '@/hooks/useAuth';
+import { useCartSummary } from '@/hooks/useCartSummary';
 import { MOCK_PROFILE_USER } from '../../mocks/profile.mock';
+import { normalizeIndianMobile } from '@/features/auth';
+
+function formatProfilePhone(phoneNumber: string | undefined): string {
+  if (!phoneNumber) {
+    return MOCK_PROFILE_USER.phone;
+  }
+
+  const normalized = normalizeIndianMobile(phoneNumber);
+  if (!normalized.ok) {
+    return phoneNumber;
+  }
+
+  return `+91 ${normalized.mobile.slice(0, 5)} ${normalized.mobile.slice(5)}`;
+}
 
 export function ProfileScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { onPressSearch, onPressCart } = useSharedHeaderNavigation(navigation);
+  const { user, signOut, isSubmitting } = useAuth();
+  const { lineCount } = useCartSummary();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -52,11 +70,21 @@ export function ProfileScreen() {
   }, []);
 
   const onPressLogout = useCallback(() => {
+    if (isSubmitting) {
+      return;
+    }
+
     Alert.alert('Log out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: () => {
+          void signOut();
+        },
+      },
     ]);
-  }, []);
+  }, [isSubmitting, signOut]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: profileColors.screenBg }}>
@@ -67,7 +95,7 @@ export function ProfileScreen() {
       />
 
       <ProfileHeader
-        cartBadgeCount={MOCK_PROFILE_USER.cartCount}
+        cartBadgeCount={lineCount}
         onPressBack={onPressBack}
         onPressSearch={onPressSearch}
         onPressCart={onPressCart}
@@ -84,7 +112,7 @@ export function ProfileScreen() {
       >
         <Animated.View style={{ opacity: fadeAnim }}>
           <UserInfoCard
-            phone={MOCK_PROFILE_USER.phone}
+            phone={formatProfilePhone(user?.phoneNumber)}
             totalSavings={MOCK_PROFILE_USER.totalSavings}
             onPressEdit={onPressEdit}
           />

@@ -21,7 +21,7 @@ jest.mock("../api/auth.api", () => ({
   logoutCustomer: (...args: unknown[]) => mockLogoutCustomer(...args),
 }));
 
-import { clearMemoryTokens, getAccessToken } from "../api/authSession";
+import { clearMemoryTokens, getAccessToken, persistSessionTokens } from "../api/authSession";
 import { resetAuthStoreForTests, useAuthStore } from "../store/auth.store";
 import { AuthRequestError } from "../utils/authRequestError";
 
@@ -60,6 +60,20 @@ describe("auth store", () => {
     expect(state.isLoading).toBe(false);
     expect(state.hasHydrated).toBe(true);
     expect(mockGetCurrentCustomer).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps refreshed tokens after restore profile succeeds", async () => {
+    mockLoadAuthTokens.mockResolvedValue({ accessToken: "old-access", idToken: "old-id" });
+    mockGetCurrentCustomer.mockImplementation(async () => {
+      await persistSessionTokens({ accessToken: "new-access", idToken: "new-id" });
+      return { success: true, user: activeUser };
+    });
+
+    await useAuthStore.getState().restoreSession();
+
+    expect(useAuthStore.getState().accessToken).toBe("new-access");
+    expect(useAuthStore.getState().idToken).toBe("new-id");
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
   });
 
   it("skips login restore when no tokens are stored", async () => {

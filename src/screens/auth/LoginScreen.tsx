@@ -22,9 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Line, Path } from 'react-native-svg';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CommonActions } from '@react-navigation/native';
-import type { AuthStackParamList, RootStackParamList } from '../../types/navigation.types';
+import type { AuthStackParamList } from '../../types/navigation.types';
 import { useAuth } from '@/hooks/useAuth';
 import {
   authColors,
@@ -305,7 +303,7 @@ function LoginFooter({ containerStyle }: LoginFooterProps) {
   );
 }
 
-function LoginScreen({ navigation }: LoginScreenProps) {
+function LoginScreen(_props: LoginScreenProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
@@ -326,17 +324,6 @@ function LoginScreen({ navigation }: LoginScreenProps) {
     [authError, clearAuthError],
   );
 
-  const enterApp = useCallback(() => {
-    navigation
-      .getParent<NativeStackNavigationProp<RootStackParamList>>()
-      ?.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Application' }],
-        }),
-      );
-  }, [navigation]);
-
   const handleContinue = useCallback(async () => {
     Keyboard.dismiss();
     if (isSubmitting) {
@@ -344,14 +331,12 @@ function LoginScreen({ navigation }: LoginScreenProps) {
     }
 
     try {
-      if (otpChallenge?.mobile !== phone) {
-        await sendOtp(phone);
-      }
+      await sendOtp(phone);
       setOtpSheetVisible(true);
     } catch {
       // authError is shown from the store
     }
-  }, [isSubmitting, otpChallenge?.mobile, phone, sendOtp]);
+  }, [isSubmitting, phone, sendOtp]);
 
   const animateKeyboard = useCallback(
     (visible: boolean, keyboardHeight = 0, duration = KEYBOARD_ANIM_DURATION) => {
@@ -579,7 +564,7 @@ function LoginScreen({ navigation }: LoginScreenProps) {
           visible={otpSheetVisible}
           mobile={otpChallenge?.mobile ?? phone}
           onClose={() => setOtpSheetVisible(false)}
-          onVerified={enterApp}
+          onVerified={() => setOtpSheetVisible(false)}
         />
       </View>
     </SafeAreaView>

@@ -28,7 +28,7 @@ export function getRequestPath(url: string | undefined, baseURL: string | undefi
 }
 
 export function isPublicAuthPath(path: string): boolean {
-  return PUBLIC_PATHS.has(path);
+  return Array.from(PUBLIC_PATHS).some((publicPath) => path.endsWith(publicPath));
 }
 
 export function isRefreshAuthPath(path: string): boolean {
