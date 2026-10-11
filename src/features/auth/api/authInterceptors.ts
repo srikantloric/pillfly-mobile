@@ -1,6 +1,8 @@
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 
+import { authClient } from "@/services/api/auth.client";
+
 import { parseTokenResponse } from "./auth.parsers";
 import { AUTH_PATHS, getRequestPath, isPublicAuthPath, isRefreshAuthPath } from "./auth.paths";
 import { clearSessionTokens, getAccessToken, persistSessionTokens } from "./authSession";
@@ -16,14 +18,14 @@ function requestPath(config: InternalAxiosRequestConfig): string {
   return getRequestPath(config.url, config.baseURL);
 }
 
-async function refreshAccessToken(client: AxiosInstance): Promise<void> {
+async function refreshAccessToken(): Promise<void> {
   if (refreshInFlight) {
     await refreshInFlight;
     return;
   }
 
   refreshInFlight = (async () => {
-    const response = await client.post<unknown>(AUTH_PATHS.refresh);
+    const response = await authClient.post<unknown>(AUTH_PATHS.refresh);
     const tokens = parseTokenResponse(response.data);
     await persistSessionTokens({
       accessToken: tokens.accessToken,
@@ -76,7 +78,7 @@ export function attachAuthInterceptors(client: AxiosInstance): void {
       }
 
       try {
-        await refreshAccessToken(client);
+        await refreshAccessToken();
       } catch (refreshError) {
         await clearSessionTokens();
         return Promise.reject(refreshError);

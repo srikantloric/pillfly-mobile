@@ -1,8 +1,12 @@
 import axios, { AxiosError, type AxiosAdapter, type InternalAxiosRequestConfig } from "axios";
 
-import { attachAuthInterceptors, resetAuthRefreshLock } from "../api/authInterceptors";
-import { AUTH_PATHS } from "../api/auth.paths";
-import { clearMemoryTokens, getAccessToken, setMemoryTokens } from "../api/authSession";
+const mockAuthPost = jest.fn();
+
+jest.mock("@/services/api/auth.client", () => ({
+  authClient: {
+    post: (...args: unknown[]) => mockAuthPost(...args),
+  },
+}));
 
 jest.mock("../storage/tokenStorage", () => ({
   saveAuthTokens: jest.fn().mockResolvedValue(undefined),
@@ -10,11 +14,18 @@ jest.mock("../storage/tokenStorage", () => ({
   loadAuthTokens: jest.fn(),
 }));
 
+import { attachAuthInterceptors, resetAuthRefreshLock } from "../api/authInterceptors";
+import { AUTH_PATHS } from "../api/auth.paths";
+import { clearMemoryTokens, getAccessToken, setMemoryTokens } from "../api/authSession";
+
 type HandlerResult = { status: number; data: unknown };
 
-function createTestClient(handler: (config: InternalAxiosRequestConfig) => Promise<HandlerResult>) {
+function createTestClient(
+  handler: (config: InternalAxiosRequestConfig) => Promise<HandlerResult>,
+  baseURL = "https://example.test/api/v1/auth",
+) {
   const client = axios.create({
-    baseURL: "https://example.test/api/v1/auth",
+    baseURL,
     withCredentials: true,
   });
 
@@ -46,11 +57,35 @@ function createTestClient(handler: (config: InternalAxiosRequestConfig) => Promi
   return client;
 }
 
+function mockSuccessfulRefresh() {
+  mockAuthPost.mockResolvedValue({
+    data: {
+      success: true,
+      accessToken: "new-access",
+      idToken: "new-id",
+    },
+  });
+}
+
+function mockFailedRefresh() {
+  const config = { url: AUTH_PATHS.refresh } as InternalAxiosRequestConfig;
+  mockAuthPost.mockRejectedValue(
+    new AxiosError("Request failed", AxiosError.ERR_BAD_REQUEST, config, undefined, {
+      data: { success: false, message: "Refresh token not found" },
+      status: 401,
+      statusText: "Error",
+      headers: {},
+      config,
+    }),
+  );
+}
+
 describe("auth interceptors", () => {
   beforeEach(() => {
     resetAuthRefreshLock();
     clearMemoryTokens();
     setMemoryTokens({ accessToken: "old-access", idToken: "old-id" });
+    mockAuthPost.mockReset();
   });
 
   it("does not refresh when verify-otp returns 401", async () => {
@@ -63,28 +98,19 @@ describe("auth interceptors", () => {
       };
     });
 
-    await expect(client.post(AUTH_PATHS.verifyOtp, { mobile: "9876543210", otp: "000000", session: "s" })).rejects.toMatchObject({
+    await expect(
+      client.post(AUTH_PATHS.verifyOtp, { mobile: "9876543210", otp: "000000", session: "s" }),
+    ).rejects.toMatchObject({
       response: { data: { message: "Invalid or expired OTP" } },
     });
     expect(urls).toEqual([AUTH_PATHS.verifyOtp]);
+    expect(mockAuthPost).not.toHaveBeenCalled();
   });
 
-  it("shares one refresh across concurrent 401s and retries once", async () => {
-    let refreshCount = 0;
+  it("refreshes through authClient and shares one refresh across concurrent 401s", async () => {
+    mockSuccessfulRefresh();
     let meCount = 0;
     const client = createTestClient(async (config) => {
-      if (config.url === AUTH_PATHS.refresh) {
-        refreshCount += 1;
-        return {
-          status: 200,
-          data: {
-            success: true,
-            accessToken: "new-access",
-            idToken: "new-id",
-          },
-        };
-      }
-
       meCount += 1;
       if (config.headers.Authorization === "Bearer new-access") {
         return { status: 200, data: { success: true, user: { id: "CUS_1" } } };
@@ -95,21 +121,16 @@ describe("auth interceptors", () => {
 
     await Promise.all([client.get(AUTH_PATHS.me), client.get(AUTH_PATHS.me)]);
 
-    expect(refreshCount).toBe(1);
+    expect(mockAuthPost).toHaveBeenCalledTimes(1);
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
     expect(meCount).toBe(4);
     expect(getAccessToken()).toBe("new-access");
   });
 
   it("retries a protected request at most once", async () => {
+    mockSuccessfulRefresh();
     let meCount = 0;
-    const client = createTestClient(async (config) => {
-      if (config.url === AUTH_PATHS.refresh) {
-        return {
-          status: 200,
-          data: { success: true, accessToken: "new-access", idToken: "new-id" },
-        };
-      }
-
+    const client = createTestClient(async () => {
       meCount += 1;
       return { status: 401, data: { success: false, message: "Unauthorized" } };
     });
@@ -118,14 +139,12 @@ describe("auth interceptors", () => {
       response: { status: 401 },
     });
     expect(meCount).toBe(2);
+    expect(mockAuthPost).toHaveBeenCalledTimes(1);
   });
 
   it("clears tokens when refresh fails", async () => {
-    const client = createTestClient(async (config) => {
-      if (config.url === AUTH_PATHS.refresh) {
-        return { status: 401, data: { success: false, message: "Refresh token not found" } };
-      }
-
+    mockFailedRefresh();
+    const client = createTestClient(async () => {
       return { status: 401, data: { success: false, message: "Unauthorized" } };
     });
 
@@ -133,6 +152,7 @@ describe("auth interceptors", () => {
       response: { data: { message: "Refresh token not found" } },
     });
     expect(getAccessToken()).toBeNull();
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
   });
 
   it("does not attach an access token to public OTP requests", async () => {
@@ -155,9 +175,7 @@ describe("auth interceptors", () => {
   });
 
   it("does not refresh public OTP 401s even when the path includes the auth prefix", async () => {
-    const urls: string[] = [];
-    const client = createTestClient(async (config) => {
-      urls.push(String(config.url));
+    const client = createTestClient(async () => {
       return {
         status: 401,
         data: { success: false, message: "Invalid or expired OTP" },
@@ -173,6 +191,24 @@ describe("auth interceptors", () => {
     ).rejects.toMatchObject({
       response: { data: { message: "Invalid or expired OTP" } },
     });
-    expect(urls.some((url) => url.includes(AUTH_PATHS.refresh))).toBe(false);
+    expect(mockAuthPost).not.toHaveBeenCalled();
+  });
+
+  it("refreshes via authClient when a /api/v1 client receives 401", async () => {
+    mockSuccessfulRefresh();
+    let catalogCount = 0;
+    const client = createTestClient(async (config) => {
+      catalogCount += 1;
+      if (config.headers.Authorization === "Bearer new-access") {
+        return { status: 200, data: { items: [] } };
+      }
+      return { status: 401, data: { success: false, message: "Unauthorized" } };
+    }, "https://example.test/api/v1");
+
+    await client.get("/products");
+
+    expect(mockAuthPost).toHaveBeenCalledTimes(1);
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
+    expect(catalogCount).toBe(2);
   });
 });
