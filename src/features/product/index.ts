@@ -1,4 +1,8 @@
-export { productService, type StoreProductPage } from "./services/product.service";
+export {
+  productService,
+  type StoreProductPage,
+  type StoreSearchPage,
+} from "./services/product.service";
 
 export {
   getStoreProduct,
@@ -121,6 +125,7 @@ export * from "./constants/productDetail.constants";
 export { useMedicalSectionScroll } from "./hooks/useMedicalSectionScroll";
 export { useProductDetail } from "./hooks/useProductDetail";
 export { useProducts } from "./hooks/useProducts";
+export { useProductSearch } from "./hooks/useProductSearch";
 
 export * from "./components";
 

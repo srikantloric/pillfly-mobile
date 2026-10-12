@@ -1,9 +1,11 @@
 const mockGetStoreProduct = jest.fn();
 const mockListStoreProducts = jest.fn();
+const mockSearchStoreProducts = jest.fn();
 
 jest.mock("../api/product.api", () => ({
   getStoreProduct: (...args: unknown[]) => mockGetStoreProduct(...args),
   listStoreProducts: (...args: unknown[]) => mockListStoreProducts(...args),
+  searchStoreProducts: (...args: unknown[]) => mockSearchStoreProducts(...args),
 }));
 
 import { ProductRequestError } from "../utils/productRequestError";
@@ -62,6 +64,7 @@ describe("product.service", () => {
     resetProductCache();
     mockGetStoreProduct.mockReset();
     mockListStoreProducts.mockReset();
+    mockSearchStoreProducts.mockReset();
   });
 
   it("loads detail from the store API and caches it for sync lookup", async () => {
@@ -150,5 +153,67 @@ describe("product.service", () => {
 
   it("leaves category filtering unimplemented until the backend contract exists", () => {
     expect(productService.getProductsByCategory("health-concerns")).toEqual([]);
+  });
+
+  it("searches store products with page metadata", async () => {
+    mockSearchStoreProducts.mockResolvedValue({
+      items: [
+        {
+          objectID: "prod_123",
+          productId: "prod_123",
+          title: "Paracetamol 500 mg",
+          slug: "paracetamol-500-mg",
+          productType: "MEDICINE",
+          brandId: "brand_123",
+          brandName: "Example Pharma",
+          manufacturerId: "mfr_123",
+          manufacturerName: "Example Laboratories",
+          sku: ["PCM-500-10"],
+          status: "ACTIVE",
+        },
+        {
+          objectID: "prod_123",
+          productId: "prod_123",
+          title: "Paracetamol 500 mg",
+          slug: "paracetamol-500-mg",
+          productType: "MEDICINE",
+          brandId: "brand_123",
+          brandName: "Example Pharma",
+          manufacturerId: "mfr_123",
+          manufacturerName: "Example Laboratories",
+          sku: ["PCM-500-10"],
+          status: "ACTIVE",
+        },
+      ],
+      page: 0,
+      hitsPerPage: 10,
+      nbHits: 1,
+      nbPages: 1,
+    });
+
+    const page = await productService.searchStorePage({ q: "paracetamol", limit: 10, page: 0 });
+
+    expect(mockSearchStoreProducts).toHaveBeenCalledWith({
+      q: "paracetamol",
+      limit: 10,
+      page: 0,
+    });
+    expect(page.items).toHaveLength(1);
+    expect(page.nbPages).toBe(1);
+  });
+
+  it("returns empty search hits without inventing products", async () => {
+    mockSearchStoreProducts.mockResolvedValue({
+      items: [],
+      page: 0,
+      hitsPerPage: 0,
+      nbHits: 0,
+      nbPages: 0,
+    });
+
+    const page = await productService.searchStorePage({ q: "unknown" });
+
+    expect(page.items).toEqual([]);
+    expect(page.nbPages).toBe(0);
   });
 });

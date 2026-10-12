@@ -25,12 +25,11 @@ import {
 import type { SearchStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 
+import { useProductSearch } from "@/features/product/hooks/useProductSearch";
+import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
 import {
-  getKeywordSuggestions,
   getPreviouslyBoughtProducts,
   getProductImageUrl,
-  getProductPackLabel,
-  getProductSuggestions,
 } from "@/features/search/utils/search.utils";
 
 type Props = NativeStackScreenProps<SearchStackParamList, "SearchHome">;
@@ -41,16 +40,29 @@ export function SearchHomeScreen({ navigation }: Props) {
 
   const trimmedQuery = query.trim();
   const isSearching = trimmedQuery.length > 0;
-
-  const keywordSuggestions = useMemo(
-    () => getKeywordSuggestions(trimmedQuery),
-    [trimmedQuery],
+  const debouncedQuery = useDebouncedValue(trimmedQuery, 300);
+  const { items: productSuggestions, loading: suggestionsLoading } = useProductSearch(
+    debouncedQuery,
+    6,
   );
+  const waitingForSuggestions = trimmedQuery !== debouncedQuery || suggestionsLoading;
 
-  const productSuggestions = useMemo(
-    () => getProductSuggestions(trimmedQuery),
-    [trimmedQuery],
-  );
+  const keywordSuggestions = useMemo(() => {
+    const seen = new Set<string>();
+    const titles: string[] = [];
+    for (const hit of productSuggestions) {
+      const key = hit.title.toLowerCase();
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      titles.push(hit.title);
+      if (titles.length >= 5) {
+        break;
+      }
+    }
+    return titles;
+  }, [productSuggestions]);
 
   const previouslyBought = useMemo(() => getPreviouslyBoughtProducts(), []);
 
@@ -99,8 +111,8 @@ export function SearchHomeScreen({ navigation }: Props) {
   );
 
   const onCategoryPress = useCallback(
-    (title: string, categoryId: string) => {
-      goToResults(title, categoryId);
+    (title: string) => {
+      goToResults(title);
     },
     [goToResults],
   );
@@ -127,34 +139,33 @@ export function SearchHomeScreen({ navigation }: Props) {
         </Pressable>
       ))}
 
-      {productSuggestions.map((product) => {
-        const imageUrl = getProductImageUrl(product);
-        const packLabel = getProductPackLabel(product);
+      {productSuggestions.map((hit) => (
+        <Pressable
+          key={hit.productId}
+          accessibilityRole="button"
+          onPress={() =>
+            navigation.getParent()?.navigate("ProductDetail", { productId: hit.productId })
+          }
+          className="flex-row items-center gap-3 border-b border-pillfly-line/60 px-4 py-3 active:bg-pillfly-background"
+        >
+          <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-pillfly-line bg-pillfly-surface">
+            <ProductImageWithPlaceholder uri={hit.thumbnailUrl} className="h-full w-full" />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="text-[14px] font-bold text-pillfly-ink" numberOfLines={2}>
+              {hit.title}
+            </Text>
+            {hit.brandName ? (
+              <Text className="mt-0.5 text-[12px] text-pillfly-muted">{hit.brandName}</Text>
+            ) : null}
+          </View>
+          <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+        </Pressable>
+      ))}
 
-        return (
-          <Pressable
-            key={product.id}
-            accessibilityRole="button"
-            onPress={() => goToResults(product.title)}
-            className="flex-row items-center gap-3 border-b border-pillfly-line/60 px-4 py-3 active:bg-pillfly-background"
-          >
-            <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-pillfly-line bg-pillfly-surface">
-              <ProductImageWithPlaceholder uri={imageUrl ?? undefined} className="h-full w-full" />
-            </View>
-            <View className="min-w-0 flex-1">
-              <Text className="text-[14px] font-bold text-pillfly-ink" numberOfLines={2}>
-                {product.title}
-              </Text>
-              {packLabel ? (
-                <Text className="mt-0.5 text-[12px] text-pillfly-muted">{packLabel}</Text>
-              ) : null}
-            </View>
-            <Feather name="chevron-right" size={20} color={colors.textSecondary} />
-          </Pressable>
-        );
-      })}
-
-      {keywordSuggestions.length === 0 && productSuggestions.length === 0 ? (
+      {!waitingForSuggestions &&
+      keywordSuggestions.length === 0 &&
+      productSuggestions.length === 0 ? (
         <View className="items-center px-4 py-10">
           <Text className="text-[15px] font-semibold text-pillfly-ink">No suggestions found</Text>
           <Text className="mt-1 text-center text-[13px] text-pillfly-muted">
@@ -211,7 +222,7 @@ export function SearchHomeScreen({ navigation }: Props) {
             <Pressable
               key={category.id}
               accessibilityRole="button"
-              onPress={() => onCategoryPress(category.title, category.id)}
+              onPress={() => onCategoryPress(category.title)}
               className="active:opacity-90"
             >
               <ShopTile

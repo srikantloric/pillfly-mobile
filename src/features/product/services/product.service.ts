@@ -1,8 +1,18 @@
-import { getStoreProduct, listStoreProducts } from "@/features/product/api/product.api";
+import { getStoreProduct, listStoreProducts, searchStoreProducts } from "@/features/product/api/product.api";
 import { mapStoreProduct } from "@/features/product/api/mapStoreProduct";
 import type { Product } from "@/features/product/types/product";
+import type { ProductSearchHit } from "@/features/product/types/storeProduct";
+import { mergeUniqueHits } from "@/features/product/utils/mergeUniqueHits";
 import { mergeUniqueProducts } from "@/features/product/utils/mergeUniqueProducts";
 import { ProductRequestError } from "@/features/product/utils/productRequestError";
+
+export type StoreSearchPage = {
+  items: ProductSearchHit[];
+  page: number;
+  hitsPerPage: number;
+  nbHits: number;
+  nbPages: number;
+};
 
 export type StoreProductPage = {
   products: Product[];
@@ -55,6 +65,22 @@ export const productService = {
     }
 
     return products.filter((product) => product.title.toLowerCase().includes(normalizedQuery));
+  },
+
+  async searchStorePage(params: { q: string; limit?: number; page?: number }): Promise<StoreSearchPage> {
+    const response = await searchStoreProducts({
+      q: params.q,
+      limit: params.limit,
+      page: params.page ?? 0,
+    });
+
+    return {
+      items: mergeUniqueHits([], response.items),
+      page: response.page,
+      hitsPerPage: response.hitsPerPage,
+      nbHits: response.nbHits,
+      nbPages: response.nbPages,
+    };
   },
 
   async listStorePage(params: { limit?: number; cursor?: string } = {}): Promise<StoreProductPage> {
