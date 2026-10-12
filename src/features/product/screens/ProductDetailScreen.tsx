@@ -4,7 +4,7 @@ import { Feather } from "@react-native-vector-icons/feather";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BouncingDotsLoader } from "@/components/ui";
+import { BouncingDotsLoader, PrimaryButton } from "@/components/ui";
 import { PDP_HORIZONTAL_PADDING } from "@/features/product/constants/productDetail.constants";
 import { useProductDetail } from "@/features/product/hooks/useProductDetail";
 import { ProductDetailContent } from "@/features/product/screens/ProductDetailContent";
@@ -18,7 +18,7 @@ type Props = NativeStackScreenProps<AppStackParamList, "ProductDetail">;
 export function ProductDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const productId = route.params.productId;
-  const { product, loading, error } = useProductDetail(productId);
+  const { product, loading, error, retry } = useProductDetail(productId);
 
   const [showLoaderOverlay, setShowLoaderOverlay] = useState(true);
   const loaderOpacity = useRef(new Animated.Value(1)).current;
@@ -72,6 +72,9 @@ export function ProductDetailScreen({ route, navigation }: Props) {
         <View className={`flex-1 justify-center ${PDP_HORIZONTAL_PADDING}`}>
           <View className="rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-5">
             <Text className="text-center text-[14px] text-pillfly-promo-red">{error.message}</Text>
+            <View className="mt-4">
+              <PrimaryButton label="Retry" accessibilityLabel="Retry loading product" onPress={retry} />
+            </View>
           </View>
         </View>
       </View>

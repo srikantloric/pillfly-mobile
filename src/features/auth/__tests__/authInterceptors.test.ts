@@ -211,4 +211,15 @@ describe("auth interceptors", () => {
     expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
     expect(catalogCount).toBe(2);
   });
+
+  it("does not refresh public store product 401s", async () => {
+    const client = createTestClient(async () => {
+      return { status: 401, data: { message: "Unauthorized" } };
+    }, "https://example.test/api/v1");
+
+    await expect(client.get("/products/store")).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+    expect(mockAuthPost).not.toHaveBeenCalled();
+  });
 });

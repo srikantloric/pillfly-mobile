@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { productService } from "@/features/product/services/product.service";
 import type { Product } from "@/features/product/types/product";
@@ -7,6 +7,11 @@ export function useProductDetail(productId: string) {
   const [product, setProduct] = useState<Product | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const retry = useCallback(() => {
+    setReloadToken((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +49,7 @@ export function useProductDetail(productId: string) {
     return () => {
       cancelled = true;
     };
-  }, [productId]);
+  }, [productId, reloadToken]);
 
-  return { product, loading, error };
+  return { product, loading, error, retry };
 }

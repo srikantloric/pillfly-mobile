@@ -155,6 +155,26 @@ describe("product.api", () => {
     expect(mockGet).not.toHaveBeenCalled();
   });
 
+  it("maps network failures to a product error", async () => {
+    mockGet.mockRejectedValue({
+      request: {},
+    });
+
+    await expect(getStoreProduct("prod_123")).rejects.toMatchObject({
+      name: "ProductRequestError",
+      kind: "network",
+    });
+  });
+
+  it("rejects a malformed detail envelope", async () => {
+    mockGet.mockResolvedValue({ data: { data: { id: "prod_123" } } });
+
+    await expect(getStoreProduct("prod_123")).rejects.toMatchObject({
+      name: "ProductRequestError",
+      kind: "malformed",
+    });
+  });
+
   it("surfaces search service failures", async () => {
     mockGet.mockRejectedValue({
       response: {

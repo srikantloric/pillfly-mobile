@@ -1,46 +1,58 @@
-import { mockProducts } from "@/features/product/mocks/catalog/products.mock";
-
-import type { ProductCategory } from "@/types/category.types";
+import { getStoreProduct, listStoreProducts } from "@/features/product/api/product.api";
+import { mapStoreProduct } from "@/features/product/api/mapStoreProduct";
 import type { Product } from "@/features/product/types/product";
+import { ProductRequestError } from "@/features/product/utils/productRequestError";
 
-function normalize(input: string): string {
-  return input.trim().toLowerCase();
+const productCache = new Map<string, Product>();
+
+function remember(product: Product): Product {
+  productCache.set(product.id, product);
+  return product;
+}
+
+export function resetProductCache(): void {
+  productCache.clear();
 }
 
 export const productService = {
   getAllProducts(): Product[] {
-    return mockProducts;
+    return Array.from(productCache.values());
   },
 
   getProductById(id: string): Product | undefined {
-    return mockProducts.find((product) => product.id === id);
+    return productCache.get(id);
   },
 
   async fetchProductById(id: string): Promise<Product | undefined> {
-    return Promise.resolve(mockProducts.find((product) => product.id === id));
+    try {
+      const response = await getStoreProduct(id);
+      return remember(mapStoreProduct(response.data));
+    } catch (error) {
+      if (error instanceof ProductRequestError && error.status === 404) {
+        return undefined;
+      }
+
+      throw error;
+    }
   },
 
-  getProductsByCategory(categoryId: string): Product[] {
-    const normalizedCategoryId = normalize(categoryId) as ProductCategory;
-
-    return mockProducts.filter((product) =>
-      (product.categories ?? []).includes(normalizedCategoryId),
-    );
+  getProductsByCategory(_categoryId: string): Product[] {
+    return [];
   },
 
   searchProducts(query: string): Product[] {
-    const normalizedQuery = normalize(query);
+    const normalizedQuery = query.trim().toLowerCase();
+    const products = Array.from(productCache.values());
 
     if (!normalizedQuery) {
-      return mockProducts;
+      return products;
     }
 
-    return mockProducts.filter((product) =>
-      product.title.toLowerCase().includes(normalizedQuery),
-    );
+    return products.filter((product) => product.title.toLowerCase().includes(normalizedQuery));
   },
 
   async getProducts(): Promise<Product[]> {
-    return Promise.resolve(mockProducts);
+    const response = await listStoreProducts();
+    return response.data.map((product) => remember(mapStoreProduct(product)));
   },
 };

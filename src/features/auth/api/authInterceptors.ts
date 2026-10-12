@@ -4,6 +4,8 @@ import axios from "axios";
 import { authClient } from "@/services/api/auth.client";
 
 import { parseTokenResponse } from "./auth.parsers";
+import { isPublicProductPath } from "@/features/product/api/product.paths";
+
 import { AUTH_PATHS, getRequestPath, isPublicAuthPath, isRefreshAuthPath } from "./auth.paths";
 import { clearSessionTokens, getAccessToken, persistSessionTokens } from "./authSession";
 
@@ -73,7 +75,12 @@ export function attachAuthInterceptors(client: AxiosInstance): void {
 
       const path = requestPath(config);
 
-      if (isPublicAuthPath(path) || isRefreshAuthPath(path) || config._pillflyAuthRetry) {
+      if (
+        isPublicAuthPath(path) ||
+        isPublicProductPath(path) ||
+        isRefreshAuthPath(path) ||
+        config._pillflyAuthRetry
+      ) {
         return Promise.reject(error);
       }
 

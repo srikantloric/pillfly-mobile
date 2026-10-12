@@ -34,8 +34,12 @@ function buildMedicineProductDetailsBullets(product: MedicineProduct): string[] 
   if (brand) {
     lines.push(`Brand: ${brand}`);
   }
-  lines.push(`Manufacturer: ${medicineDetails.manufacturer}`);
-  lines.push(`SKU: ${sku}`);
+  if (medicineDetails.manufacturer.trim()) {
+    lines.push(`Manufacturer: ${medicineDetails.manufacturer}`);
+  }
+  if (sku) {
+    lines.push(`SKU: ${sku}`);
+  }
   lines.push(`Pack size: ${medicineDetails.packSize}`);
   lines.push(`Salt composition: ${medicineDetails.saltComposition}`);
   lines.push(`Dosage form: ${medicineDetails.dosageForm}`);
@@ -68,6 +72,12 @@ function buildHealthcareProductDetailsBullets(product: HealthcareProduct): strin
   }
   if (details?.manufacturerAddress) {
     lines.push(`Manufacturer address: ${details.manufacturerAddress}`);
+  }
+  if (details?.storageInstructions) {
+    lines.push(`Storage: ${details.storageInstructions}`);
+  }
+  if (details?.shelfLifeInMonths != null) {
+    lines.push(`Shelf life: ${details.shelfLifeInMonths} months`);
   }
 
   return lines;
