@@ -1,5 +1,28 @@
 export { productService } from "./services/product.service";
 
+export {
+  getStoreProduct,
+  listStoreProducts,
+  searchStoreProducts,
+} from "./api/product.api";
+export {
+  getDisplayedPrice,
+  isStoreHealthcare,
+  isStoreMedicine,
+} from "./api/product.parsers";
+export type {
+  ListStoreProductsParams,
+  ProductSearchHit,
+  ProductSearchResponse,
+  SearchStoreProductsParams,
+  StoreHealthcareProduct,
+  StoreMedicineProduct,
+  StoreProduct,
+  StoreProductListResponse,
+  StoreProductResponse,
+  StoreProductVariant,
+} from "./types/storeProduct";
+
 export type {
   BaseProduct,
   CreateProductPayloadForHealthcare,
