@@ -102,9 +102,50 @@ describe("product.service", () => {
 
     const products = await productService.getProducts();
 
-    expect(mockListStoreProducts).toHaveBeenCalled();
+    expect(mockListStoreProducts).toHaveBeenCalledWith({
+      limit: undefined,
+      cursor: undefined,
+    });
     expect(products).toHaveLength(1);
     expect(productService.getAllProducts()).toHaveLength(1);
+  });
+
+  it("passes an opaque cursor through on the next store page", async () => {
+    mockListStoreProducts.mockResolvedValue({
+      data: [{ ...medicine, id: "prod_124" }],
+      nextCursor: "cursor-2",
+    });
+
+    const page = await productService.listStorePage({
+      limit: 20,
+      cursor: "eyJpZCI6InByb2RfMTIzIn0=",
+    });
+
+    expect(mockListStoreProducts).toHaveBeenCalledWith({
+      limit: 20,
+      cursor: "eyJpZCI6InByb2RfMTIzIn0=",
+    });
+    expect(page.products[0]?.id).toBe("prod_124");
+    expect(page.nextCursor).toBe("cursor-2");
+  });
+
+  it("omits nextCursor when the backend has no further page", async () => {
+    mockListStoreProducts.mockResolvedValue({ data: [] });
+
+    const page = await productService.listStorePage();
+
+    expect(page.products).toEqual([]);
+    expect(page.nextCursor).toBeUndefined();
+  });
+
+  it("drops duplicate product ids within a store page", async () => {
+    mockListStoreProducts.mockResolvedValue({
+      data: [medicine, medicine],
+    });
+
+    const page = await productService.listStorePage();
+
+    expect(page.products).toHaveLength(1);
   });
 
   it("leaves category filtering unimplemented until the backend contract exists", () => {

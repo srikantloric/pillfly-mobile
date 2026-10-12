@@ -1,7 +1,13 @@
 import { getStoreProduct, listStoreProducts } from "@/features/product/api/product.api";
 import { mapStoreProduct } from "@/features/product/api/mapStoreProduct";
 import type { Product } from "@/features/product/types/product";
+import { mergeUniqueProducts } from "@/features/product/utils/mergeUniqueProducts";
 import { ProductRequestError } from "@/features/product/utils/productRequestError";
+
+export type StoreProductPage = {
+  products: Product[];
+  nextCursor?: string;
+};
 
 const productCache = new Map<string, Product>();
 
@@ -51,8 +57,28 @@ export const productService = {
     return products.filter((product) => product.title.toLowerCase().includes(normalizedQuery));
   },
 
+  async listStorePage(params: { limit?: number; cursor?: string } = {}): Promise<StoreProductPage> {
+    const cursor = params.cursor?.trim();
+    const response = await listStoreProducts({
+      limit: params.limit,
+      cursor: cursor || undefined,
+    });
+
+    const products = mergeUniqueProducts(
+      [],
+      response.data.map((product) => remember(mapStoreProduct(product))),
+    );
+
+    const page: StoreProductPage = { products };
+    if (response.nextCursor) {
+      page.nextCursor = response.nextCursor;
+    }
+
+    return page;
+  },
+
   async getProducts(): Promise<Product[]> {
-    const response = await listStoreProducts();
-    return response.data.map((product) => remember(mapStoreProduct(product)));
+    const page = await productService.listStorePage();
+    return page.products;
   },
 };

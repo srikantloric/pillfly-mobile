@@ -1,4 +1,4 @@
-export { productService } from "./services/product.service";
+export { productService, type StoreProductPage } from "./services/product.service";
 
 export {
   getStoreProduct,
