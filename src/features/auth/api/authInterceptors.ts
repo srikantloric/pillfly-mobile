@@ -1,7 +1,11 @@
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 
+import { authClient } from "@/services/api/auth.client";
+
 import { parseTokenResponse } from "./auth.parsers";
+import { isPublicProductPath } from "@/features/product/api/product.paths";
+
 import { AUTH_PATHS, getRequestPath, isPublicAuthPath, isRefreshAuthPath } from "./auth.paths";
 import { clearSessionTokens, getAccessToken, persistSessionTokens } from "./authSession";
 
@@ -16,14 +20,14 @@ function requestPath(config: InternalAxiosRequestConfig): string {
   return getRequestPath(config.url, config.baseURL);
 }
 
-async function refreshAccessToken(client: AxiosInstance): Promise<void> {
+async function refreshAccessToken(): Promise<void> {
   if (refreshInFlight) {
     await refreshInFlight;
     return;
   }
 
   refreshInFlight = (async () => {
-    const response = await client.post<unknown>(AUTH_PATHS.refresh);
+    const response = await authClient.post<unknown>(AUTH_PATHS.refresh);
     const tokens = parseTokenResponse(response.data);
     await persistSessionTokens({
       accessToken: tokens.accessToken,
@@ -71,12 +75,17 @@ export function attachAuthInterceptors(client: AxiosInstance): void {
 
       const path = requestPath(config);
 
-      if (isPublicAuthPath(path) || isRefreshAuthPath(path) || config._pillflyAuthRetry) {
+      if (
+        isPublicAuthPath(path) ||
+        isPublicProductPath(path) ||
+        isRefreshAuthPath(path) ||
+        config._pillflyAuthRetry
+      ) {
         return Promise.reject(error);
       }
 
       try {
-        await refreshAccessToken(client);
+        await refreshAccessToken();
       } catch (refreshError) {
         await clearSessionTokens();
         return Promise.reject(refreshError);

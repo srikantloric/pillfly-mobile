@@ -7,14 +7,7 @@ export {
   TOP_SEARCH_CATEGORY_TILES,
 } from "./mocks/search.mock";
 
-export {
-  getDiscountPercent,
-  getKeywordSuggestions,
-  getPreviouslyBoughtProducts,
-  getProductSuggestions,
-  getResultsForSearch,
-  getUnitPriceLabel,
-} from "./utils/search.utils";
+export { getPreviouslyBoughtProducts } from "./utils/search.utils";
 
 export {
   formatInr,

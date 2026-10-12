@@ -1,7 +1,5 @@
 import { PRODUCT_SEARCH_RATINGS } from "@/features/search/mocks/search.mock";
-import type { HealthcareProduct, MedicineProduct, Product } from "@/features/product/types/product";
-
-const DEFAULT_CATALOG_DISCOUNT_PERCENT = 22;
+import type { HealthcareProduct, MedicineProduct, Product, ProductVariant } from "@/features/product/types/product";
 
 export interface ProductPricing {
   mrp: number;
@@ -37,13 +35,31 @@ export function getProductStock(product: Product): number {
   return getDefaultVariant(product)?.stock ?? 0;
 }
 
+function isPurchasable(inStock: boolean | undefined, availableQty: number): boolean {
+  if (inStock === false || availableQty === 0) {
+    return false;
+  }
+
+  return availableQty > 0;
+}
+
 export function isProductInStock(product: Product): boolean {
-  return getProductStock(product) > 0;
+  if (isMedicineProduct(product)) {
+    return isPurchasable(product.inStock, product.stock);
+  }
+
+  const variant = getDefaultVariant(product);
+  if (!variant) {
+    return false;
+  }
+
+  return isPurchasable(variant.inStock, variant.stock);
 }
 
 export function getProductPackLabel(product: Product): string | undefined {
   if (isMedicineProduct(product)) {
-    return formatMedicineQuantityLabel(product);
+    const packSize = product.medicineDetails.packSize.trim();
+    return packSize || undefined;
   }
 
   const variant = getDefaultVariant(product);
@@ -61,38 +77,9 @@ export function getProductPackLabel(product: Product): string | undefined {
   return undefined;
 }
 
-function formatMedicineQuantityLabel(product: MedicineProduct): string {
-  const { packSize, dosageForm } = product.medicineDetails;
-  const countMatch = packSize.match(/(\d+)/);
-  const count = countMatch?.[1];
-
-  if (!count) {
-    return packSize;
-  }
-
-  const unitLabel =
-    dosageForm === "TABLET"
-      ? "Tablet"
-      : dosageForm === "CAPSULE"
-        ? "Capsule"
-        : dosageForm === "SYRUP"
-          ? "Unit"
-          : "Unit";
-
-  const plural = Number(count) === 1 ? unitLabel : `${unitLabel}(s)`;
-  return `${count} ${plural} in ${product.medicineDetails.unit === "STRIP" ? "Strip" : product.medicineDetails.unit}`;
-}
-
-function getExplicitDiscountPercent(product: Product): number | undefined {
-  if (isMedicineProduct(product) && product.discount != null) {
-    return product.discount;
-  }
-
+function getPricedVariant(product: Product): ProductVariant | undefined {
   if (isHealthcareProduct(product)) {
-    const variant = getDefaultVariant(product);
-    if (variant?.discount != null) {
-      return variant.discount;
-    }
+    return getDefaultVariant(product);
   }
 
   return undefined;
@@ -107,23 +94,23 @@ export function getProductMrp(product: Product): number | undefined {
 }
 
 export function getProductPricing(product: Product): ProductPricing | null {
-  const mrp = getProductMrp(product);
-  if (mrp == null) {
+  if (isMedicineProduct(product)) {
+    return {
+      mrp: product.mrp,
+      salePrice: product.sellingPrice ?? product.mrp,
+      discountPercent: product.discount ?? 0,
+    };
+  }
+
+  const variant = getPricedVariant(product);
+  if (!variant) {
     return null;
   }
 
-  const explicitDiscount = getExplicitDiscountPercent(product);
-  const discountPercent =
-    explicitDiscount != null && explicitDiscount > 0
-      ? explicitDiscount
-      : DEFAULT_CATALOG_DISCOUNT_PERCENT;
-
-  const salePrice = roundMoney(mrp * (1 - discountPercent / 100));
-
   return {
-    mrp,
-    salePrice,
-    discountPercent,
+    mrp: variant.mrp,
+    salePrice: variant.sellingPrice ?? variant.mrp,
+    discountPercent: variant.discount ?? 0,
   };
 }
 
@@ -152,10 +139,11 @@ export function getProductImages(product: Product): string[] {
 
 export function getProductManufacturerLabel(product: Product): string | undefined {
   if (isMedicineProduct(product)) {
-    return product.medicineDetails.manufacturer;
+    const manufacturer = product.medicineDetails.manufacturer.trim();
+    return manufacturer || undefined;
   }
 
-  return product.brand;
+  return product.brand?.trim() || undefined;
 }
 
 export function getProductPackLabelDisplay(product: Product): string | undefined {

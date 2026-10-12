@@ -1,4 +1,31 @@
-export { productService } from "./services/product.service";
+export {
+  productService,
+  type StoreProductPage,
+  type StoreSearchPage,
+} from "./services/product.service";
+
+export {
+  getStoreProduct,
+  listStoreProducts,
+  searchStoreProducts,
+} from "./api/product.api";
+export {
+  getDisplayedPrice,
+  isStoreHealthcare,
+  isStoreMedicine,
+} from "./api/product.parsers";
+export type {
+  ListStoreProductsParams,
+  ProductSearchHit,
+  ProductSearchResponse,
+  SearchStoreProductsParams,
+  StoreHealthcareProduct,
+  StoreMedicineProduct,
+  StoreProduct,
+  StoreProductListResponse,
+  StoreProductResponse,
+  StoreProductVariant,
+} from "./types/storeProduct";
 
 export type {
   BaseProduct,
@@ -98,6 +125,7 @@ export * from "./constants/productDetail.constants";
 export { useMedicalSectionScroll } from "./hooks/useMedicalSectionScroll";
 export { useProductDetail } from "./hooks/useProductDetail";
 export { useProducts } from "./hooks/useProducts";
+export { useProductSearch } from "./hooks/useProductSearch";
 
 export * from "./components";
 

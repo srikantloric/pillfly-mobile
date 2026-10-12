@@ -76,8 +76,10 @@ export interface MedicineProduct extends BaseProduct {
 
   mrp: number;
   discount?: number;
+  sellingPrice?: number;
 
   stock: number;
+  inStock?: boolean;
 
   images: ImageType[];
 
@@ -92,6 +94,9 @@ export interface HealthcareDetails {
   expiryInfo?: string;
   manufacturerAddress?: string;
   countryOfOrigin?: string;
+  requiresExpiryTracking?: boolean;
+  storageInstructions?: string;
+  shelfLifeInMonths?: number;
 }
 
 export interface HealthcareProduct extends BaseProduct {
@@ -129,11 +134,13 @@ export interface ProductVariant {
   cgst?: number;
   rackPercentage?: number;
   discount?: number;
+  sellingPrice?: number;
 
   images: ImageType[];
 
   sku: string;
   stock: number;
+  inStock?: boolean;
 
   isDefault?: boolean;
 }
