@@ -135,6 +135,19 @@ describe("mapStoreProduct", () => {
     expect(product.productDetails?.shelfLifeInMonths).toBe(24);
   });
 
+  it("maps a medicine with no variants as unavailable at zero price", () => {
+    const product = mapStoreProduct({ ...medicine, variants: [] });
+    expect(isMedicineProduct(product)).toBe(true);
+    if (!isMedicineProduct(product)) {
+      return;
+    }
+
+    expect(product.mrp).toBe(0);
+    expect(product.sellingPrice).toBe(0);
+    expect(product.stock).toBe(0);
+    expect(product.inStock).toBe(false);
+  });
+
   it("falls back to thumbnail when variant images have no url", () => {
     const product = mapStoreProduct({
       ...medicine,

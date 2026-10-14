@@ -202,6 +202,17 @@ describe("product.service", () => {
     expect(page.nbPages).toBe(1);
   });
 
+  it("keeps existing sync service lookups compatible after an API fetch", async () => {
+    mockGetStoreProduct.mockResolvedValue({ data: medicine });
+
+    await productService.fetchProductById("prod_123");
+
+    expect(productService.getAllProducts().map((product) => product.id)).toEqual(["prod_123"]);
+    expect(productService.searchProducts("Paracetamol")[0]?.id).toBe("prod_123");
+    expect(productService.searchProducts("unknown")).toEqual([]);
+    expect(productService.getProductById("prod_123")?.title).toBe("Paracetamol 500 mg");
+  });
+
   it("returns empty search hits without inventing products", async () => {
     mockSearchStoreProducts.mockResolvedValue({
       items: [],
