@@ -175,6 +175,55 @@ describe("product.api", () => {
     });
   });
 
+  it("rejects an empty product id before calling the API", async () => {
+    await expect(getStoreProduct("  ")).rejects.toBeInstanceOf(ProductRequestError);
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed list envelope", async () => {
+    mockGet.mockResolvedValue({ data: { data: { id: "prod_123" } } });
+
+    await expect(listStoreProducts()).rejects.toMatchObject({
+      name: "ProductRequestError",
+      kind: "malformed",
+    });
+  });
+
+  it("requests the next search page with page metadata", async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        items: [],
+        page: 1,
+        hitsPerPage: 10,
+        nbHits: 12,
+        nbPages: 2,
+      },
+    });
+
+    const result = await searchStoreProducts({ q: "para", limit: 10, page: 1 });
+
+    expect(mockGet).toHaveBeenCalledWith(PRODUCT_PATHS.search, {
+      params: { q: "para", limit: 10, page: 1 },
+    });
+    expect(result.page).toBe(1);
+    expect(result.nbPages).toBe(2);
+    expect(result.nbHits).toBe(12);
+  });
+
+  it("surfaces search validation failures", async () => {
+    mockGet.mockRejectedValue({
+      response: {
+        status: 400,
+        data: { message: "Validation failed" },
+      },
+    });
+
+    await expect(searchStoreProducts({ q: "para", limit: 10, page: 0 })).rejects.toMatchObject({
+      message: "Validation failed",
+      status: 400,
+    });
+  });
+
   it("surfaces search service failures", async () => {
     mockGet.mockRejectedValue({
       response: {

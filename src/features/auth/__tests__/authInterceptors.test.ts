@@ -222,4 +222,15 @@ describe("auth interceptors", () => {
     });
     expect(mockAuthPost).not.toHaveBeenCalled();
   });
+
+  it("does not refresh public product search 401s", async () => {
+    const client = createTestClient(async () => {
+      return { status: 401, data: { message: "Unauthorized" } };
+    }, "https://example.test/api/v1");
+
+    await expect(client.get("/products/search")).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+    expect(mockAuthPost).not.toHaveBeenCalled();
+  });
 });

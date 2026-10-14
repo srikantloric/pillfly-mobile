@@ -2,45 +2,99 @@ import * as Keychain from "react-native-keychain";
 
 import type { AuthTokens } from "../types/auth.types";
 
-const TOKEN_SERVICE = "com.pillfly.auth.tokens";
-const TOKEN_ACCOUNT = "pillfly-customer";
+export const TOKEN_SERVICE = "com.pillfly.auth.tokens";
+export const TOKEN_ACCOUNT = "pillfly-customer";
 
-function isAuthTokens(value: unknown): value is AuthTokens {
-  if (typeof value !== "object" || value === null) {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+export function isAuthTokens(value: unknown): value is AuthTokens {
+  if (!isRecord(value)) {
     return false;
   }
 
-  const record = value as Record<string, unknown>;
-  return typeof record.accessToken === "string" && typeof record.idToken === "string";
+  return isNonEmptyString(value.accessToken) && isNonEmptyString(value.idToken);
 }
 
-export async function saveAuthTokens(tokens: AuthTokens): Promise<void> {
-  await Keychain.setGenericPassword(TOKEN_ACCOUNT, JSON.stringify(tokens), {
-    service: TOKEN_SERVICE,
-    accessible: Keychain.ACCESSIBLE.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
-  });
+function toStoredTokens(tokens: AuthTokens): AuthTokens {
+  return {
+    accessToken: tokens.accessToken,
+    idToken: tokens.idToken,
+  };
 }
 
+function resolveDeviceOnlyAccessibility(): Keychain.ACCESSIBLE {
+  const option = Keychain.ACCESSIBLE?.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY;
+  if (option == null) {
+    throw new Error("Keychain accessibility AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY is unavailable.");
+  }
+
+  return option;
+}
+
+async function discardMalformedStoredTokens(): Promise<void> {
+  await clearAuthTokens();
+}
+
+/**
+ * Loads the persisted customer session.
+ * Returns `null` when no credentials exist, or when Keychain cannot be read.
+ * A `null` result is an unavailable/unreadable session, not proof that credentials were deleted.
+ */
 export async function loadAuthTokens(): Promise<AuthTokens | null> {
-  const credentials = await Keychain.getGenericPassword({ service: TOKEN_SERVICE });
+  let credentials: Awaited<ReturnType<typeof Keychain.getGenericPassword>>;
+  try {
+    credentials = await Keychain.getGenericPassword({ service: TOKEN_SERVICE });
+  } catch {
+    return null;
+  }
 
   if (!credentials) {
     return null;
   }
 
+  let parsed: unknown;
   try {
-    const parsed: unknown = JSON.parse(credentials.password);
-    if (!isAuthTokens(parsed) || !parsed.accessToken || !parsed.idToken) {
-      await clearAuthTokens();
-      return null;
-    }
-    return parsed;
+    parsed = JSON.parse(credentials.password);
   } catch {
-    await clearAuthTokens();
+    await discardMalformedStoredTokens();
     return null;
+  }
+
+  if (!isAuthTokens(parsed)) {
+    await discardMalformedStoredTokens();
+    return null;
+  }
+
+  return toStoredTokens(parsed);
+}
+
+export async function saveAuthTokens(tokens: AuthTokens): Promise<void> {
+  if (!isAuthTokens(tokens)) {
+    throw new Error("Invalid auth tokens.");
+  }
+
+  const payload = toStoredTokens(tokens);
+  const accessible = resolveDeviceOnlyAccessibility();
+
+  const result = await Keychain.setGenericPassword(TOKEN_ACCOUNT, JSON.stringify(payload), {
+    service: TOKEN_SERVICE,
+    accessible,
+  });
+
+  if (result === false) {
+    throw new Error("Keychain write failed.");
   }
 }
 
 export async function clearAuthTokens(): Promise<void> {
-  await Keychain.resetGenericPassword({ service: TOKEN_SERVICE });
+  const result = await Keychain.resetGenericPassword({ service: TOKEN_SERVICE });
+  if (result === false) {
+    throw new Error("Keychain delete failed.");
+  }
 }

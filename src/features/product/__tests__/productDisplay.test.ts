@@ -65,6 +65,18 @@ const healthcareOos = (): HealthcareProduct => ({
 });
 
 describe("product display pricing and stock", () => {
+  it("does not apply a frontend catalog discount when sellingPrice is present", () => {
+    const pricing = getProductPricing(
+      medicine({
+        mrp: 50,
+        discount: 0,
+        sellingPrice: 50,
+      }),
+    );
+
+    expect(pricing).toEqual({ mrp: 50, salePrice: 50, discountPercent: 0 });
+  });
+
   it("uses backend sellingPrice instead of calculating a catalog default", () => {
     expect(getProductPricing(medicine())).toEqual({
       mrp: 50,

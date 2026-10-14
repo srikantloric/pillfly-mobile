@@ -234,6 +234,41 @@ describe("store product parsers", () => {
     expect(parsed.nbPages).toBe(1);
   });
 
+  it("skips products that are not ACTIVE", () => {
+    expect(parseStoreProduct(medicinePayload({ status: "INACTIVE" }))).toBeNull();
+  });
+
+  it("keeps zero FEFO price and stock values", () => {
+    const product = parseStoreProduct(
+      medicinePayload({
+        variants: [
+          {
+            id: "var_123",
+            sku: "PCM-500-10",
+            combinationKey: "default",
+            isDefault: true,
+            status: "ACTIVE",
+            mrp: 0,
+            sellingDiscount: 20,
+            sellingPrice: 0,
+            availableQty: 0,
+            inStock: false,
+            images: [],
+            ...timestamps,
+          },
+        ],
+      }),
+    );
+
+    expect(product?.variants[0]).toMatchObject({
+      mrp: 0,
+      sellingPrice: 0,
+      availableQty: 0,
+      inStock: false,
+    });
+    expect(getDisplayedPrice(product!.variants[0]!)).toBe(0);
+  });
+
   it("parses an empty search result without inventing hits", () => {
     expect(parseProductSearchResponse({ items: [], nbHits: 0, nbPages: 0 })).toEqual({
       items: [],

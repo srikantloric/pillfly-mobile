@@ -37,8 +37,8 @@ export function subscribeAuthTokens(listener: AuthTokensListener): () => void {
 }
 
 export async function persistSessionTokens(tokens: AuthTokens): Promise<void> {
-  setMemoryTokens(tokens);
   await saveAuthTokens(tokens);
+  setMemoryTokens(tokens);
   notify(tokens);
 }
 
