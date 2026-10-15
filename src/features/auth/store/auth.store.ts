@@ -14,6 +14,7 @@ import {
   setMemoryTokens,
   subscribeAuthTokens,
 } from "../api/authSession";
+import { resetSessionCart } from "@/features/cart/store/cart.store";
 import { loadAuthTokens } from "../storage/tokenStorage";
 import type { AuthState, Customer } from "../types/auth.types";
 import { AuthRequestError, toAuthRequestError } from "../utils/authRequestError";
@@ -102,6 +103,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
         const stored = await loadAuthTokens();
 
         if (!stored) {
+          resetSessionCart();
           set({
             ...initialState,
             isLoading: false,
@@ -295,6 +297,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => ({
       // Cookie/API logout can fail; local credentials must still be removed.
     } finally {
       await clearSessionTokens();
+      resetSessionCart();
       set({
         ...initialState,
         isLoading: false,

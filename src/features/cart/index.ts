@@ -1,6 +1,6 @@
 export { useCartActions } from "./hooks/useCartActions";
 export { useCartSummary } from "./hooks/useCartSummary";
-export { useCartStore } from "./store/cart.store";
+export { resetSessionCart, useCartStore } from "./store/cart.store";
 
 export {
   buildCartBill,
