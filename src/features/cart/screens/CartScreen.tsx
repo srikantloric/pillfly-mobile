@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import React, { useCallback, useRef } from "react";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { NavigationProp, ParamListBase } from "@react-navigation/native";
 
@@ -15,8 +15,8 @@ import {
 } from "../components";
 
 import { useCartActions } from "../hooks/useCartActions";
+import { useCartSummary } from "../hooks/useCartSummary";
 import { useCartStore } from "../store/cart.store";
-import { buildCartBill, resolveCartLines } from "../utils/cartPricing";
 
 const CART_FOOTER_SCROLL_PADDING = 112;
 
@@ -26,14 +26,12 @@ export function CartScreen({ navigation }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const billOffsetRef = useRef(0);
 
-  const items = useCartStore((state) => state.items);
   const deliveryAddress = useCartStore((state) => state.deliveryAddress);
   console.log('deliveryAddress', deliveryAddress);
 
   const { removeFromCart } = useCartActions();
-
-  const resolvedLines = useMemo(() => resolveCartLines(items), [items]);
-  const bill = useMemo(() => buildCartBill(items), [items]);
+  const { resolvedLines, bill, hasPersistedItems, isResolving, persistHydrated, retryResolve } =
+    useCartSummary();
 
   const onPressBack = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -71,6 +69,24 @@ export function CartScreen({ navigation }: Props) {
     billOffsetRef.current = y;
   }, []);
 
+  if (!persistHydrated || (hasPersistedItems && resolvedLines.length === 0 && isResolving)) {
+    return (
+      <View className="flex-1 bg-pillfly-background">
+        <CartHeader
+          onPressBack={onPressBack}
+          onPressSearch={onPressSearch}
+          onPressSaveForLater={onPressSaveForLater}
+        />
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-[18px] font-bold text-pillfly-ink">Loading cart</Text>
+          <Text className="mt-2 text-center text-[14px] text-pillfly-muted">
+            Restoring your items and current prices.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   if (resolvedLines.length === 0) {
     return (
       <View className="flex-1 bg-pillfly-background">
@@ -80,10 +96,23 @@ export function CartScreen({ navigation }: Props) {
           onPressSaveForLater={onPressSaveForLater}
         />
         <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[18px] font-bold text-pillfly-ink">Your cart is empty</Text>
-          <Text className="mt-2 text-center text-[14px] text-pillfly-muted">
-            Add items from search or product pages to see them here.
+          <Text className="text-[18px] font-bold text-pillfly-ink">
+            {hasPersistedItems ? "Unable to load cart items" : "Your cart is empty"}
           </Text>
+          <Text className="mt-2 text-center text-[14px] text-pillfly-muted">
+            {hasPersistedItems
+              ? "Check your connection and try again."
+              : "Add items from search or product pages to see them here."}
+          </Text>
+          {hasPersistedItems ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={retryResolve}
+              className="mt-4 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
+            >
+              <Text className="text-[15px] font-bold text-white">Retry</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     );
