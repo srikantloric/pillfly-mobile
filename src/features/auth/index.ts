@@ -40,3 +40,5 @@ export {
 
 export { useAuthStore } from "./store/auth.store";
 export { useAuth } from "./hooks/useAuth";
+
+export { default as LoginScreen } from "./screens/LoginScreen";

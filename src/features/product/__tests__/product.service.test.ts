@@ -213,6 +213,23 @@ describe("product.service", () => {
     expect(productService.getProductById("prod_123")?.title).toBe("Paracetamol 500 mg");
   });
 
+  it("fills missing catalog entries by id without refetching cached products", async () => {
+    mockGetStoreProduct.mockResolvedValue({ data: medicine });
+
+    await productService.fetchProductById("prod_123");
+    mockGetStoreProduct.mockClear();
+    mockGetStoreProduct.mockResolvedValue({
+      data: { ...medicine, id: "prod_124", title: "Ibuprofen 400 mg" },
+    });
+
+    await productService.ensureProductsByIds(["prod_123", "prod_124", "prod_123", ""]);
+
+    expect(mockGetStoreProduct).toHaveBeenCalledTimes(1);
+    expect(mockGetStoreProduct).toHaveBeenCalledWith("prod_124");
+    expect(productService.getProductById("prod_123")?.title).toBe("Paracetamol 500 mg");
+    expect(productService.getProductById("prod_124")?.title).toBe("Ibuprofen 400 mg");
+  });
+
   it("returns empty search hits without inventing products", async () => {
     mockSearchStoreProducts.mockResolvedValue({
       items: [],

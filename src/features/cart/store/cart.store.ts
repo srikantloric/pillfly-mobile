@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { subscribeAuthTokens } from "@/features/auth/api/authSession";
+
 import type { CartLineItem, DeliveryAddress } from "../types/cart.types";
 
 type CartState = {
@@ -61,7 +63,7 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], deliveryAddress: null }),
 
       setDeliveryAddress: (deliveryAddress) => set({ deliveryAddress }),
     }),
@@ -75,3 +77,26 @@ export const useCartStore = create<CartState>()(
     },
   ),
 );
+
+function wipePersistedCart() {
+  useCartStore.setState({ items: [], deliveryAddress: null });
+}
+
+export function resetSessionCart() {
+  wipePersistedCart();
+
+  if (useCartStore.persist.hasHydrated()) {
+    return;
+  }
+
+  const unsubscribe = useCartStore.persist.onFinishHydration(() => {
+    wipePersistedCart();
+    unsubscribe();
+  });
+}
+
+subscribeAuthTokens((tokens) => {
+  if (!tokens) {
+    resetSessionCart();
+  }
+});

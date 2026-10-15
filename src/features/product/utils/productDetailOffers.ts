@@ -1,5 +1,5 @@
 import { PRODUCT_DETAIL_OFFER_COUPON_IDS } from "@/features/product/mocks/detail.mock";
-import { SAVINGS_COUPONS, type SavingsCoupon } from "@/mocks/savings.mock";
+import { SAVINGS_COUPONS, type SavingsCoupon } from "@/features/savings";
 
 let cachedOffers: SavingsCoupon[] | null = null;
 

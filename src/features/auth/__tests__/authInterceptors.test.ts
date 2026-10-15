@@ -14,6 +14,8 @@ jest.mock("../storage/tokenStorage", () => ({
   loadAuthTokens: jest.fn(),
 }));
 
+import { isPublicProductPath } from "@/features/product/api/product.paths";
+
 import { attachAuthInterceptors, resetAuthRefreshLock } from "../api/authInterceptors";
 import { AUTH_PATHS } from "../api/auth.paths";
 import { clearMemoryTokens, getAccessToken, setMemoryTokens } from "../api/authSession";
@@ -23,6 +25,7 @@ type HandlerResult = { status: number; data: unknown };
 function createTestClient(
   handler: (config: InternalAxiosRequestConfig) => Promise<HandlerResult>,
   baseURL = "https://example.test/api/v1/auth",
+  skipRefresh?: (path: string) => boolean,
 ) {
   const client = axios.create({
     baseURL,
@@ -53,7 +56,7 @@ function createTestClient(
   };
 
   client.defaults.adapter = adapter;
-  attachAuthInterceptors(client);
+  attachAuthInterceptors(client, skipRefresh ? { skipRefresh } : undefined);
   return client;
 }
 
@@ -212,10 +215,26 @@ describe("auth interceptors", () => {
     expect(catalogCount).toBe(2);
   });
 
-  it("does not refresh public store product 401s", async () => {
+  it("refreshes a product 401 when the caller does not mark the path as public", async () => {
+    mockSuccessfulRefresh();
     const client = createTestClient(async () => {
       return { status: 401, data: { message: "Unauthorized" } };
     }, "https://example.test/api/v1");
+
+    await expect(client.get("/products/store")).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
+  });
+
+  it("does not refresh public store product 401s", async () => {
+    const client = createTestClient(
+      async () => {
+        return { status: 401, data: { message: "Unauthorized" } };
+      },
+      "https://example.test/api/v1",
+      isPublicProductPath,
+    );
 
     await expect(client.get("/products/store")).rejects.toMatchObject({
       response: { status: 401 },
@@ -224,9 +243,13 @@ describe("auth interceptors", () => {
   });
 
   it("does not refresh public product search 401s", async () => {
-    const client = createTestClient(async () => {
-      return { status: 401, data: { message: "Unauthorized" } };
-    }, "https://example.test/api/v1");
+    const client = createTestClient(
+      async () => {
+        return { status: 401, data: { message: "Unauthorized" } };
+      },
+      "https://example.test/api/v1",
+      isPublicProductPath,
+    );
 
     await expect(client.get("/products/search")).rejects.toMatchObject({
       response: { status: 401 },

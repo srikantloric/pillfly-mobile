@@ -4,11 +4,11 @@ import { View } from "react-native";
 
 
 
-import { CouponCard } from "@/components/savings/CouponCard";
+import { CouponCard } from "@/features/savings/components/CouponCard";
 
 import { SectionHeaderRow } from "@/components/ui";
 
-import type { SavingsCoupon } from "@/mocks/savings.mock";
+import type { SavingsCoupon } from "@/features/savings";
 
 import { getProductDetailOffers } from "@/features/product/utils/productDetailOffers";
 

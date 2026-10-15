@@ -21,9 +21,19 @@ jest.mock("../api/auth.api", () => ({
   logoutCustomer: (...args: unknown[]) => mockLogoutCustomer(...args),
 }));
 
+import { useCartStore } from "@/features/cart/store/cart.store";
+
 import { clearMemoryTokens, getAccessToken, persistSessionTokens } from "../api/authSession";
 import { resetAuthStoreForTests, useAuthStore } from "../store/auth.store";
 import { AuthRequestError } from "../utils/authRequestError";
+
+const leftoverCartAddress = {
+  id: "addr_1",
+  label: "Home",
+  line1: "12 MG Road",
+  city: "Bengaluru",
+  pincode: "560001",
+};
 
 const activeUser = {
   id: "CUS_123",
@@ -37,6 +47,7 @@ const activeUser = {
 describe("auth store", () => {
   beforeEach(() => {
     resetAuthStoreForTests();
+    useCartStore.setState({ items: [], deliveryAddress: null });
     clearMemoryTokens();
     mockLoadAuthTokens.mockReset();
     mockSaveAuthTokens.mockReset();
@@ -188,10 +199,30 @@ describe("auth store", () => {
     });
     mockLogoutCustomer.mockRejectedValue(new AuthRequestError("Unauthorized", { status: 401 }));
 
+    useCartStore.setState({
+      items: [{ productId: "prod_123", quantity: 2 }],
+      deliveryAddress: leftoverCartAddress,
+    });
+
     await useAuthStore.getState().signOut();
 
     expect(mockClearAuthTokens).toHaveBeenCalled();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
     expect(getAccessToken()).toBeNull();
+    expect(useCartStore.getState().items).toEqual([]);
+    expect(useCartStore.getState().deliveryAddress).toBeNull();
+  });
+
+  it("clears a leftover cart when restore finds no session", async () => {
+    mockLoadAuthTokens.mockResolvedValue(null);
+    useCartStore.setState({
+      items: [{ productId: "prod_123", quantity: 1 }],
+      deliveryAddress: leftoverCartAddress,
+    });
+
+    await useAuthStore.getState().restoreSession();
+
+    expect(useCartStore.getState().items).toEqual([]);
+    expect(useCartStore.getState().deliveryAddress).toBeNull();
   });
 });

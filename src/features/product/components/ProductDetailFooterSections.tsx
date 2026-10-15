@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { View } from "react-native";
 
-import type { SavingsCoupon } from "@/mocks/savings.mock";
+import type { SavingsCoupon } from "@/features/savings";
 import type { ProductDetailShareChannelId } from "@/features/product/mocks/detail.mock";
 
 import { ProductDetailDisclaimer } from "./ProductDetailDisclaimer";

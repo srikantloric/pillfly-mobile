@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useMemo } from "react";
 import { View, useWindowDimensions } from "react-native";
 
-import { HomePromoBanner } from "@/components/home/HomePromoBanner";
+import { HomePromoBanner } from "@/components/ui";
 import { CarouselDots, HorizontalPager } from "@/components/ui";
 import {
   PRODUCT_DETAIL_PROMO_SLIDES,

@@ -20,6 +20,7 @@ export type StoreProductPage = {
 };
 
 const productCache = new Map<string, Product>();
+const productFetchInFlight = new Map<string, Promise<Product | undefined>>();
 
 function remember(product: Product): Product {
   productCache.set(product.id, product);
@@ -28,6 +29,7 @@ function remember(product: Product): Product {
 
 export function resetProductCache(): void {
   productCache.clear();
+  productFetchInFlight.clear();
 }
 
 export const productService = {
@@ -40,16 +42,54 @@ export const productService = {
   },
 
   async fetchProductById(id: string): Promise<Product | undefined> {
-    try {
-      const response = await getStoreProduct(id);
-      return remember(mapStoreProduct(response.data));
-    } catch (error) {
-      if (error instanceof ProductRequestError && error.status === 404) {
-        return undefined;
-      }
-
-      throw error;
+    const cached = productCache.get(id);
+    if (cached) {
+      return cached;
     }
+
+    const pending = productFetchInFlight.get(id);
+    if (pending) {
+      return pending;
+    }
+
+    const request = (async () => {
+      try {
+        const response = await getStoreProduct(id);
+        return remember(mapStoreProduct(response.data));
+      } catch (error) {
+        if (error instanceof ProductRequestError && error.status === 404) {
+          return undefined;
+        }
+
+        throw error;
+      }
+    })();
+
+    productFetchInFlight.set(id, request);
+
+    try {
+      return await request;
+    } finally {
+      productFetchInFlight.delete(id);
+    }
+  },
+
+  async ensureProductsByIds(ids: readonly string[]): Promise<void> {
+    const uniqueIds = [...new Set(ids.map((id) => id.trim()).filter((id) => id.length > 0))];
+
+    await Promise.all(
+      uniqueIds.map(async (id) => {
+        if (productCache.has(id)) {
+          return;
+        }
+
+        try {
+          await productService.fetchProductById(id);
+        } catch {
+          // Leave the id unresolved so cart can render what it has and retry later.
+        }
+      }),
+    );
   },
 
   getProductsByCategory(_categoryId: string): Product[] {

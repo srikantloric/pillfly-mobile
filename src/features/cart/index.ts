@@ -1,6 +1,6 @@
 export { useCartActions } from "./hooks/useCartActions";
 export { useCartSummary } from "./hooks/useCartSummary";
-export { useCartStore } from "./store/cart.store";
+export { resetSessionCart, useCartStore } from "./store/cart.store";
 
 export {
   buildCartBill,
@@ -21,3 +21,4 @@ export type {
 export * from "./components";
 
 export { CartScreen } from "./screens/CartScreen";
+export { CheckoutScreen } from "./screens/CheckoutScreen";

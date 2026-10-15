@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 
-import { ProductImageWithPlaceholder } from "@/features/search/components";
+import { ProductImageWithPlaceholder } from "@/components/ui";
 import { colors } from "@/theme";
 
 type Props = {

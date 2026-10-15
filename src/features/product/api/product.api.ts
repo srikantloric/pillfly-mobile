@@ -1,3 +1,4 @@
+import { attachAuthInterceptors } from "@/features/auth/api/authInterceptors";
 import { productClient } from "@/services/api/product.client";
 
 import type {
@@ -13,7 +14,11 @@ import {
   parseStoreProductListResponse,
   parseStoreProductResponse,
 } from "./product.parsers";
-import { PRODUCT_PATHS } from "./product.paths";
+import { isPublicProductPath, PRODUCT_PATHS } from "./product.paths";
+
+if (typeof productClient.interceptors?.request?.use === "function") {
+  attachAuthInterceptors(productClient, { skipRefresh: isPublicProductPath });
+}
 
 const DEFAULT_LIMIT = 20;
 const MIN_LIMIT = 1;

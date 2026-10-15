@@ -4,13 +4,15 @@ import axios from "axios";
 import { authClient } from "@/services/api/auth.client";
 
 import { parseTokenResponse } from "./auth.parsers";
-import { isPublicProductPath } from "@/features/product/api/product.paths";
-
 import { AUTH_PATHS, getRequestPath, isPublicAuthPath, isRefreshAuthPath } from "./auth.paths";
 import { clearSessionTokens, getAccessToken, persistSessionTokens } from "./authSession";
 
 type RetryableConfig = InternalAxiosRequestConfig & {
   _pillflyAuthRetry?: boolean;
+};
+
+export type AuthInterceptorOptions = {
+  skipRefresh?: (path: string) => boolean;
 };
 
 let refreshInFlight: Promise<void> | null = null;
@@ -44,7 +46,10 @@ export function resetAuthRefreshLock(): void {
   refreshInFlight = null;
 }
 
-export function attachAuthInterceptors(client: AxiosInstance): void {
+export function attachAuthInterceptors(
+  client: AxiosInstance,
+  options: AuthInterceptorOptions = {},
+): void {
   if (attachedClients.has(client)) {
     return;
   }
@@ -77,8 +82,8 @@ export function attachAuthInterceptors(client: AxiosInstance): void {
 
       if (
         isPublicAuthPath(path) ||
-        isPublicProductPath(path) ||
         isRefreshAuthPath(path) ||
+        options.skipRefresh?.(path) ||
         config._pillflyAuthRetry
       ) {
         return Promise.reject(error);
