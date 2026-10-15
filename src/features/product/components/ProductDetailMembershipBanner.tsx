@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 import LinearGradient from "react-native-linear-gradient";
 
-import { profileColors } from "@/components/profile/profile.styles";
+import { profileColors } from "@/features/profile";
 
 import { PDP_SURFACE_RADIUS } from "../constants/productDetail.constants";
 

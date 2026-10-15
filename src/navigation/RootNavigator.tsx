@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import RNBootSplash from 'react-native-bootsplash';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/features/auth';
 import type { RootStackParamList } from '../types/navigation.types';
 import { AuthStackNavigator } from './AuthStackNavigator';
 import { AppStackNavigator } from './AppStackNavigator';

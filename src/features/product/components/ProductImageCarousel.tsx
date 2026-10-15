@@ -2,7 +2,7 @@ import React, { memo, useCallback, useMemo } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 
-import { ProductImageWithPlaceholder } from "@/features/search/components";
+import { ProductImageWithPlaceholder } from "@/components/ui";
 import { CarouselDots, HorizontalPager } from "@/components/ui";
 import type { Product } from "@/features/product/types/product";
 import { getProductImages, isProductInStock } from "@/features/product/utils/productDisplay";

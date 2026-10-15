@@ -14,7 +14,7 @@ import {
 } from "@/features/product";
 import { OutlineButton, PrimaryButton } from "@/components/ui";
 
-import { ProductImageWithPlaceholder } from "./ProductImageWithPlaceholder";
+import { ProductImageWithPlaceholder } from "@/components/ui";
 
 const TITLE_LINE_HEIGHT = 18;
 const TITLE_MAX_LINES = 2;

@@ -1,8 +1,4 @@
 export { AppHeader } from './AppHeader';
-export { CategoriesHeader } from './CategoriesHeader';
-export { HomeHeader } from './HomeHeader';
-export { OffersHeader } from './OffersHeader';
-export { SavingsHeader } from './SavingsHeader';
 export { formatCartBadgeCount } from './header.utils';
 export { useSharedHeaderNavigation } from './useSharedHeaderNavigation';
 

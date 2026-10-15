@@ -11,12 +11,15 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { HomePromoBanner } from "@/components/home/HomePromoBanner";
+import {
+  HomePromoBanner,
+  HorizontalScrollRow,
+  ProductImageWithPlaceholder,
+  SectionTitle,
+} from "@/components/ui";
 import { ProductListRow } from "@/features/product";
-import { ShopTile } from "@/components/category/ShopTile";
-import { ProductImageWithPlaceholder, SearchBar } from "@/features/search/components";
-import { HorizontalScrollRow, SectionTitle } from "@/components/ui";
-import { CATEGORIES } from "@/mocks/categories.mock";
+import { CATEGORIES, ShopTile } from "@/features/category";
+import { SearchBar } from "@/features/search/components";
 import {
   RECENT_SEARCHES,
   SEARCH_PROMO_BANNER,

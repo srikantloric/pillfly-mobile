@@ -2,12 +2,13 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { MaterialIcons } from '@react-native-vector-icons/material-icons';
+
+import { CategoryScreen } from '@/features/category';
+import { HomeScreen } from '@/features/home';
+import { OfferScreen } from '@/features/offers';
+import { SavingsScreen } from '@/features/savings';
 import type { MainTabParamList } from '../types/navigation.types';
 import { colors } from '../theme';
-import { HomeScreen } from '../screens/home/HomeScreen';
-import { CategoryScreen } from '../screens/category/CategoryScreen';
-import { OfferScreen } from '../screens/offer/OfferScreen';
-import { SavingsScreen } from '../screens/savings/SavingsScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 

@@ -2,7 +2,7 @@ import type { ImageRequireSource } from "react-native";
 
 import type { CategoryId } from "@/types/category.types";
 
-import { homePromoBannerAssets } from "@/components/home/HomePromoBanner";
+import { homePromoBannerAssets } from "@/components/ui";
 
 export const TOP_SEARCH_CATEGORY_TILES: ReadonlyArray<{
   id: CategoryId;

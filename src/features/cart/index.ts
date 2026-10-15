@@ -21,3 +21,4 @@ export type {
 export * from "./components";
 
 export { CartScreen } from "./screens/CartScreen";
+export { CheckoutScreen } from "./screens/CheckoutScreen";

@@ -1,4 +1,6 @@
 export { BouncingDotsLoader } from "./BouncingDotsLoader";
+export { HomePromoBanner, HOME_CONTENT_PADDING_HORIZONTAL, homePromoBannerAssets } from "./HomePromoBanner";
+export { ProductImageWithPlaceholder } from "./ProductImageWithPlaceholder";
 export { Accordion } from "./Accordion";
 export { BulletList } from "./BulletList";
 export { CarouselDots } from "./CarouselDots";

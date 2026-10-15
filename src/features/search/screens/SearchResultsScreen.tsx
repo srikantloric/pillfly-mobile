@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CART_STICKY_BAR_SCROLL_PADDING, CartStickyBar } from "@/components/cart";
+import { CART_STICKY_BAR_SCROLL_PADDING, CartStickyBar } from "@/features/cart";
 import { SearchBar, SearchHitCard } from "@/features/search/components";
 import { PrimaryButton } from "@/components/ui";
 import { useCartSummary } from "@/features/cart";

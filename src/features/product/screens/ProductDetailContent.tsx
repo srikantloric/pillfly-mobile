@@ -11,7 +11,7 @@ import {
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CART_STICKY_BAR_SCROLL_PADDING, CartStickyBar } from "@/components/cart";
+import { CART_STICKY_BAR_SCROLL_PADDING, CartStickyBar } from "@/features/cart";
 import {
   ProductDetailAccordionSections,
   ProductDetailFooterSections,
@@ -29,7 +29,7 @@ import { PDP_HEADER_COLLAPSE_END, PDP_HORIZONTAL_PADDING } from "@/features/prod
 import { useMedicalSectionScroll } from "@/features/product/hooks/useMedicalSectionScroll";
 import { useCartActions, useCartSummary } from "@/features/cart";
 import type { ProductDetailShareChannelId } from "@/features/product/mocks/detail.mock";
-import type { SavingsCoupon } from "@/mocks/savings.mock";
+import type { SavingsCoupon } from "@/features/savings";
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { AppStackParamList } from "@/types/navigation.types";
 import type { Product } from "@/features/product/types/product";

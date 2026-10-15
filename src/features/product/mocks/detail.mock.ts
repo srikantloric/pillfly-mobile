@@ -1,6 +1,6 @@
 import type { ImageRequireSource } from "react-native";
 
-import { homePromoBannerAssets } from "@/components/home/HomePromoBanner";
+import { homePromoBannerAssets } from "@/components/ui";
 import { PDP_SHARE_BRAND_COLORS } from "@/features/product/constants/productDetail.constants";
 
 export const MOCK_DELIVERY_INFO = {
