@@ -6,10 +6,6 @@ export type VariantStatus = "ACTIVE" | "INACTIVE";
 
 export type ProductImageType = "PRIMARY" | "SECONDARY";
 
-export interface ApiError {
-  message: string;
-}
-
 export interface StoreProductVariantImage {
   key: string;
   url?: string;
@@ -126,14 +122,6 @@ export interface ProductSearchResponse {
   hitsPerPage: number;
   nbHits: number;
   nbPages: number;
-}
-
-export interface ProductSearchValidationError {
-  message: "Validation failed";
-  errors: {
-    formErrors: string[];
-    fieldErrors: Record<string, string[]>;
-  };
 }
 
 export interface ListStoreProductsParams {

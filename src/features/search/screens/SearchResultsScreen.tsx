@@ -10,7 +10,7 @@ import { PrimaryButton } from "@/components/ui";
 import { useCartSummary } from "@/features/cart";
 import { useProductSearch } from "@/features/product/hooks/useProductSearch";
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
-import type { ProductSearchHit } from "@/features/product";
+import type { ProductSearchHit } from "@/features/product/types/storeProduct";
 import type { SearchStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 

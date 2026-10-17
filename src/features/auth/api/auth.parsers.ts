@@ -1,113 +1,62 @@
-import type {
-  Customer,
-  GetMeResponse,
-  ResendOtpResponse,
-  SendOtpResponse,
-  TokenResponse,
-} from "../types/auth.types";
-import { AuthRequestError } from "../utils/authRequestError";
+import { RequestError } from "@/services/api/requestError";
+
+import type { AuthTokens, Customer } from "../types/auth.types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function malformed(message = "Unexpected response from server."): AuthRequestError {
-  return new AuthRequestError(message, { kind: "malformed" });
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
-export function parseSendOtpResponse(data: unknown): SendOtpResponse {
-  if (!isRecord(data) || data.success !== true || typeof data.session !== "string" || !data.session.trim()) {
-    throw malformed();
-  }
-
-  if (data.challengeName != null && data.challengeName !== "CUSTOM_CHALLENGE") {
-    throw malformed();
-  }
-
-  return {
-    success: true,
-    message: "OTP sent successfully",
-    session: data.session,
-    challengeName: "CUSTOM_CHALLENGE",
-  };
+function malformed(): RequestError {
+  return new RequestError("Unexpected response from server.", { kind: "malformed" });
 }
 
-export function parseResendOtpResponse(data: unknown): ResendOtpResponse {
+function requireSuccess(data: unknown): Record<string, unknown> {
   if (!isRecord(data) || data.success !== true) {
     throw malformed();
   }
-
-  return {
-    success: true,
-    message: "OTP resent successfully",
-  };
+  return data;
 }
 
-export function parseTokenResponse(data: unknown): TokenResponse {
+/** send-otp → the Cognito session that verify-otp must echo back. */
+export function parseSendOtpResponse(data: unknown): string {
+  const body = requireSuccess(data);
+  if (!isNonEmptyString(body.session)) {
+    throw malformed();
+  }
+  return body.session;
+}
+
+export function parseResendOtpResponse(data: unknown): void {
+  requireSuccess(data);
+}
+
+export function parseTokenResponse(data: unknown): AuthTokens {
+  const body = requireSuccess(data);
+  if (!isNonEmptyString(body.accessToken) || !isNonEmptyString(body.idToken)) {
+    throw malformed();
+  }
+  return { accessToken: body.accessToken, idToken: body.idToken };
+}
+
+export function parseGetMeResponse(data: unknown): Customer {
+  const { user } = requireSuccess(data);
   if (
-    !isRecord(data) ||
-    data.success !== true ||
-    typeof data.accessToken !== "string" ||
-    !data.accessToken ||
-    typeof data.idToken !== "string" ||
-    !data.idToken
+    !isRecord(user) ||
+    !isNonEmptyString(user.id) ||
+    !isNonEmptyString(user.phoneNumber) ||
+    (user.status !== "ACTIVE" && user.status !== "BLOCKED")
   ) {
     throw malformed();
   }
 
-  const parsed: TokenResponse = {
-    success: true,
-    accessToken: data.accessToken,
-    idToken: data.idToken,
-  };
-
-  if (typeof data.expiresIn === "number") {
-    parsed.expiresIn = data.expiresIn;
-  }
-
-  if (typeof data.tokenType === "string") {
-    parsed.tokenType = data.tokenType;
-  }
-
-  return parsed;
-}
-
-function parseCustomer(value: unknown): Customer {
-  if (
-    !isRecord(value) ||
-    typeof value.id !== "string" ||
-    !value.id ||
-    typeof value.phoneNumber !== "string" ||
-    !value.phoneNumber ||
-    (value.status !== "ACTIVE" && value.status !== "BLOCKED") ||
-    typeof value.createdAt !== "string" ||
-    typeof value.updatedAt !== "string"
-  ) {
-    throw malformed();
-  }
-
-  const customer: Customer = {
-    id: value.id,
-    phoneNumber: value.phoneNumber,
-    status: value.status,
-    createdAt: value.createdAt,
-    updatedAt: value.updatedAt,
-  };
-
-  if (typeof value.name === "string") {
-    customer.name = value.name;
-  }
-
-  return customer;
-}
-
-export function parseGetMeResponse(data: unknown): GetMeResponse {
-  if (!isRecord(data) || data.success !== true) {
-    throw malformed();
-  }
-
   return {
-    success: true,
-    user: parseCustomer(data.user),
+    id: user.id,
+    phoneNumber: user.phoneNumber,
+    status: user.status,
+    ...(typeof user.name === "string" ? { name: user.name } : {}),
   };
 }

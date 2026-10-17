@@ -17,7 +17,7 @@ import {
   ProductImageWithPlaceholder,
   SectionTitle,
 } from "@/components/ui";
-import { ProductListRow } from "@/features/product";
+import { ProductListRow } from "@/features/product/components/ProductListRow";
 import { CATEGORIES, ShopTile } from "@/features/category";
 import { SearchBar } from "@/features/search/components";
 import {
@@ -30,10 +30,8 @@ import { colors } from "@/theme";
 
 import { useProductSearch } from "@/features/product/hooks/useProductSearch";
 import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
-import {
-  getPreviouslyBoughtProducts,
-  getProductImageUrl,
-} from "@/features/search/utils/search.utils";
+import { getProductImageUrl } from "@/features/product/utils/productDisplay";
+import { getPreviouslyBoughtProducts } from "@/features/search/utils/search.utils";
 
 type Props = NativeStackScreenProps<SearchStackParamList, "SearchHome">;
 

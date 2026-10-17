@@ -15,14 +15,14 @@ import type {
   StoreProductVariantImage,
   VariantStatus,
 } from "../types/storeProduct";
-import { ProductRequestError } from "../utils/productRequestError";
+import { RequestError } from "@/services/api/requestError";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function malformed(message = "Unexpected response from server."): ProductRequestError {
-  return new ProductRequestError(message, { kind: "malformed" });
+function malformed(): RequestError {
+  return new RequestError("Unexpected response from server.", { kind: "malformed" });
 }
 
 function requiredString(value: unknown): string | null {
@@ -65,7 +65,7 @@ function requiredStringArray(value: unknown): string[] | null {
   return items;
 }
 
-export function sortStoreProductImages(
+function sortByOrder(
   images: StoreProductVariantImage[],
 ): StoreProductVariantImage[] {
   return [...images].sort((left, right) => left.order - right.order);
@@ -81,10 +81,6 @@ export function isStoreHealthcare(
   product: StoreProduct,
 ): product is StoreHealthcareProduct {
   return product.productType === "HEALTHCARE";
-}
-
-export function getDisplayedPrice(variant: StoreProductVariant): number {
-  return variant.sellingPrice;
 }
 
 function parseImageType(value: unknown): ProductImageType | null {
@@ -176,7 +172,7 @@ function parseVariant(value: unknown): StoreProductVariant | null {
     sellingPrice,
     availableQty,
     inStock,
-    images: sortStoreProductImages(images),
+    images: sortByOrder(images),
     createdAt,
     updatedAt,
   };

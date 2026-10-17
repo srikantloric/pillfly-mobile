@@ -7,34 +7,17 @@ export const AUTH_PATHS = {
   me: "/customer/me",
 } as const;
 
-const PUBLIC_PATHS = new Set<string>([
-  AUTH_PATHS.sendOtp,
-  AUTH_PATHS.verifyOtp,
-  AUTH_PATHS.resendOtp,
-]);
+const PUBLIC_PATHS: readonly string[] = [AUTH_PATHS.sendOtp, AUTH_PATHS.verifyOtp, AUTH_PATHS.resendOtp];
 
-export function getRequestPath(url: string | undefined, baseURL: string | undefined): string {
-  if (!url) {
-    return "";
-  }
-
-  try {
-    const resolved = new URL(url, baseURL ?? "https://local.invalid");
-    return resolved.pathname.replace(/\/+$/, "") || "/";
-  } catch {
-    const [path] = url.split("?");
-    return path.startsWith("/") ? path.replace(/\/+$/, "") || "/" : `/${path.replace(/\/+$/, "")}`;
-  }
+/** Request URLs here are relative constants; strip the query and trailing slash for matching. */
+export function getRequestPath(url: string | undefined): string {
+  return (url ?? "").split("?")[0].replace(/\/+$/, "");
 }
 
 export function isPublicAuthPath(path: string): boolean {
-  return Array.from(PUBLIC_PATHS).some((publicPath) => path.endsWith(publicPath));
+  return PUBLIC_PATHS.some((publicPath) => path.endsWith(publicPath));
 }
 
 export function isRefreshAuthPath(path: string): boolean {
   return path.endsWith(AUTH_PATHS.refresh);
-}
-
-export function isProtectedAuthPath(path: string): boolean {
-  return path.endsWith(AUTH_PATHS.me) || path.endsWith(AUTH_PATHS.logout);
 }

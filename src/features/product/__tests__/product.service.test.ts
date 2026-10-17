@@ -8,7 +8,7 @@ jest.mock("../api/product.api", () => ({
   searchStoreProducts: (...args: unknown[]) => mockSearchStoreProducts(...args),
 }));
 
-import { ProductRequestError } from "../utils/productRequestError";
+import { RequestError } from "@/services/api/requestError";
 import { productService, resetProductCache } from "../services/product.service";
 import { isMedicineProduct } from "../utils/productDisplay";
 import type { StoreMedicineProduct } from "../types/storeProduct";
@@ -80,7 +80,7 @@ describe("product.service", () => {
 
   it("returns undefined for a 404 without using catalog mocks", async () => {
     mockGetStoreProduct.mockRejectedValue(
-      new ProductRequestError("Product not found.", { status: 404, kind: "http" }),
+      new RequestError("Product not found.", { status: 404, kind: "http" }),
     );
 
     await expect(productService.fetchProductById("missing")).resolves.toBeUndefined();
@@ -89,7 +89,7 @@ describe("product.service", () => {
 
   it("does not hide network errors behind mock products", async () => {
     mockGetStoreProduct.mockRejectedValue(
-      new ProductRequestError("Network error. Check your connection and try again.", {
+      new RequestError("Network error. Check your connection and try again.", {
         kind: "network",
       }),
     );
@@ -103,14 +103,14 @@ describe("product.service", () => {
   it("lists store products from the API", async () => {
     mockListStoreProducts.mockResolvedValue({ data: [medicine] });
 
-    const products = await productService.getProducts();
+    const page = await productService.listStorePage();
 
     expect(mockListStoreProducts).toHaveBeenCalledWith({
       limit: undefined,
       cursor: undefined,
     });
-    expect(products).toHaveLength(1);
-    expect(productService.getAllProducts()).toHaveLength(1);
+    expect(page.products).toHaveLength(1);
+    expect(productService.getProductById("prod_123")?.id).toBe("prod_123");
   });
 
   it("passes an opaque cursor through on the next store page", async () => {
@@ -149,10 +149,6 @@ describe("product.service", () => {
     const page = await productService.listStorePage();
 
     expect(page.products).toHaveLength(1);
-  });
-
-  it("leaves category filtering unimplemented until the backend contract exists", () => {
-    expect(productService.getProductsByCategory("health-concerns")).toEqual([]);
   });
 
   it("searches store products with page metadata", async () => {
@@ -207,9 +203,6 @@ describe("product.service", () => {
 
     await productService.fetchProductById("prod_123");
 
-    expect(productService.getAllProducts().map((product) => product.id)).toEqual(["prod_123"]);
-    expect(productService.searchProducts("Paracetamol")[0]?.id).toBe("prod_123");
-    expect(productService.searchProducts("unknown")).toEqual([]);
     expect(productService.getProductById("prod_123")?.title).toBe("Paracetamol 500 mg");
   });
 

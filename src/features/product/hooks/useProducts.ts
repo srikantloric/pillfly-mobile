@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { productService } from "@/features/product/services/product.service";
 import type { Product } from "@/features/product/types/product";
-import { mergeUniqueProducts } from "@/features/product/utils/mergeUniqueProducts";
+import { mergeUniqueBy } from "@/features/product/utils/mergeUniqueBy";
 
 const DEFAULT_PAGE_LIMIT = 20;
 
@@ -70,7 +70,7 @@ export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
 
     try {
       const page = await productService.listStorePage({ limit, cursor });
-      setProducts((current) => mergeUniqueProducts(current, page.products));
+      setProducts((current) => mergeUniqueBy(current, page.products, (product) => product.id));
       setNextCursor(page.nextCursor);
       nextCursorRef.current = page.nextCursor;
       setError(null);

@@ -3,12 +3,16 @@ const mockGet = jest.fn();
 jest.mock("@/services/api/product.client", () => ({
   productClient: {
     get: (...args: unknown[]) => mockGet(...args),
+    interceptors: {
+      request: { use: jest.fn() },
+      response: { use: jest.fn() },
+    },
   },
 }));
 
 import { getStoreProduct, listStoreProducts, searchStoreProducts } from "../api/product.api";
 import { PRODUCT_PATHS } from "../api/product.paths";
-import { ProductRequestError } from "../utils/productRequestError";
+import { RequestError } from "@/services/api/requestError";
 
 const timestamps = {
   createdAt: "2026-01-15T10:00:00.000Z",
@@ -110,7 +114,7 @@ describe("product.api", () => {
     });
 
     await expect(getStoreProduct("missing")).rejects.toMatchObject({
-      name: "ProductRequestError",
+      name: "RequestError",
       status: 404,
       message: "Product doesn't exist",
     });
@@ -151,7 +155,7 @@ describe("product.api", () => {
   });
 
   it("rejects a negative search page before calling the API", async () => {
-    await expect(searchStoreProducts({ page: -1 })).rejects.toBeInstanceOf(ProductRequestError);
+    await expect(searchStoreProducts({ page: -1 })).rejects.toBeInstanceOf(RequestError);
     expect(mockGet).not.toHaveBeenCalled();
   });
 
@@ -161,7 +165,7 @@ describe("product.api", () => {
     });
 
     await expect(getStoreProduct("prod_123")).rejects.toMatchObject({
-      name: "ProductRequestError",
+      name: "RequestError",
       kind: "network",
     });
   });
@@ -170,13 +174,13 @@ describe("product.api", () => {
     mockGet.mockResolvedValue({ data: { data: { id: "prod_123" } } });
 
     await expect(getStoreProduct("prod_123")).rejects.toMatchObject({
-      name: "ProductRequestError",
+      name: "RequestError",
       kind: "malformed",
     });
   });
 
   it("rejects an empty product id before calling the API", async () => {
-    await expect(getStoreProduct("  ")).rejects.toBeInstanceOf(ProductRequestError);
+    await expect(getStoreProduct("  ")).rejects.toBeInstanceOf(RequestError);
     expect(mockGet).not.toHaveBeenCalled();
   });
 
@@ -184,7 +188,7 @@ describe("product.api", () => {
     mockGet.mockResolvedValue({ data: { data: { id: "prod_123" } } });
 
     await expect(listStoreProducts()).rejects.toMatchObject({
-      name: "ProductRequestError",
+      name: "RequestError",
       kind: "malformed",
     });
   });

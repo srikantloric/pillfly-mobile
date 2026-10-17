@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { Pressable, Text, View } from "react-native";
 
-import type { ProductSearchHit } from "@/features/product";
+import type { ProductSearchHit } from "@/features/product/types/storeProduct";
 import { PrimaryButton } from "@/components/ui";
 
 import { ProductImageWithPlaceholder } from "@/components/ui";

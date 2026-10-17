@@ -1,10 +1,7 @@
 import type { HealthcareProduct, MedicineProduct, Product } from "@/features/product/types/product";
 import { getDefaultVariant, isHealthcareProduct, isMedicineProduct } from "@/features/product/utils/productDisplay";
 
-import { createSingleEntryCache } from "./productDetailBuilders.cache";
 import { parseBulletList } from "./productMedicalContent";
-
-const accordionSectionsCache = createSingleEntryCache<string, ProductAccordionSection[]>();
 
 export type ProductAccordionSectionId =
   | "additionalInformation"
@@ -173,12 +170,8 @@ const SECTION_BUILDERS: Record<
   productDetails: getProductDetailsSection,
 };
 
-function buildProductAccordionSections(product: Product): ProductAccordionSection[] {
+export function getProductAccordionSections(product: Product): ProductAccordionSection[] {
   return ACCORDION_ORDER.map((id) => SECTION_BUILDERS[id](product)).filter(
     (section): section is ProductAccordionSection => section != null,
   );
-}
-
-export function getProductAccordionSections(product: Product): ProductAccordionSection[] {
-  return accordionSectionsCache.get(product.id, () => buildProductAccordionSections(product));
 }

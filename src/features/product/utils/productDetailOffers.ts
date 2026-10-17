@@ -1,14 +1,6 @@
 import { PRODUCT_DETAIL_OFFER_COUPON_IDS } from "@/features/product/mocks/detail.mock";
 import { SAVINGS_COUPONS, type SavingsCoupon } from "@/features/savings";
 
-let cachedOffers: SavingsCoupon[] | null = null;
-
 export function getProductDetailOffers(): SavingsCoupon[] {
-  if (cachedOffers) {
-    return cachedOffers;
-  }
-
-  const idSet = new Set(PRODUCT_DETAIL_OFFER_COUPON_IDS);
-  cachedOffers = SAVINGS_COUPONS.filter((coupon) => idSet.has(coupon.id));
-  return cachedOffers;
+  return SAVINGS_COUPONS.filter((coupon) => PRODUCT_DETAIL_OFFER_COUPON_IDS.includes(coupon.id));
 }
