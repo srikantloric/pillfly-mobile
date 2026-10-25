@@ -1,7 +1,6 @@
 import { authClient } from "@/services/api/auth.client";
 
-import { isValidOtp, normalizeIndianMobile } from "../utils/phoneValidation";
-import { AuthRequestError, toAuthRequestError } from "../utils/authRequestError";
+import type { AuthTokens, Customer } from "../types/auth.types";
 import {
   parseGetMeResponse,
   parseResendOtpResponse,
@@ -9,14 +8,9 @@ import {
   parseTokenResponse,
 } from "./auth.parsers";
 import { AUTH_PATHS } from "./auth.paths";
+import { toAuthError } from "./authErrors";
 import { attachAuthInterceptors } from "./authInterceptors";
 import { persistSessionTokens } from "./authSession";
-import type {
-  GetMeResponse,
-  ResendOtpResponse,
-  SendOtpResponse,
-  TokenResponse,
-} from "../types/auth.types";
 
 attachAuthInterceptors(authClient);
 
@@ -24,91 +18,46 @@ async function request<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
   } catch (error) {
-    throw toAuthRequestError(error);
+    throw toAuthError(error);
   }
 }
 
-export async function sendCustomerOtp(mobileInput: string): Promise<SendOtpResponse> {
-  const mobile = normalizeIndianMobile(mobileInput);
-  if (!mobile.ok) {
-    throw new AuthRequestError(mobile.message, { status: 400, kind: "http" });
-  }
-
+/** Callers pass an already-normalised 10-digit mobile (see `normalizeIndianMobile`). */
+export function sendCustomerOtp(mobile: string): Promise<string> {
   return request(async () => {
-    const response = await authClient.post<unknown>(AUTH_PATHS.sendOtp, { mobile: mobile.mobile });
+    const response = await authClient.post<unknown>(AUTH_PATHS.sendOtp, { mobile });
     return parseSendOtpResponse(response.data);
   });
 }
 
-export async function verifyCustomerOtp(input: {
+/** Verifies the OTP and persists the issued tokens. */
+export function verifyCustomerOtp(input: {
   mobile: string;
   otp: string;
   session: string;
-}): Promise<TokenResponse> {
-  const mobile = normalizeIndianMobile(input.mobile);
-  if (!mobile.ok) {
-    throw new AuthRequestError(mobile.message, { status: 400, kind: "http" });
-  }
-
-  if (!isValidOtp(input.otp)) {
-    throw new AuthRequestError("Enter the 6-digit OTP", { status: 400, kind: "http" });
-  }
-
-  if (!input.session.trim()) {
-    throw new AuthRequestError("OTP session expired. Request a new OTP.", {
-      status: 401,
-      kind: "http",
-    });
-  }
-
+}): Promise<AuthTokens> {
   return request(async () => {
-    const response = await authClient.post<unknown>(AUTH_PATHS.verifyOtp, {
-      mobile: mobile.mobile,
-      otp: input.otp,
-      session: input.session,
-    });
+    const response = await authClient.post<unknown>(AUTH_PATHS.verifyOtp, input);
     const tokens = parseTokenResponse(response.data);
-    await persistSessionTokens({
-      accessToken: tokens.accessToken,
-      idToken: tokens.idToken,
-    });
+    await persistSessionTokens(tokens);
     return tokens;
   });
 }
 
-export async function resendCustomerOtp(mobileInput: string): Promise<ResendOtpResponse> {
-  const mobile = normalizeIndianMobile(mobileInput);
-  if (!mobile.ok) {
-    throw new AuthRequestError(mobile.message, { status: 400, kind: "http" });
-  }
-
+export function resendCustomerOtp(mobile: string): Promise<void> {
   return request(async () => {
-    const response = await authClient.post<unknown>(AUTH_PATHS.resendOtp, { mobile: mobile.mobile });
-    return parseResendOtpResponse(response.data);
+    const response = await authClient.post<unknown>(AUTH_PATHS.resendOtp, { mobile });
+    parseResendOtpResponse(response.data);
   });
 }
 
-export async function refreshCustomerTokens(): Promise<TokenResponse> {
+export function logoutCustomer(): Promise<void> {
   return request(async () => {
-    const response = await authClient.post<unknown>(AUTH_PATHS.refresh);
-    const tokens = parseTokenResponse(response.data);
-    await persistSessionTokens({
-      accessToken: tokens.accessToken,
-      idToken: tokens.idToken,
-    });
-    return tokens;
-  });
-}
-
-export async function logoutCustomer(): Promise<void> {
-  try {
     await authClient.post(AUTH_PATHS.logout);
-  } catch (error) {
-    throw toAuthRequestError(error);
-  }
+  });
 }
 
-export async function getCurrentCustomer(): Promise<GetMeResponse> {
+export function getCurrentCustomer(): Promise<Customer> {
   return request(async () => {
     const response = await authClient.get<unknown>(AUTH_PATHS.me);
     return parseGetMeResponse(response.data);

@@ -17,7 +17,7 @@ import {
   ProductImageWithPlaceholder,
   SectionTitle,
 } from "@/components/ui";
-import { ProductListRow } from "@/features/product";
+import { ProductListRow } from "@/features/product/components/ProductListRow";
 import { CATEGORIES, ShopTile } from "@/features/category";
 import { SearchBar } from "@/features/search/components";
 import {
@@ -30,12 +30,12 @@ import { colors } from "@/theme";
 
 import { useProductSearch } from "@/features/product/hooks/useProductSearch";
 import { useDebouncedValue } from "@/features/search/hooks/useDebouncedValue";
-import {
-  getPreviouslyBoughtProducts,
-  getProductImageUrl,
-} from "@/features/search/utils/search.utils";
+import { getProductImageUrl } from "@/features/product/utils/productDisplay";
+import { getPreviouslyBoughtProducts } from "@/features/search/utils/search.utils";
 
 type Props = NativeStackScreenProps<SearchStackParamList, "SearchHome">;
+
+const SUGGESTION_PLACEHOLDER_ROWS = 6;
 
 export function SearchHomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -120,64 +120,98 @@ export function SearchHomeScreen({ navigation }: Props) {
     [goToResults],
   );
 
+  const hasSuggestions = keywordSuggestions.length > 0 || productSuggestions.length > 0;
+
   const suggestionsContent = (
     <View className="flex-1">
-      <Text className="px-4 pb-2 pt-1 text-[13px] text-pillfly-muted">
+      <Text className="px-4 pb-2 pt-1 text-[13px] text-pillfly-muted" numberOfLines={1}>
         Showing suggestions for{" "}
         <Text className="font-bold text-pillfly-ink">{trimmedQuery}</Text>
       </Text>
 
-      {keywordSuggestions.map((term) => (
-        <Pressable
-          key={term}
-          accessibilityRole="button"
-          onPress={() => {
-            setQuery(term);
-            goToResults(term);
-          }}
-          className="flex-row items-center justify-between border-b border-pillfly-line/60 px-4 py-3.5 active:bg-pillfly-background"
-        >
-          <Text className="text-[15px] font-bold text-pillfly-ink">{term}</Text>
-          <Feather name="search" size={18} color={colors.textSecondary} />
-        </Pressable>
-      ))}
+      <ScrollView
+        className="flex-1"
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Reserve row space during the first fetch so results don't push content around when they land. */}
+        {waitingForSuggestions && !hasSuggestions
+          ? Array.from({ length: SUGGESTION_PLACEHOLDER_ROWS }, (_, index) => (
+              <View
+                key={`placeholder-${index}`}
+                className="h-20 flex-row items-center gap-3 border-b border-pillfly-line/60 px-4"
+              >
+                <View className="h-14 w-14 rounded-lg bg-pillfly-line/60" />
+                <View className="flex-1 gap-2">
+                  <View className="h-3.5 w-3/4 rounded bg-pillfly-line/60" />
+                  <View className="h-3 w-1/3 rounded bg-pillfly-line/60" />
+                </View>
+              </View>
+            ))
+          : null}
 
-      {productSuggestions.map((hit) => (
-        <Pressable
-          key={hit.productId}
-          accessibilityRole="button"
-          onPress={() =>
-            navigation.getParent()?.navigate("ProductDetail", { productId: hit.productId })
-          }
-          className="flex-row items-center gap-3 border-b border-pillfly-line/60 px-4 py-3 active:bg-pillfly-background"
-        >
-          <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-pillfly-line bg-pillfly-surface">
-            <ProductImageWithPlaceholder uri={hit.thumbnailUrl} className="h-full w-full" />
-          </View>
-          <View className="min-w-0 flex-1">
-            <Text className="text-[14px] font-bold text-pillfly-ink" numberOfLines={2}>
-              {hit.title}
-            </Text>
-            {hit.brandName ? (
-              <Text className="mt-0.5 text-[12px] text-pillfly-muted">{hit.brandName}</Text>
-            ) : null}
-          </View>
-          <Feather name="chevron-right" size={20} color={colors.textSecondary} />
-        </Pressable>
-      ))}
+        {/* Previous results stay visible (dimmed) while the next query loads, instead of collapsing. */}
+        <View className={waitingForSuggestions && hasSuggestions ? "opacity-60" : undefined}>
+          {keywordSuggestions.map((term) => (
+            <Pressable
+              key={term}
+              accessibilityRole="button"
+              onPress={() => {
+                setQuery(term);
+                goToResults(term);
+              }}
+              className="flex-row items-center justify-between border-b border-pillfly-line/60 px-4 py-3.5 active:bg-pillfly-background"
+            >
+              <Text className="mr-3 flex-1 text-[15px] font-bold text-pillfly-ink" numberOfLines={1}>
+                {term}
+              </Text>
+              <Feather name="search" size={18} color={colors.textSecondary} />
+            </Pressable>
+          ))}
 
-      {!waitingForSuggestions &&
-      keywordSuggestions.length === 0 &&
-      productSuggestions.length === 0 ? (
-        <View className="items-center px-4 py-10">
-          <Text className="text-[15px] font-semibold text-pillfly-ink">No suggestions found</Text>
-          <Text className="mt-1 text-center text-[13px] text-pillfly-muted">
-            Try another keyword or view all matching products.
-          </Text>
+          {productSuggestions.map((hit) => (
+            <Pressable
+              key={hit.productId}
+              accessibilityRole="button"
+              onPress={() =>
+                navigation.getParent()?.navigate("ProductDetail", { productId: hit.productId })
+              }
+              className="h-20 flex-row items-center gap-3 border-b border-pillfly-line/60 px-4 active:bg-pillfly-background"
+            >
+              <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-lg border border-pillfly-line bg-pillfly-surface">
+                <ProductImageWithPlaceholder uri={hit.thumbnailUrl} className="h-full w-full" />
+              </View>
+              <View className="min-w-0 flex-1">
+                <Text className="text-[14px] font-bold leading-[18px] text-pillfly-ink" numberOfLines={2}>
+                  {hit.title}
+                </Text>
+                {hit.brandName ? (
+                  <Text className="mt-0.5 text-[12px] leading-4 text-pillfly-muted" numberOfLines={1}>
+                    {hit.brandName}
+                  </Text>
+                ) : null}
+              </View>
+              <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+            </Pressable>
+          ))}
         </View>
-      ) : null}
 
-      <View className="items-center px-4 py-5">
+        {!waitingForSuggestions && !hasSuggestions ? (
+          <View className="items-center px-4 py-10">
+            <Text className="text-[15px] font-semibold text-pillfly-ink">No suggestions found</Text>
+            <Text className="mt-1 text-center text-[13px] text-pillfly-muted">
+              Try another keyword or view all matching products.
+            </Text>
+          </View>
+        ) : null}
+      </ScrollView>
+
+      {/* Pinned outside the scroll area so it never moves as the suggestion count changes. */}
+      <View
+        className="items-center border-t border-pillfly-line/60 bg-pillfly-background px-4 pt-3"
+        style={{ paddingBottom: insets.bottom + 12 }}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="View all results"

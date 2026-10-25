@@ -2,7 +2,7 @@ import React, { memo, useCallback } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 
-import type { Product } from "@/features/product";
+import type { Product } from "@/features/product/types/product";
 import {
   formatInr,
   getProductImageUrl,
@@ -11,7 +11,7 @@ import {
   getProductRating,
   isMedicineProduct,
   isProductInStock,
-} from "@/features/product";
+} from "@/features/product/utils/productDisplay";
 import { OutlineButton, PrimaryButton } from "@/components/ui";
 
 import { ProductImageWithPlaceholder } from "@/components/ui";

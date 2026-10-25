@@ -17,7 +17,6 @@ export const PDP_SURFACE_RADIUS = "rounded-xl";
 
 export const PDP_SHEET_RADIUS = "rounded-t-2xl";
 
-export const PDP_BORDER = "border-pillfly-line";
 
 export const PDP_DIVIDER = "border-b border-pillfly-line";
 

@@ -23,9 +23,15 @@ jest.mock("../api/auth.api", () => ({
 
 import { useCartStore } from "@/features/cart/store/cart.store";
 
-import { clearMemoryTokens, getAccessToken, persistSessionTokens } from "../api/authSession";
+import { RequestError } from "@/services/api/requestError";
+
+import {
+  clearMemoryTokens,
+  getAccessToken,
+  persistSessionTokens,
+  setMemoryTokens,
+} from "../api/authSession";
 import { resetAuthStoreForTests, useAuthStore } from "../store/auth.store";
-import { AuthRequestError } from "../utils/authRequestError";
 
 const leftoverCartAddress = {
   id: "addr_1",
@@ -61,14 +67,13 @@ describe("auth store", () => {
 
   it("restores an ACTIVE customer session", async () => {
     mockLoadAuthTokens.mockResolvedValue({ accessToken: "access", idToken: "id" });
-    mockGetCurrentCustomer.mockResolvedValue({ success: true, user: activeUser });
+    mockGetCurrentCustomer.mockResolvedValue(activeUser);
 
     await useAuthStore.getState().restoreSession();
 
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(true);
     expect(state.user).toEqual(activeUser);
-    expect(state.isLoading).toBe(false);
     expect(state.hasHydrated).toBe(true);
     expect(mockGetCurrentCustomer).toHaveBeenCalledTimes(1);
   });
@@ -77,13 +82,12 @@ describe("auth store", () => {
     mockLoadAuthTokens.mockResolvedValue({ accessToken: "old-access", idToken: "old-id" });
     mockGetCurrentCustomer.mockImplementation(async () => {
       await persistSessionTokens({ accessToken: "new-access", idToken: "new-id" });
-      return { success: true, user: activeUser };
+      return activeUser;
     });
 
     await useAuthStore.getState().restoreSession();
 
-    expect(useAuthStore.getState().accessToken).toBe("new-access");
-    expect(useAuthStore.getState().idToken).toBe("new-id");
+    expect(getAccessToken()).toBe("new-access");
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
   });
 
@@ -96,14 +100,13 @@ describe("auth store", () => {
       isAuthenticated: false,
       user: null,
       hasHydrated: true,
-      isLoading: false,
     });
     expect(mockGetCurrentCustomer).not.toHaveBeenCalled();
   });
 
   it("runs restore only once until retry", async () => {
     mockLoadAuthTokens.mockResolvedValue({ accessToken: "access", idToken: "id" });
-    mockGetCurrentCustomer.mockResolvedValue({ success: true, user: activeUser });
+    mockGetCurrentCustomer.mockResolvedValue(activeUser);
 
     await Promise.all([
       useAuthStore.getState().restoreSession(),
@@ -116,10 +119,7 @@ describe("auth store", () => {
 
   it("clears a BLOCKED customer on restore", async () => {
     mockLoadAuthTokens.mockResolvedValue({ accessToken: "access", idToken: "id" });
-    mockGetCurrentCustomer.mockResolvedValue({
-      success: true,
-      user: { ...activeUser, status: "BLOCKED" },
-    });
+    mockGetCurrentCustomer.mockResolvedValue({ ...activeUser, status: "BLOCKED" });
 
     await useAuthStore.getState().restoreSession();
 
@@ -132,23 +132,18 @@ describe("auth store", () => {
   it("keeps tokens on restore network failure without marking authenticated", async () => {
     mockLoadAuthTokens.mockResolvedValue({ accessToken: "access", idToken: "id" });
     mockGetCurrentCustomer.mockRejectedValue(
-      new AuthRequestError("Network error. Check your connection and try again.", { kind: "network" }),
+      new RequestError("Network error. Check your connection and try again.", { kind: "network" }),
     );
 
     await useAuthStore.getState().restoreSession();
 
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
-    expect(useAuthStore.getState().accessToken).toBe("access");
+    expect(getAccessToken()).toBe("access");
     expect(mockClearAuthTokens).not.toHaveBeenCalled();
   });
 
   it("stores the send-otp session for verify", async () => {
-    mockSendCustomerOtp.mockResolvedValue({
-      success: true,
-      message: "OTP sent successfully",
-      session: "cognito-session-token",
-      challengeName: "CUSTOM_CHALLENGE",
-    });
+    mockSendCustomerOtp.mockResolvedValue("cognito-session-token");
 
     await useAuthStore.getState().sendOtp("+91 98765 43210");
 
@@ -163,13 +158,12 @@ describe("auth store", () => {
     useAuthStore.setState({
       otpChallenge: { mobile: "9876543210", session: "cognito-session-token" },
     });
-    mockVerifyCustomerOtp.mockResolvedValue({
-      success: true,
-      accessToken: "access",
-      idToken: "id",
+    mockVerifyCustomerOtp.mockImplementation(async () => {
+      setMemoryTokens({ accessToken: "access", idToken: "id" });
+      return { accessToken: "access", idToken: "id" };
     });
     mockGetCurrentCustomer.mockRejectedValue(
-      new AuthRequestError("Unable to get customer profile.", { status: 500, kind: "http" }),
+      new RequestError("Unable to get customer profile.", { status: 500, kind: "http" }),
     );
 
     await expect(useAuthStore.getState().verifyOtp("123456")).rejects.toThrow(
@@ -178,7 +172,7 @@ describe("auth store", () => {
 
     const state = useAuthStore.getState();
     expect(state.isAuthenticated).toBe(false);
-    expect(state.accessToken).toBe("access");
+    expect(getAccessToken()).toBe("access");
     expect(state.otpChallenge).toBeNull();
     expect(state.authError).not.toMatch(/invalid or expired otp/i);
     expect(mockVerifyCustomerOtp).toHaveBeenCalledWith({
@@ -189,15 +183,13 @@ describe("auth store", () => {
   });
 
   it("signs out locally even when logout API fails", async () => {
+    setMemoryTokens({ accessToken: "access", idToken: "id" });
     useAuthStore.setState({
-      accessToken: "access",
-      idToken: "id",
       user: activeUser,
       isAuthenticated: true,
-      isLoading: false,
       hasHydrated: true,
     });
-    mockLogoutCustomer.mockRejectedValue(new AuthRequestError("Unauthorized", { status: 401 }));
+    mockLogoutCustomer.mockRejectedValue(new RequestError("Unauthorized", { status: 401 }));
 
     useCartStore.setState({
       items: [{ productId: "prod_123", quantity: 2 }],
@@ -224,5 +216,89 @@ describe("auth store", () => {
 
     expect(useCartStore.getState().items).toEqual([]);
     expect(useCartStore.getState().deliveryAddress).toBeNull();
+  });
+
+  it("rejects an invalid mobile before calling send-otp", async () => {
+    await expect(useAuthStore.getState().sendOtp("12345")).rejects.toBeInstanceOf(RequestError);
+
+    expect(mockSendCustomerOtp).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().authError).toBe("Enter a valid Indian mobile number");
+    expect(useAuthStore.getState().isSubmitting).toBe(false);
+  });
+
+  it("keeps the OTP challenge when verify-otp fails so the user can retry", async () => {
+    const challenge = { mobile: "9876543210", session: "cognito-session-token" };
+    useAuthStore.setState({ otpChallenge: challenge });
+    mockVerifyCustomerOtp.mockRejectedValue(
+      new RequestError("Invalid or expired OTP", { status: 401 }),
+    );
+
+    await expect(useAuthStore.getState().verifyOtp("000000")).rejects.toThrow("Invalid or expired OTP");
+
+    expect(useAuthStore.getState()).toMatchObject({
+      otpChallenge: challenge,
+      authError: "Invalid or expired OTP",
+      isSubmitting: false,
+      isAuthenticated: false,
+    });
+  });
+
+  it("rejects a malformed OTP and a missing challenge without calling the API", async () => {
+    await expect(useAuthStore.getState().verifyOtp("123456")).rejects.toThrow(/OTP session expired/);
+
+    useAuthStore.setState({ otpChallenge: { mobile: "9876543210", session: "s" } });
+    await expect(useAuthStore.getState().verifyOtp("12a")).rejects.toThrow(/6-digit OTP/);
+
+    expect(mockVerifyCustomerOtp).not.toHaveBeenCalled();
+  });
+
+  it("authenticates an ACTIVE customer after verify", async () => {
+    useAuthStore.setState({ otpChallenge: { mobile: "9876543210", session: "s" } });
+    mockVerifyCustomerOtp.mockResolvedValue({ accessToken: "access", idToken: "id" });
+    mockGetCurrentCustomer.mockResolvedValue(activeUser);
+
+    await useAuthStore.getState().verifyOtp("123456");
+
+    expect(useAuthStore.getState()).toMatchObject({
+      user: activeUser,
+      isAuthenticated: true,
+      isSubmitting: false,
+      otpChallenge: null,
+      authError: null,
+    });
+  });
+
+  it("clears the session when a BLOCKED customer verifies", async () => {
+    useAuthStore.setState({ otpChallenge: { mobile: "9876543210", session: "s" } });
+    mockVerifyCustomerOtp.mockImplementation(async () => {
+      setMemoryTokens({ accessToken: "access", idToken: "id" });
+      return { accessToken: "access", idToken: "id" };
+    });
+    mockGetCurrentCustomer.mockResolvedValue({ ...activeUser, status: "BLOCKED" });
+
+    await expect(useAuthStore.getState().verifyOtp("123456")).rejects.toThrow(
+      "This account cannot be used.",
+    );
+
+    expect(getAccessToken()).toBeNull();
+    expect(mockClearAuthTokens).toHaveBeenCalled();
+    expect(useAuthStore.getState()).toMatchObject({
+      isAuthenticated: false,
+      isSubmitting: false,
+      authError: "This account cannot be used.",
+    });
+  });
+
+  it("logs out when tokens are cleared outside the store", async () => {
+    useAuthStore.setState({ user: activeUser, isAuthenticated: true, hasHydrated: true });
+
+    // e.g. the interceptor's refresh failed
+    await persistSessionTokens({ accessToken: "a", idToken: "i" });
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+
+    const { clearSessionTokens } = jest.requireActual("../api/authSession");
+    await clearSessionTokens();
+
+    expect(useAuthStore.getState()).toMatchObject({ user: null, isAuthenticated: false });
   });
 });

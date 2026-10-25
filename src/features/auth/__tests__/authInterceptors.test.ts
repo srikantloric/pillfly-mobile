@@ -16,7 +16,7 @@ jest.mock("../storage/tokenStorage", () => ({
 
 import { isPublicProductPath } from "@/features/product/api/product.paths";
 
-import { attachAuthInterceptors, resetAuthRefreshLock } from "../api/authInterceptors";
+import { attachAuthInterceptors } from "../api/authInterceptors";
 import { AUTH_PATHS } from "../api/auth.paths";
 import { clearMemoryTokens, getAccessToken, setMemoryTokens } from "../api/authSession";
 
@@ -85,7 +85,6 @@ function mockFailedRefresh() {
 
 describe("auth interceptors", () => {
   beforeEach(() => {
-    resetAuthRefreshLock();
     clearMemoryTokens();
     setMemoryTokens({ accessToken: "old-access", idToken: "old-id" });
     mockAuthPost.mockReset();

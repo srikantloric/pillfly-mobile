@@ -1,5 +1,4 @@
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
-import axios from "axios";
 
 import { authClient } from "@/services/api/auth.client";
 
@@ -12,51 +11,30 @@ type RetryableConfig = InternalAxiosRequestConfig & {
 };
 
 export type AuthInterceptorOptions = {
+  /** Paths that may return 401 without meaning the session expired (e.g. public catalog). */
   skipRefresh?: (path: string) => boolean;
 };
 
 let refreshInFlight: Promise<void> | null = null;
-const attachedClients = new WeakSet<AxiosInstance>();
 
-function requestPath(config: InternalAxiosRequestConfig): string {
-  return getRequestPath(config.url, config.baseURL);
-}
-
-async function refreshAccessToken(): Promise<void> {
-  if (refreshInFlight) {
-    await refreshInFlight;
-    return;
-  }
-
-  refreshInFlight = (async () => {
+/** Refreshes via the cookie-backed endpoint; concurrent 401s share one refresh call. */
+function refreshAccessToken(): Promise<void> {
+  refreshInFlight ??= (async () => {
     const response = await authClient.post<unknown>(AUTH_PATHS.refresh);
-    const tokens = parseTokenResponse(response.data);
-    await persistSessionTokens({
-      accessToken: tokens.accessToken,
-      idToken: tokens.idToken,
-    });
+    await persistSessionTokens(parseTokenResponse(response.data));
   })().finally(() => {
     refreshInFlight = null;
   });
 
-  await refreshInFlight;
-}
-
-export function resetAuthRefreshLock(): void {
-  refreshInFlight = null;
+  return refreshInFlight;
 }
 
 export function attachAuthInterceptors(
   client: AxiosInstance,
   options: AuthInterceptorOptions = {},
 ): void {
-  if (attachedClients.has(client)) {
-    return;
-  }
-  attachedClients.add(client);
-
   client.interceptors.request.use((config) => {
-    const path = requestPath(config);
+    const path = getRequestPath(config.url);
     const accessToken = getAccessToken();
 
     if (accessToken && !isPublicAuthPath(path) && !isRefreshAuthPath(path)) {
@@ -72,20 +50,13 @@ export function attachAuthInterceptors(
     (response) => response,
     async (error: AxiosError) => {
       const config = error.config as RetryableConfig | undefined;
-      const status = error.response?.status;
 
-      if (!config || status !== 401) {
+      if (!config || error.response?.status !== 401 || config._pillflyAuthRetry) {
         return Promise.reject(error);
       }
 
-      const path = requestPath(config);
-
-      if (
-        isPublicAuthPath(path) ||
-        isRefreshAuthPath(path) ||
-        options.skipRefresh?.(path) ||
-        config._pillflyAuthRetry
-      ) {
+      const path = getRequestPath(config.url);
+      if (isPublicAuthPath(path) || isRefreshAuthPath(path) || options.skipRefresh?.(path)) {
         return Promise.reject(error);
       }
 
@@ -97,16 +68,7 @@ export function attachAuthInterceptors(
       }
 
       config._pillflyAuthRetry = true;
-      const accessToken = getAccessToken();
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-      }
-
       return client.request(config);
     },
   );
-}
-
-export function isAxiosError(error: unknown): error is AxiosError {
-  return axios.isAxiosError(error);
 }

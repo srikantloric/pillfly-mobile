@@ -4,7 +4,6 @@ import {
   Easing,
   Keyboard,
   Modal,
-  Platform,
   Pressable,
   Text,
   TextInput,
@@ -13,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../hooks/useAuth';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import {
   authColors,
   authRadii,
@@ -30,7 +30,7 @@ type Props = {
   onVerified: () => void;
 };
 
-function maskedMobile(mobile: string): string {
+function formatMobile(mobile: string): string {
   if (mobile.length !== 10) {
     return `+91 ${mobile}`;
   }
@@ -76,24 +76,9 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
   useEffect(() => {
     if (!visible) {
       setKeyboardHeight(0);
-      return;
     }
-
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showSub = Keyboard.addListener(showEvent, (event) => {
-      setKeyboardHeight(event.endCoordinates.height);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
   }, [visible]);
+  useKeyboardHeight(setKeyboardHeight, visible);
 
   const handleChangeOtp = useCallback(
     (value: string) => {
@@ -115,10 +100,6 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
   }, [clearAuthError, isSubmitting, onClose]);
 
   const handleVerify = useCallback(async () => {
-    if (otp.length !== 6 || isSubmitting) {
-      return;
-    }
-
     Keyboard.dismiss();
     try {
       await verifyOtp(otp);
@@ -126,22 +107,17 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
     } catch {
       setOtp('');
     }
-  }, [isSubmitting, onVerified, otp, verifyOtp]);
+  }, [onVerified, otp, verifyOtp]);
 
   const handleResend = useCallback(async () => {
-    if (isSubmitting) {
-      return;
-    }
-
     setOtp('');
     try {
       await resendOtp();
     } catch {
       // authError is shown from the store
     }
-  }, [isSubmitting, resendOtp]);
+  }, [resendOtp]);
 
-  const canVerify = otp.length === 6 && !isSubmitting;
   const sheetPaddingBottom = Math.max(insets.bottom, 12) + (keyboardHeight > 0 ? 8 : 16);
 
   return (
@@ -192,7 +168,7 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
             className="mt-1 px-6 text-pillfly-auth-muted"
             style={{ fontSize: authTypography.subtitle }}
           >
-            We sent a 6-digit code to {maskedMobile(mobile)}
+            We sent a 6-digit code to {formatMobile(mobile)}
           </Text>
 
           <View
@@ -229,10 +205,8 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
           <View style={{ marginTop: authSpacing.sectionVertical }}>
             <AuthGradientButton
               label="Verify OTP"
-              onPress={() => {
-                handleVerify().catch(() => undefined);
-              }}
-              disabled={!canVerify && !isSubmitting}
+              onPress={handleVerify}
+              disabled={otp.length !== 6}
               busy={isSubmitting}
             />
           </View>
@@ -240,9 +214,7 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Resend OTP"
-            onPress={() => {
-              handleResend().catch(() => undefined);
-            }}
+            onPress={handleResend}
             disabled={isSubmitting}
             className="mt-4 items-center py-3 active:opacity-70"
           >

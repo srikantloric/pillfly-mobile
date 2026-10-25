@@ -3,6 +3,7 @@ import {
   Alert,
   Animated,
   ScrollView,
+  Text,
   View,
   useWindowDimensions,
   type NativeScrollEvent,
@@ -19,16 +20,23 @@ import {
   ProductDetailMembershipBanner,
   ProductDetailMedicalContent,
   ProductDetailMetaSections,
-  ProductDetailOfferFootnote,
   ProductDetailProductCarousels,
+  ProductDetailPromoCarousel,
   ProductImageCarousel,
   ProductInformationCard,
   getPdpHeroImageHeight,
 } from "@/features/product/components";
-import { PDP_HEADER_COLLAPSE_END, PDP_HORIZONTAL_PADDING } from "@/features/product/constants/productDetail.constants";
+import {
+  PDP_HEADER_COLLAPSE_END,
+  PDP_HORIZONTAL_PADDING,
+  PDP_SUBTITLE_CLASS,
+} from "@/features/product/constants/productDetail.constants";
 import { useMedicalSectionScroll } from "@/features/product/hooks/useMedicalSectionScroll";
 import { useCartActions, useCartSummary } from "@/features/cart";
-import type { ProductDetailShareChannelId } from "@/features/product/mocks/detail.mock";
+import {
+  PRODUCT_DETAIL_OFFER_FOOTNOTE,
+  type ProductDetailShareChannelId,
+} from "@/features/product/mocks/detail.mock";
 import type { SavingsCoupon } from "@/features/savings";
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { AppStackParamList } from "@/types/navigation.types";
@@ -232,7 +240,7 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
             onPressViewBenefits={showFeatureComingSoon}
             onPressAddPlus={showFeatureComingSoon}
           />
-          <ProductDetailOfferFootnote />
+          <Text className={`mt-2 ${PDP_SUBTITLE_CLASS}`}>{PRODUCT_DETAIL_OFFER_FOOTNOTE}</Text>
         </View>
 
         <ProductDetailMetaSections
@@ -241,8 +249,9 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
           onPressReturnPolicy={showFeatureComingSoon}
           onPressComposition={showFeatureComingSoon}
           onPressTherapeutic={showFeatureComingSoon}
-          onPressPromoCta={showFeatureComingSoon}
         />
+
+        <ProductDetailPromoCarousel onPressPromoCta={showFeatureComingSoon} />
 
         <ProductDetailProductCarousels
           productId={product.id}

@@ -2,133 +2,111 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { productService } from "@/features/product/services/product.service";
 import type { ProductSearchHit } from "@/features/product/types/storeProduct";
-import { hasMoreSearchPages, mergeUniqueHits } from "@/features/product/utils/mergeUniqueHits";
+import { mergeUniqueBy } from "@/features/product/utils/mergeUniqueBy";
 
 const DEFAULT_SEARCH_LIMIT = 20;
+
+/** `page` is 0-based; `nbPages` is the total page count. */
+export function hasMoreSearchPages(page: number, nbPages: number): boolean {
+  return nbPages > 0 && page < nbPages - 1;
+}
+
+function toError(e: unknown): Error {
+  return e instanceof Error ? e : new Error("Failed to search products");
+}
 
 export function useProductSearch(query: string, limit = DEFAULT_SEARCH_LIMIT) {
   const trimmedQuery = query.trim();
   const [items, setItems] = useState<ProductSearchHit[]>([]);
-  const [page, setPage] = useState(0);
-  const [nbPages, setNbPages] = useState(0);
-  const [nbHits, setNbHits] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const loadMoreLock = useRef(false);
-  const pageRef = useRef(0);
-  const nbPagesRef = useRef(0);
+
+  // Paging cursor for loadMore; `generation` changes with each new query so late pages are dropped.
+  const paging = useRef({ page: 0, nbPages: 0, generation: 0, loadingMore: false });
 
   const retry = useCallback(() => {
     setReloadToken((current) => current + 1);
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    pageRef.current = 0;
-    nbPagesRef.current = 0;
+    const generation = paging.current.generation + 1;
+    paging.current = { page: 0, nbPages: 0, generation, loadingMore: false };
+    setError(null);
+    setLoadingMore(false);
 
     if (!trimmedQuery) {
       setItems([]);
-      setPage(0);
-      setNbPages(0);
-      setNbHits(0);
-      setError(null);
+      setHasMore(false);
       setLoading(false);
       return;
     }
 
-    async function loadFirstPage() {
-      try {
-        setLoading(true);
-        setError(null);
+    // Previous results stay visible until the new query's first page arrives.
 
-        const result = await productService.searchStorePage({
-          q: trimmedQuery,
-          limit,
-          page: 0,
-        });
-
-        if (cancelled) {
+    setLoading(true);
+    productService
+      .searchStorePage({ q: trimmedQuery, limit, page: 0 })
+      .then((result) => {
+        if (paging.current.generation !== generation) {
           return;
         }
-
+        paging.current.page = result.page;
+        paging.current.nbPages = result.nbPages;
         setItems(result.items);
-        setPage(result.page);
-        setNbPages(result.nbPages);
-        setNbHits(result.nbHits);
-        pageRef.current = result.page;
-        nbPagesRef.current = result.nbPages;
-      } catch (e) {
-        if (!cancelled) {
+        setHasMore(hasMoreSearchPages(result.page, result.nbPages));
+      })
+      .catch((e: unknown) => {
+        if (paging.current.generation === generation) {
           setItems([]);
-          setPage(0);
-          setNbPages(0);
-          setNbHits(0);
-          pageRef.current = 0;
-          nbPagesRef.current = 0;
-          setError(e instanceof Error ? e : new Error("Failed to search products"));
+          setHasMore(false);
+          setError(toError(e));
         }
-      } finally {
-        if (!cancelled) {
+      })
+      .finally(() => {
+        if (paging.current.generation === generation) {
           setLoading(false);
         }
-      }
-    }
-
-    loadFirstPage();
-
-    return () => {
-      cancelled = true;
-    };
+      });
   }, [limit, reloadToken, trimmedQuery]);
 
   const loadMore = useCallback(async () => {
-    if (
-      !trimmedQuery ||
-      loading ||
-      loadMoreLock.current ||
-      !hasMoreSearchPages(pageRef.current, nbPagesRef.current)
-    ) {
+    const state = paging.current;
+    if (!trimmedQuery || loading || state.loadingMore || !hasMoreSearchPages(state.page, state.nbPages)) {
       return;
     }
 
-    loadMoreLock.current = true;
+    const { generation } = state;
+    state.loadingMore = true;
     setLoadingMore(true);
-    const nextPage = pageRef.current + 1;
 
     try {
       const result = await productService.searchStorePage({
         q: trimmedQuery,
         limit,
-        page: nextPage,
+        page: state.page + 1,
       });
-      setItems((current) => mergeUniqueHits(current, result.items));
-      setPage(result.page);
-      setNbPages(result.nbPages);
-      setNbHits(result.nbHits);
-      pageRef.current = result.page;
-      nbPagesRef.current = result.nbPages;
+      if (paging.current.generation !== generation) {
+        return;
+      }
+      paging.current.page = result.page;
+      paging.current.nbPages = result.nbPages;
+      setItems((current) => mergeUniqueBy(current, result.items, (hit) => hit.productId));
+      setHasMore(hasMoreSearchPages(result.page, result.nbPages));
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e : new Error("Failed to search products"));
+      if (paging.current.generation === generation) {
+        setError(toError(e));
+      }
     } finally {
-      loadMoreLock.current = false;
-      setLoadingMore(false);
+      if (paging.current.generation === generation) {
+        paging.current.loadingMore = false;
+        setLoadingMore(false);
+      }
     }
   }, [limit, loading, trimmedQuery]);
 
-  return {
-    items,
-    page,
-    nbPages,
-    nbHits,
-    hasMore: hasMoreSearchPages(page, nbPages),
-    loading,
-    loadingMore,
-    error,
-    loadMore,
-    retry,
-  };
+  return { items, hasMore, loading, loadingMore, error, loadMore, retry };
 }

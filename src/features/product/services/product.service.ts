@@ -1,24 +1,19 @@
 import { getStoreProduct, listStoreProducts, searchStoreProducts } from "@/features/product/api/product.api";
 import { mapStoreProduct } from "@/features/product/api/mapStoreProduct";
 import type { Product } from "@/features/product/types/product";
-import type { ProductSearchHit } from "@/features/product/types/storeProduct";
-import { mergeUniqueHits } from "@/features/product/utils/mergeUniqueHits";
-import { mergeUniqueProducts } from "@/features/product/utils/mergeUniqueProducts";
-import { ProductRequestError } from "@/features/product/utils/productRequestError";
-
-export type StoreSearchPage = {
-  items: ProductSearchHit[];
-  page: number;
-  hitsPerPage: number;
-  nbHits: number;
-  nbPages: number;
-};
+import type { ProductSearchResponse } from "@/features/product/types/storeProduct";
+import { mergeUniqueBy } from "@/features/product/utils/mergeUniqueBy";
+import { RequestError } from "@/services/api/requestError";
 
 export type StoreProductPage = {
   products: Product[];
   nextCursor?: string;
 };
 
+/**
+ * Products fetched from the API are cached by id so the cart and detail screens can
+ * read them synchronously; concurrent fetches of the same id share one request.
+ */
 const productCache = new Map<string, Product>();
 const productFetchInFlight = new Map<string, Promise<Product | undefined>>();
 
@@ -33,14 +28,11 @@ export function resetProductCache(): void {
 }
 
 export const productService = {
-  getAllProducts(): Product[] {
-    return Array.from(productCache.values());
-  },
-
   getProductById(id: string): Product | undefined {
     return productCache.get(id);
   },
 
+  /** Resolves `undefined` when the product does not exist (404). */
   async fetchProductById(id: string): Promise<Product | undefined> {
     const cached = productCache.get(id);
     if (cached) {
@@ -57,16 +49,14 @@ export const productService = {
         const response = await getStoreProduct(id);
         return remember(mapStoreProduct(response.data));
       } catch (error) {
-        if (error instanceof ProductRequestError && error.status === 404) {
+        if (error instanceof RequestError && error.status === 404) {
           return undefined;
         }
-
         throw error;
       }
     })();
 
     productFetchInFlight.set(id, request);
-
     try {
       return await request;
     } finally {
@@ -79,10 +69,6 @@ export const productService = {
 
     await Promise.all(
       uniqueIds.map(async (id) => {
-        if (productCache.has(id)) {
-          return;
-        }
-
         try {
           await productService.fetchProductById(id);
         } catch {
@@ -92,59 +78,20 @@ export const productService = {
     );
   },
 
-  getProductsByCategory(_categoryId: string): Product[] {
-    return [];
-  },
-
-  searchProducts(query: string): Product[] {
-    const normalizedQuery = query.trim().toLowerCase();
-    const products = Array.from(productCache.values());
-
-    if (!normalizedQuery) {
-      return products;
-    }
-
-    return products.filter((product) => product.title.toLowerCase().includes(normalizedQuery));
-  },
-
-  async searchStorePage(params: { q: string; limit?: number; page?: number }): Promise<StoreSearchPage> {
-    const response = await searchStoreProducts({
-      q: params.q,
-      limit: params.limit,
-      page: params.page ?? 0,
-    });
-
-    return {
-      items: mergeUniqueHits([], response.items),
-      page: response.page,
-      hitsPerPage: response.hitsPerPage,
-      nbHits: response.nbHits,
-      nbPages: response.nbPages,
-    };
+  /** Search can return several records per product; keep one hit per product id. */
+  async searchStorePage(params: { q: string; limit?: number; page?: number }): Promise<ProductSearchResponse> {
+    const response = await searchStoreProducts({ q: params.q, limit: params.limit, page: params.page ?? 0 });
+    return { ...response, items: mergeUniqueBy([], response.items, (hit) => hit.productId) };
   },
 
   async listStorePage(params: { limit?: number; cursor?: string } = {}): Promise<StoreProductPage> {
-    const cursor = params.cursor?.trim();
-    const response = await listStoreProducts({
-      limit: params.limit,
-      cursor: cursor || undefined,
-    });
-
-    const products = mergeUniqueProducts(
+    const response = await listStoreProducts({ limit: params.limit, cursor: params.cursor });
+    const products = mergeUniqueBy(
       [],
       response.data.map((product) => remember(mapStoreProduct(product))),
+      (product) => product.id,
     );
 
-    const page: StoreProductPage = { products };
-    if (response.nextCursor) {
-      page.nextCursor = response.nextCursor;
-    }
-
-    return page;
-  },
-
-  async getProducts(): Promise<Product[]> {
-    const page = await productService.listStorePage();
-    return page.products;
+    return response.nextCursor ? { products, nextCursor: response.nextCursor } : { products };
   },
 };

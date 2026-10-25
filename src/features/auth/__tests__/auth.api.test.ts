@@ -26,7 +26,7 @@ import {
   verifyCustomerOtp,
 } from "../api/auth.api";
 import { AUTH_PATHS } from "../api/auth.paths";
-import { AuthRequestError } from "../utils/authRequestError";
+import { RequestError } from "@/services/api/requestError";
 
 describe("auth.api", () => {
   beforeEach(() => {
@@ -36,7 +36,7 @@ describe("auth.api", () => {
     mockClearAuthTokens.mockReset();
   });
 
-  it("sends a normalized 10-digit mobile to send-otp", async () => {
+  it("posts the mobile to send-otp and returns the session", async () => {
     mockPost.mockResolvedValue({
       data: {
         success: true,
@@ -46,15 +46,19 @@ describe("auth.api", () => {
       },
     });
 
-    const result = await sendCustomerOtp("+91 98765 43210");
+    const session = await sendCustomerOtp("9876543210");
 
     expect(mockPost).toHaveBeenCalledWith(AUTH_PATHS.sendOtp, { mobile: "9876543210" });
-    expect(result.session).toBe("cognito-session-token");
+    expect(session).toBe("cognito-session-token");
   });
 
-  it("rejects invalid mobiles before calling the API", async () => {
-    await expect(sendCustomerOtp("12345")).rejects.toBeInstanceOf(AuthRequestError);
-    expect(mockPost).not.toHaveBeenCalled();
+  it("maps HTTP failures to user-facing RequestErrors", async () => {
+    mockPost.mockRejectedValue({ response: { status: 403, data: {} } });
+
+    await expect(sendCustomerOtp("9876543210")).rejects.toMatchObject({
+      status: 403,
+      message: "This account cannot be used.",
+    });
   });
 
   it("verifies OTP with the provided session and stores tokens", async () => {
@@ -86,19 +90,21 @@ describe("auth.api", () => {
     });
   });
 
-  it("does not invent a session for verify-otp", async () => {
+  it("does not store tokens when verify-otp returns a malformed body", async () => {
+    mockPost.mockResolvedValue({ data: { success: true } });
+
     await expect(
-      verifyCustomerOtp({ mobile: "9876543210", otp: "123456", session: "   " }),
-    ).rejects.toBeInstanceOf(AuthRequestError);
-    expect(mockPost).not.toHaveBeenCalled();
+      verifyCustomerOtp({ mobile: "9876543210", otp: "123456", session: "s" }),
+    ).rejects.toBeInstanceOf(RequestError);
+    expect(mockSaveAuthTokens).not.toHaveBeenCalled();
   });
 
-  it("resends OTP with the same normalized mobile", async () => {
+  it("resends OTP to the challenge mobile", async () => {
     mockPost.mockResolvedValue({
       data: { success: true, message: "OTP resent successfully" },
     });
 
-    await resendCustomerOtp("919876543210");
+    await resendCustomerOtp("9876543210");
 
     expect(mockPost).toHaveBeenCalledWith(AUTH_PATHS.resendOtp, { mobile: "9876543210" });
   });

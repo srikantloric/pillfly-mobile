@@ -1,5 +1,8 @@
 import { create } from "zustand";
 
+import { resetSessionCart } from "@/features/cart/store/cart.store";
+import { RequestError } from "@/services/api/requestError";
+
 import {
   getCurrentCustomer,
   logoutCustomer,
@@ -7,31 +10,25 @@ import {
   sendCustomerOtp,
   verifyCustomerOtp,
 } from "../api/auth.api";
-import {
-  clearSessionTokens,
-  getAccessToken,
-  getIdToken,
-  setMemoryTokens,
-  subscribeAuthTokens,
-} from "../api/authSession";
-import { resetSessionCart } from "@/features/cart/store/cart.store";
+import { toAuthError } from "../api/authErrors";
+import { clearSessionTokens, setMemoryTokens, subscribeAuthTokens } from "../api/authSession";
 import { loadAuthTokens } from "../storage/tokenStorage";
-import type { AuthState, Customer } from "../types/auth.types";
-import { AuthRequestError, toAuthRequestError } from "../utils/authRequestError";
-import { normalizeIndianMobile } from "../utils/phoneValidation";
+import type { Customer } from "../types/auth.types";
+import { isValidOtp, normalizeIndianMobile } from "../utils/phoneValidation";
 
 export type OtpChallenge = {
   mobile: string;
   session: string;
 };
 
-export type AuthStoreState = AuthState & {
+export type AuthStoreState = {
+  user: Customer | null;
+  isAuthenticated: boolean;
   otpChallenge: OtpChallenge | null;
   isSubmitting: boolean;
   hasHydrated: boolean;
   authError: string | null;
   restoreSession: () => Promise<void>;
-  retryRestore: () => Promise<void>;
   sendOtp: (mobileInput: string) => Promise<void>;
   verifyOtp: (otp: string) => Promise<void>;
   resendOtp: () => Promise<void>;
@@ -39,296 +36,173 @@ export type AuthStoreState = AuthState & {
   clearAuthError: () => void;
 };
 
-const inactiveAccountMessage = "This account cannot be used.";
+const OTP_EXPIRED_MESSAGE = "OTP session expired. Request a new OTP.";
+const PROFILE_FAILED_MESSAGE = "Signed in, but your profile could not be loaded. Please try again.";
 
-function isAuthenticatedFrom(accessToken: string | null, user: Customer | null): boolean {
-  return Boolean(accessToken && user?.status === "ACTIVE");
-}
-
-function shouldClearSession(error: AuthRequestError): boolean {
-  return error.status === 401 || error.status === 403 || error.status === 404;
-}
-
-function requireActiveCustomer(user: Customer): Customer {
-  if (user.status !== "ACTIVE") {
-    throw new AuthRequestError(inactiveAccountMessage, { status: 403, kind: "http" });
-  }
-  return user;
-}
-
-let restoreInFlight: Promise<void> | null = null;
-
-const initialState: Pick<
-  AuthStoreState,
-  | "accessToken"
-  | "idToken"
-  | "user"
-  | "isAuthenticated"
-  | "isLoading"
-  | "otpChallenge"
-  | "isSubmitting"
-  | "hasHydrated"
-  | "authError"
-> = {
-  accessToken: null,
-  idToken: null,
+const initialState = {
   user: null,
   isAuthenticated: false,
-  isLoading: true,
   otpChallenge: null,
   isSubmitting: false,
   hasHydrated: false,
   authError: null,
-};
+} satisfies Partial<AuthStoreState>;
 
-export const useAuthStore = create<AuthStoreState>((set, get) => ({
-  ...initialState,
+/** The session is unusable (expired, blocked or no profile) rather than temporarily failing. */
+function shouldClearSession(error: RequestError): boolean {
+  return error.status === 401 || error.status === 403 || error.status === 404;
+}
 
-  clearAuthError: () => set({ authError: null }),
+async function fetchActiveCustomer(): Promise<Customer> {
+  const user = await getCurrentCustomer();
+  if (user.status !== "ACTIVE") {
+    throw new RequestError("This account cannot be used.", { status: 403 });
+  }
+  return user;
+}
 
-  restoreSession: async () => {
-    if (get().hasHydrated) {
-      return;
-    }
+/** Keychain failures must not block the UI from showing the logged-out state. */
+async function endSession(): Promise<void> {
+  await clearSessionTokens().catch(() => undefined);
+}
 
-    if (restoreInFlight) {
-      await restoreInFlight;
-      return;
-    }
+let restoreInFlight: Promise<void> | null = null;
 
-    restoreInFlight = (async () => {
-      set({ isLoading: true, authError: null });
-
-      try {
-        const stored = await loadAuthTokens();
-
-        if (!stored) {
-          resetSessionCart();
-          set({
-            ...initialState,
-            isLoading: false,
-            hasHydrated: true,
-          });
-          return;
-        }
-
-        setMemoryTokens(stored);
-        set({
-          accessToken: stored.accessToken,
-          idToken: stored.idToken,
-          isAuthenticated: false,
-        });
-
-        const { user } = await getCurrentCustomer();
-        const activeUser = requireActiveCustomer(user);
-        const accessToken = getAccessToken() ?? stored.accessToken;
-        const idToken = getIdToken() ?? stored.idToken;
-
-        set({
-          accessToken,
-          idToken,
-          user: activeUser,
-          isAuthenticated: true,
-          isLoading: false,
-          hasHydrated: true,
-          authError: null,
-        });
-      } catch (error) {
-        const authError = toAuthRequestError(error);
-
-        if (shouldClearSession(authError)) {
-          await clearSessionTokens();
-          set({
-            ...initialState,
-            isLoading: false,
-            hasHydrated: true,
-            authError: authError.message,
-          });
-          return;
-        }
-
-        set({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          hasHydrated: true,
-          authError: authError.message,
-        });
-      }
-    })().finally(() => {
-      restoreInFlight = null;
-    });
-
-    await restoreInFlight;
-  },
-
-  retryRestore: async () => {
-    set({ hasHydrated: false });
-    await get().restoreSession();
-  },
-
-  sendOtp: async (mobileInput) => {
-    const normalized = normalizeIndianMobile(mobileInput);
-    if (!normalized.ok) {
-      set({ authError: normalized.message });
-      throw new AuthRequestError(normalized.message, { status: 400, kind: "http" });
-    }
-
-    set({ isSubmitting: true, authError: null });
-
-    try {
-      const result = await sendCustomerOtp(normalized.mobile);
-      set({
-        otpChallenge: { mobile: normalized.mobile, session: result.session },
-        isSubmitting: false,
-        authError: null,
-      });
-    } catch (error) {
-      const authError = toAuthRequestError(error);
-      set({ isSubmitting: false, authError: authError.message });
-      throw authError;
-    }
-  },
-
-  verifyOtp: async (otp) => {
-    const challenge = get().otpChallenge;
-    if (!challenge) {
-      const message = "OTP session expired. Request a new OTP.";
-      set({ authError: message });
-      throw new AuthRequestError(message, { status: 401, kind: "http" });
-    }
-
-    set({ isSubmitting: true, authError: null });
-
-    try {
-      const tokens = await verifyCustomerOtp({
-        mobile: challenge.mobile,
-        otp,
-        session: challenge.session,
-      });
-
-      setMemoryTokens({
-        accessToken: tokens.accessToken,
-        idToken: tokens.idToken,
-      });
-      set({
-        accessToken: tokens.accessToken,
-        idToken: tokens.idToken,
-        otpChallenge: null,
-        isAuthenticated: false,
-      });
-
-      try {
-        const { user } = await getCurrentCustomer();
-        const activeUser = requireActiveCustomer(user);
-
-        set({
-          accessToken: tokens.accessToken,
-          idToken: tokens.idToken,
-          user: activeUser,
-          isAuthenticated: true,
-          isSubmitting: false,
-          authError: null,
-        });
-      } catch (profileError) {
-        const authError = toAuthRequestError(profileError);
-
-        if (authError.status === 403 || authError.message.toLowerCase().includes("inactive")) {
-          await clearSessionTokens();
-          set({
-            accessToken: null,
-            idToken: null,
-            user: null,
-            isAuthenticated: false,
-            isSubmitting: false,
-            otpChallenge: null,
-            authError: authError.status === 403 ? authError.message : inactiveAccountMessage,
-          });
-          throw authError;
-        }
-
-        set({
-          user: null,
-          isAuthenticated: false,
-          isSubmitting: false,
-          otpChallenge: null,
-          authError: authError.message,
-        });
-        throw new AuthRequestError(
-          "Signed in, but your profile could not be loaded. Please try again.",
-          { status: authError.status, kind: authError.kind },
-        );
-      }
-    } catch (error) {
-      const authError = toAuthRequestError(error);
-      if (get().isSubmitting) {
-        set({ isSubmitting: false, authError: authError.message });
-      }
-      throw authError;
-    }
-  },
-
-  resendOtp: async () => {
-    const challenge = get().otpChallenge;
-    if (!challenge) {
-      const message = "OTP session expired. Request a new OTP.";
-      set({ authError: message });
-      throw new AuthRequestError(message, { status: 401, kind: "http" });
-    }
-
-    set({ isSubmitting: true, authError: null });
-
-    try {
-      await resendCustomerOtp(challenge.mobile);
-      set({ isSubmitting: false, authError: null });
-    } catch (error) {
-      const authError = toAuthRequestError(error);
-      set({ isSubmitting: false, authError: authError.message });
-      throw authError;
-    }
-  },
-
-  signOut: async () => {
-    set({ isSubmitting: true, authError: null });
-
-    try {
-      await logoutCustomer();
-    } catch {
-      // Cookie/API logout can fail; local credentials must still be removed.
-    } finally {
-      await clearSessionTokens();
-      resetSessionCart();
-      set({
-        ...initialState,
-        isLoading: false,
-        hasHydrated: true,
-        isSubmitting: false,
-      });
-    }
-  },
-}));
-
-subscribeAuthTokens((tokens) => {
-  if (!tokens) {
-    const { isLoading, hasHydrated, isSubmitting } = useAuthStore.getState();
-    useAuthStore.setState({
-      accessToken: null,
-      idToken: null,
-      user: null,
-      isAuthenticated: false,
-      isLoading,
-      hasHydrated,
-      isSubmitting,
-    });
-    return;
+export const useAuthStore = create<AuthStoreState>((set, get) => {
+  /** Records a user-facing error and returns it so callers can `throw fail(...)`. */
+  function fail(error: unknown): RequestError {
+    const authError = toAuthError(error);
+    set({ isSubmitting: false, authError: authError.message });
+    return authError;
   }
 
-  const { user } = useAuthStore.getState();
-  useAuthStore.setState({
-    accessToken: tokens.accessToken,
-    idToken: tokens.idToken,
-    isAuthenticated: isAuthenticatedFrom(tokens.accessToken, user),
-  });
+  function requireChallenge(): OtpChallenge {
+    const challenge = get().otpChallenge;
+    if (!challenge) {
+      throw fail(new RequestError(OTP_EXPIRED_MESSAGE, { status: 401 }));
+    }
+    return challenge;
+  }
+
+  return {
+    ...initialState,
+
+    clearAuthError: () => set({ authError: null }),
+
+    restoreSession: async () => {
+      if (get().hasHydrated) {
+        return;
+      }
+
+      restoreInFlight ??= (async () => {
+        set({ authError: null });
+
+        try {
+          const stored = await loadAuthTokens();
+          if (!stored) {
+            resetSessionCart();
+            set({ ...initialState, hasHydrated: true });
+            return;
+          }
+
+          setMemoryTokens(stored);
+          const user = await fetchActiveCustomer();
+          set({ user, isAuthenticated: true, hasHydrated: true });
+        } catch (error) {
+          const authError = toAuthError(error);
+          // Network/server errors keep the stored tokens so the next launch can retry.
+          set({ user: null, isAuthenticated: false, hasHydrated: true, authError: authError.message });
+          if (shouldClearSession(authError)) {
+            await endSession();
+          }
+        }
+      })().finally(() => {
+        restoreInFlight = null;
+      });
+
+      await restoreInFlight;
+    },
+
+    sendOtp: async (mobileInput) => {
+      const normalized = normalizeIndianMobile(mobileInput);
+      if (!normalized.ok) {
+        throw fail(new RequestError(normalized.message, { status: 400 }));
+      }
+
+      set({ isSubmitting: true, authError: null });
+      try {
+        const session = await sendCustomerOtp(normalized.mobile);
+        set({ otpChallenge: { mobile: normalized.mobile, session }, isSubmitting: false });
+      } catch (error) {
+        throw fail(error);
+      }
+    },
+
+    verifyOtp: async (otp) => {
+      const challenge = requireChallenge();
+      if (!isValidOtp(otp)) {
+        throw fail(new RequestError("Enter the 6-digit OTP", { status: 400 }));
+      }
+
+      set({ isSubmitting: true, authError: null });
+      try {
+        await verifyCustomerOtp({ ...challenge, otp });
+      } catch (error) {
+        // Wrong/expired OTP: keep the challenge so the user can retry or resend.
+        throw fail(error);
+      }
+
+      // Tokens are stored; the challenge is spent whatever happens next.
+      set({ otpChallenge: null });
+      try {
+        const user = await fetchActiveCustomer();
+        set({ user, isAuthenticated: true, isSubmitting: false });
+      } catch (error) {
+        const authError = fail(error);
+        if (shouldClearSession(authError)) {
+          await endSession();
+          throw authError;
+        }
+        throw new RequestError(PROFILE_FAILED_MESSAGE, {
+          status: authError.status,
+          kind: authError.kind,
+        });
+      }
+    },
+
+    resendOtp: async () => {
+      const challenge = requireChallenge();
+
+      set({ isSubmitting: true, authError: null });
+      try {
+        await resendCustomerOtp(challenge.mobile);
+        set({ isSubmitting: false });
+      } catch (error) {
+        throw fail(error);
+      }
+    },
+
+    signOut: async () => {
+      set({ isSubmitting: true, authError: null });
+
+      try {
+        await logoutCustomer();
+      } catch {
+        // Cookie/API logout can fail; local credentials must still be removed.
+      }
+
+      // Clearing notifies listeners, which also resets the cart.
+      await endSession();
+      set({ ...initialState, hasHydrated: true });
+    },
+  };
+});
+
+// Tokens can be cleared outside the store (e.g. a failed refresh in the interceptor).
+subscribeAuthTokens((tokens) => {
+  if (!tokens) {
+    useAuthStore.setState({ user: null, isAuthenticated: false });
+  }
 });
 
 export function resetAuthStoreForTests(): void {

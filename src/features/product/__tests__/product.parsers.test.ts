@@ -1,5 +1,4 @@
 import {
-  getDisplayedPrice,
   isStoreHealthcare,
   isStoreMedicine,
   parseProductSearchResponse,
@@ -7,7 +6,7 @@ import {
   parseStoreProductListResponse,
   parseStoreProductResponse,
 } from "../api/product.parsers";
-import { ProductRequestError } from "../utils/productRequestError";
+import { RequestError } from "@/services/api/requestError";
 
 const timestamps = {
   createdAt: "2026-01-15T10:00:00.000Z",
@@ -136,7 +135,7 @@ describe("store product parsers", () => {
     expect(product.variantOptions).toEqual([]);
     expect(product.details.prescriptionRequired).toBe(false);
     expect(product.variants[0]?.sellingPrice).toBe(40);
-    expect(getDisplayedPrice(product.variants[0]!)).toBe(40);
+    expect(product.variants[0]!.sellingPrice).toBe(40);
     expect(product.variants[0]?.images.map((image) => image.order)).toEqual([0, 1]);
   });
 
@@ -198,7 +197,7 @@ describe("store product parsers", () => {
 
   it("parses a detail payload and rejects missing products", () => {
     expect(parseStoreProductResponse({ data: medicinePayload() }).data.id).toBe("prod_123");
-    expect(() => parseStoreProductResponse({ data: { id: "prod_123" } })).toThrow(ProductRequestError);
+    expect(() => parseStoreProductResponse({ data: { id: "prod_123" } })).toThrow(RequestError);
   });
 
   it("parses search hits and pagination metadata", () => {
@@ -266,7 +265,7 @@ describe("store product parsers", () => {
       availableQty: 0,
       inStock: false,
     });
-    expect(getDisplayedPrice(product!.variants[0]!)).toBe(0);
+    expect(product!.variants[0]!.sellingPrice).toBe(0);
   });
 
   it("parses an empty search result without inventing hits", () => {

@@ -1,5 +1,6 @@
 import { attachAuthInterceptors } from "@/features/auth/api/authInterceptors";
 import { productClient } from "@/services/api/product.client";
+import { RequestError, toRequestError } from "@/services/api/requestError";
 
 import type {
   ListStoreProductsParams,
@@ -8,7 +9,6 @@ import type {
   StoreProductResponse,
   StoreProductListResponse,
 } from "../types/storeProduct";
-import { ProductRequestError, toProductRequestError } from "../utils/productRequestError";
 import {
   parseProductSearchResponse,
   parseStoreProductListResponse,
@@ -16,9 +16,12 @@ import {
 } from "./product.parsers";
 import { isPublicProductPath, PRODUCT_PATHS } from "./product.paths";
 
-if (typeof productClient.interceptors?.request?.use === "function") {
-  attachAuthInterceptors(productClient, { skipRefresh: isPublicProductPath });
-}
+attachAuthInterceptors(productClient, { skipRefresh: isPublicProductPath });
+
+const PRODUCT_STATUS_MESSAGES = {
+  400: "Unable to complete this request.",
+  404: "Product not found.",
+};
 
 const DEFAULT_LIMIT = 20;
 const MIN_LIMIT = 1;
@@ -37,7 +40,7 @@ async function request<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
   } catch (error) {
-    throw toProductRequestError(error);
+    throw toRequestError(error, PRODUCT_STATUS_MESSAGES);
   }
 }
 
@@ -61,7 +64,7 @@ export async function listStoreProducts(
 export async function getStoreProduct(productId: string): Promise<StoreProductResponse> {
   const id = productId.trim();
   if (!id) {
-    throw new ProductRequestError("Product id is required.", { status: 400, kind: "http" });
+    throw new RequestError("Product id is required.", { status: 400 });
   }
 
   return request(async () => {
@@ -75,7 +78,7 @@ export async function searchStoreProducts(
 ): Promise<ProductSearchResponse> {
   const page = params.page ?? 0;
   if (!Number.isFinite(page) || page < 0) {
-    throw new ProductRequestError("Validation failed", { status: 400, kind: "http" });
+    throw new RequestError("Validation failed", { status: 400 });
   }
 
   const query: Record<string, string | number> = {

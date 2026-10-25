@@ -5,15 +5,11 @@ import {
 import { productService } from "@/features/product/services/product.service";
 import type { Product } from "@/features/product/types/product";
 
-import { createSingleEntryCache } from "./productDetailBuilders.cache";
-
-const carouselSectionsCache = createSingleEntryCache<string, ProductDetailCarouselSection[]>();
-
 export type ProductDetailCarouselSection = ProductDetailCarouselSectionConfig & {
   products: Product[];
 };
 
-export function resolveCarouselProducts(
+function resolveCarouselProducts(
   productIds: readonly string[],
   excludeProductId?: string,
 ): Product[] {
@@ -36,19 +32,11 @@ export function resolveCarouselProducts(
     });
 }
 
-function buildProductDetailCarouselSections(
+export function getProductDetailCarouselSections(
   excludeProductId: string,
 ): ProductDetailCarouselSection[] {
   return PRODUCT_DETAIL_CAROUSEL_SECTIONS.map((section) => ({
     ...section,
     products: resolveCarouselProducts(section.productIds, excludeProductId),
   })).filter((section) => section.products.length > 0);
-}
-
-export function getProductDetailCarouselSections(
-  excludeProductId: string,
-): ProductDetailCarouselSection[] {
-  return carouselSectionsCache.get(excludeProductId, () =>
-    buildProductDetailCarouselSections(excludeProductId),
-  );
 }
