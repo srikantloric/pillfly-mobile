@@ -24,7 +24,7 @@ type HandlerResult = { status: number; data: unknown };
 
 function createTestClient(
   handler: (config: InternalAxiosRequestConfig) => Promise<HandlerResult>,
-  baseURL = "https://example.test/api/v1/auth",
+  baseURL = "https://example.test/api/v1",
   skipRefresh?: (path: string) => boolean,
 ) {
   const client = axios.create({
@@ -185,7 +185,7 @@ describe("auth interceptors", () => {
     });
 
     await expect(
-      client.post(`/api/v1/auth${AUTH_PATHS.verifyOtp}`, {
+      client.post(`/api/v1${AUTH_PATHS.verifyOtp}`, {
         mobile: "9876543210",
         otp: "000000",
         session: "s",

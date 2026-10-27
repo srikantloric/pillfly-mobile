@@ -20,13 +20,16 @@ jest.mock("../storage/tokenStorage", () => ({
   loadAuthTokens: jest.fn(),
 }));
 
+import { RequestError } from "@/services/api/requestError";
+
 import {
+  getCurrentCustomer,
+  logoutCustomer,
   resendCustomerOtp,
   sendCustomerOtp,
   verifyCustomerOtp,
 } from "../api/auth.api";
-import { AUTH_PATHS } from "../api/auth.paths";
-import { RequestError } from "@/services/api/requestError";
+import { AUTH_PATHS, isPublicAuthPath, isRefreshAuthPath } from "../api/auth.paths";
 
 describe("auth.api", () => {
   beforeEach(() => {
@@ -107,5 +110,63 @@ describe("auth.api", () => {
     await resendCustomerOtp("9876543210");
 
     expect(mockPost).toHaveBeenCalledWith(AUTH_PATHS.resendOtp, { mobile: "9876543210" });
+  });
+
+  it("posts logout to the app logout route", async () => {
+    mockPost.mockResolvedValue({ data: { success: true } });
+
+    await logoutCustomer();
+
+    expect(mockPost).toHaveBeenCalledWith("/auth/app/logout");
+  });
+
+  it("loads the current customer from /api/v1/customer/me", async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        success: true,
+        user: {
+          id: "CUS_123",
+          phoneNumber: "+919876543210",
+          status: "ACTIVE",
+        },
+      },
+    });
+
+    const user = await getCurrentCustomer();
+
+    expect(mockGet).toHaveBeenCalledWith("/customer/me");
+    expect(user).toEqual({
+      id: "CUS_123",
+      phoneNumber: "+919876543210",
+      status: "ACTIVE",
+    });
+  });
+});
+
+describe("auth paths", () => {
+  it("points each call at the current auth and customer routes", () => {
+    expect(AUTH_PATHS).toEqual({
+      sendOtp: "/auth/send-otp",
+      verifyOtp: "/auth/app/verify-otp",
+      resendOtp: "/auth/resend-otp",
+      refresh: "/auth/app/refresh",
+      logout: "/auth/app/logout",
+      me: "/customer/me",
+    });
+  });
+
+  it("treats OTP routes as public and only the app refresh route as refresh", () => {
+    expect(isPublicAuthPath("/auth/send-otp")).toBe(true);
+    expect(isPublicAuthPath("/auth/resend-otp")).toBe(true);
+    expect(isPublicAuthPath("/auth/app/verify-otp")).toBe(true);
+    expect(isPublicAuthPath("/api/v1/auth/app/verify-otp")).toBe(true);
+    expect(isPublicAuthPath("/auth/app/refresh")).toBe(false);
+    expect(isPublicAuthPath("/auth/app/logout")).toBe(false);
+    expect(isPublicAuthPath("/customer/me")).toBe(false);
+
+    expect(isRefreshAuthPath("/auth/app/refresh")).toBe(true);
+    expect(isRefreshAuthPath("/api/v1/auth/app/refresh")).toBe(true);
+    expect(isRefreshAuthPath("/auth/app/logout")).toBe(false);
+    expect(isRefreshAuthPath("/auth/resend-otp")).toBe(false);
   });
 });

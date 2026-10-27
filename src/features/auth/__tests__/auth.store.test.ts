@@ -218,6 +218,19 @@ describe("auth store", () => {
     expect(useCartStore.getState().deliveryAddress).toBeNull();
   });
 
+  it("keeps the Cognito session when resend succeeds", async () => {
+    const challenge = { mobile: "9876543210", session: "cognito-session-token" };
+    useAuthStore.setState({ otpChallenge: challenge });
+    mockResendCustomerOtp.mockResolvedValue(undefined);
+
+    await useAuthStore.getState().resendOtp();
+
+    expect(mockResendCustomerOtp).toHaveBeenCalledWith("9876543210");
+    expect(useAuthStore.getState().otpChallenge).toEqual(challenge);
+    expect(useAuthStore.getState().isSubmitting).toBe(false);
+    expect(useAuthStore.getState().authError).toBeNull();
+  });
+
   it("rejects an invalid mobile before calling send-otp", async () => {
     await expect(useAuthStore.getState().sendOtp("12345")).rejects.toBeInstanceOf(RequestError);
 
