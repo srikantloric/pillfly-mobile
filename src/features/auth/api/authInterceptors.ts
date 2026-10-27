@@ -24,7 +24,6 @@ export type AuthInterceptorOptions = {
 
 let refreshInFlight: Promise<void> | null = null;
 
-/** Refreshes with the Keychain refresh token in the body. Concurrent 401s share one call. */
 function refreshAccessToken(): Promise<void> {
   if (refreshInFlight) {
     authLog("refresh.join");

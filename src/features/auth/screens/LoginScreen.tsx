@@ -63,7 +63,6 @@ function LoginScreen(_props: LoginScreenProps) {
     }
   }, [phone, sendOtp]);
 
-  // Lift the form above the keyboard and fade the hero behind it.
   useKeyboardHeight((keyboardHeight, duration) => {
     const visible = keyboardHeight > 0;
     const formBaseBottom = insets.bottom + 12;
@@ -88,7 +87,6 @@ function LoginScreen(_props: LoginScreenProps) {
     ]).start();
   });
 
-  // Each value moves from its "keyboard closed" to its "keyboard open" opacity.
   const opacity = useMemo(() => {
     const fade = (closed: number, open: number) =>
       keyboardProgress.interpolate({ inputRange: [0, 1], outputRange: [closed, open] });

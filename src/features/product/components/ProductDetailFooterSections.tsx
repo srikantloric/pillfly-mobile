@@ -23,7 +23,6 @@ type Props = {
   onPressShareChannel?: (channelId: ProductDetailShareChannelId) => void;
 };
 
-/** Offers, share buttons and the medical disclaimer at the bottom of the product page. */
 export const ProductDetailFooterSections = memo(function ProductDetailFooterSections({
   onPressCoupon,
   onPressShareChannel,

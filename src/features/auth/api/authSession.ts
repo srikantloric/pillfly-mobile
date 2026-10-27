@@ -1,10 +1,6 @@
 import { clearAuthTokens, saveAuthTokens } from "../storage/tokenStorage";
 import type { AuthTokens } from "../types/auth.types";
 
-/**
- * Single in-memory holder of the session tokens. The interceptors read from here,
- * and listeners (auth store, cart) are told when tokens are replaced or cleared.
- */
 type AuthTokensListener = (tokens: AuthTokens | null) => void;
 
 let sessionTokens: AuthTokens | null = null;

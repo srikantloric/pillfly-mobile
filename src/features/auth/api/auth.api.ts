@@ -30,7 +30,6 @@ export function sendCustomerOtp(mobile: string): Promise<string> {
   });
 }
 
-/** Verifies the OTP and persists the issued tokens. */
 export function verifyCustomerOtp(input: {
   mobile: string;
   otp: string;

@@ -78,7 +78,6 @@ export const productService = {
     );
   },
 
-  /** Search can return several records per product; keep one hit per product id. */
   async searchStorePage(params: { q: string; limit?: number; page?: number }): Promise<ProductSearchResponse> {
     const response = await searchStoreProducts({ q: params.q, limit: params.limit, page: params.page ?? 0 });
     return { ...response, items: mergeUniqueBy([], response.items, (hit) => hit.productId) };

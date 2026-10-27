@@ -68,6 +68,18 @@ describe("auth.api", () => {
     });
   });
 
+  it("uses a generic message when a 500 has no server message", async () => {
+    mockPost.mockRejectedValue({
+      response: { status: 500, data: { success: false, error: { code: "INTERNAL_ERROR" } } },
+    });
+
+    await expect(resendCustomerOtp("9876543210")).rejects.toMatchObject({
+      status: 500,
+      kind: "http",
+      message: "Something went wrong. Please try again.",
+    });
+  });
+
   it("verifies OTP with the provided session and stores tokens", async () => {
     mockPost.mockResolvedValue({
       data: {

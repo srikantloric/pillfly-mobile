@@ -70,7 +70,6 @@ async function endSession(): Promise<void> {
 let restoreInFlight: Promise<void> | null = null;
 
 export const useAuthStore = create<AuthStoreState>((set, get) => {
-  /** Records a user-facing error and returns it so callers can `throw fail(...)`. */
   function fail(error: unknown): RequestError {
     const authError = toAuthError(error);
     authLog("error", {

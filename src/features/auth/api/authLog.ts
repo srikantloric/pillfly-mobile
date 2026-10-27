@@ -4,7 +4,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Keeps the response shape visible while hiding credentials. */
 export function redactAuthValue(value: unknown, key?: string): unknown {
   if (typeof value === "string" && key && SENSITIVE_KEY.test(key)) {
     return `[redacted ${value.length} chars]`;

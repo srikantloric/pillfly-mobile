@@ -19,7 +19,6 @@ type ProductHandlers = {
   onNotify?: (product: Product) => void;
 };
 
-/** Binds the product to `onPress` so the memoised card only re-renders when its product changes. */
 const CarouselProductCard = memo(function CarouselProductCard({
   product,
   width,

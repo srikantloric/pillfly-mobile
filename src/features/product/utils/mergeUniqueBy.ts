@@ -1,4 +1,3 @@
-/** Appends `incoming` items whose key is not already present (in `existing` or earlier in `incoming`). */
 export function mergeUniqueBy<T>(
   existing: readonly T[],
   incoming: readonly T[],

@@ -54,7 +54,6 @@ type LoginBackgroundProps = {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
-/** Soft circles, plus signs and sparkles drawn behind the login hero. */
 export function LoginBackground({ width, height, containerStyle }: LoginBackgroundProps) {
   const decorColor = authColors.lightGreen;
   const opacity = authColors.decorativeOpacity;

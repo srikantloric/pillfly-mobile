@@ -317,7 +317,6 @@ describe("auth store", () => {
   it("logs out when tokens are cleared outside the store", async () => {
     useAuthStore.setState({ user: activeUser, isAuthenticated: true, hasHydrated: true });
 
-    // e.g. the interceptor's refresh failed
     await persistSessionTokens({ accessToken: "a", refreshToken: "r", idToken: "i" });
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
 

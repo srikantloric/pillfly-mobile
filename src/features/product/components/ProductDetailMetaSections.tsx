@@ -29,7 +29,6 @@ const LOCATION_LINE = MOCK_DELIVERY_INFO.areaLabel
   ? `${MOCK_DELIVERY_INFO.pincode}, ${MOCK_DELIVERY_INFO.areaLabel}`
   : MOCK_DELIVERY_INFO.pincode;
 
-/** Four primary-coloured dots used as the "composition" row icon. */
 const moleculeIcon = (
   <View className="h-8 w-8 flex-row flex-wrap content-center justify-center gap-1">
     {[0, 1, 2, 3].map((index) => (

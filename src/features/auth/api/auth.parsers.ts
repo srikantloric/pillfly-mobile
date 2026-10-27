@@ -28,7 +28,6 @@ function requireSuccess(data: unknown): Record<string, unknown> {
   return data;
 }
 
-/** send-otp nests the Cognito session under `data`. The session is not stored as a credential. */
 export function parseSendOtpResponse(data: unknown): string {
   const body = requireSuccess(data);
   const session = isRecord(body.data) ? trimmed(body.data.session) : undefined;
@@ -38,7 +37,6 @@ export function parseSendOtpResponse(data: unknown): string {
   return session;
 }
 
-/** resend-otp nests `message` under `data`. The live body does not return a session. */
 export function parseResendOtpResponse(data: unknown): { session?: string } {
   const body = requireSuccess(data);
   if (!isRecord(body.data) || !trimmed(body.data.message)) {
@@ -49,7 +47,6 @@ export function parseResendOtpResponse(data: unknown): { session?: string } {
   return session ? { session } : {};
 }
 
-/** app verify-otp is flat. `accessToken` and `refreshToken` are required; `idToken` is optional. */
 export function parseVerifyOtpResponse(data: unknown): AuthTokens {
   const body = requireSuccess(data);
   const accessToken = trimmed(body.accessToken);
@@ -66,7 +63,6 @@ export function parseVerifyOtpResponse(data: unknown): AuthTokens {
   };
 }
 
-/** app refresh wraps tokens in `data`. Only `accessToken` is required there. */
 export function parseRefreshResponse(data: unknown): RefreshTokenUpdate {
   const body = requireSuccess(data);
   if (!isRecord(body.data)) {
@@ -87,7 +83,6 @@ export function parseRefreshResponse(data: unknown): RefreshTokenUpdate {
   };
 }
 
-/** Keeps the previous refresh and ID tokens when the refresh body omits them. */
 export function applyRefreshUpdate(current: AuthTokens | null, update: RefreshTokenUpdate): AuthTokens {
   const refreshToken = update.refreshToken ?? current?.refreshToken;
   if (!refreshToken) {

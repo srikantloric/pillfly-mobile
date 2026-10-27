@@ -37,7 +37,6 @@ type Props = {
   onTabPress?: (tabId: MedicalInfoTabId) => void;
 };
 
-/** Medical description plus tabbed Uses / Side effects / … sections that the tabs scroll to. */
 export const ProductDetailMedicalContent = memo(function ProductDetailMedicalContent({
   product,
   onSectionLayout,
