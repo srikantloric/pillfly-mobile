@@ -15,10 +15,11 @@ jest.mock("../storage/tokenStorage", () => ({
 }));
 
 import { isPublicProductPath } from "@/features/product/api/product.paths";
+import { RequestError } from "@/services/api/requestError";
 
 import { attachAuthInterceptors } from "../api/authInterceptors";
 import { AUTH_PATHS } from "../api/auth.paths";
-import { clearMemoryTokens, getAccessToken, setMemoryTokens } from "../api/authSession";
+import { clearMemoryTokens, getAccessToken, getRefreshToken, setMemoryTokens } from "../api/authSession";
 
 type HandlerResult = { status: number; data: unknown };
 
@@ -60,12 +61,14 @@ function createTestClient(
   return client;
 }
 
-function mockSuccessfulRefresh() {
+function mockSuccessfulRefresh(data: Record<string, unknown> = { idToken: "new-id" }) {
   mockAuthPost.mockResolvedValue({
     data: {
       success: true,
-      accessToken: "new-access",
-      idToken: "new-id",
+      data: {
+        accessToken: "new-access",
+        ...data,
+      },
     },
   });
 }
@@ -86,7 +89,7 @@ function mockFailedRefresh() {
 describe("auth interceptors", () => {
   beforeEach(() => {
     clearMemoryTokens();
-    setMemoryTokens({ accessToken: "old-access", idToken: "old-id" });
+    setMemoryTokens({ accessToken: "old-access", refreshToken: "old-refresh", idToken: "old-id" });
     mockAuthPost.mockReset();
   });
 
@@ -124,9 +127,10 @@ describe("auth interceptors", () => {
     await Promise.all([client.get(AUTH_PATHS.me), client.get(AUTH_PATHS.me)]);
 
     expect(mockAuthPost).toHaveBeenCalledTimes(1);
-    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh, { refreshToken: "old-refresh" });
     expect(meCount).toBe(4);
     expect(getAccessToken()).toBe("new-access");
+    expect(getRefreshToken()).toBe("old-refresh");
   });
 
   it("retries a protected request at most once", async () => {
@@ -154,7 +158,46 @@ describe("auth interceptors", () => {
       response: { data: { message: "Refresh token not found" } },
     });
     expect(getAccessToken()).toBeNull();
-    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh, { refreshToken: "old-refresh" });
+  });
+
+  it("clears tokens when refresh returns no access token", async () => {
+    mockAuthPost.mockResolvedValue({ data: { success: true, data: { refreshToken: "next" } } });
+    const client = createTestClient(async () => {
+      return { status: 401, data: { success: false, message: "Unauthorized" } };
+    });
+
+    await expect(client.get(AUTH_PATHS.me)).rejects.toBeInstanceOf(RequestError);
+    expect(mockAuthPost).toHaveBeenCalledTimes(1);
+    expect(getAccessToken()).toBeNull();
+    expect(getRefreshToken()).toBeNull();
+  });
+
+  it("does not refresh a 401 from the refresh path", async () => {
+    const client = createTestClient(async () => {
+      return { status: 401, data: { success: false, message: "Refresh token not found" } };
+    });
+
+    await expect(client.post(AUTH_PATHS.refresh, { refreshToken: "old-refresh" })).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+    expect(mockAuthPost).not.toHaveBeenCalled();
+    expect(getRefreshToken()).toBe("old-refresh");
+  });
+
+  it("rotates the refresh token when the response includes one", async () => {
+    mockSuccessfulRefresh({ idToken: "new-id", refreshToken: "new-refresh" });
+    const client = createTestClient(async (config) => {
+      if (config.headers.Authorization === "Bearer new-access") {
+        return { status: 200, data: { success: true } };
+      }
+      return { status: 401, data: { success: false } };
+    });
+
+    await client.get(AUTH_PATHS.me);
+
+    expect(getRefreshToken()).toBe("new-refresh");
+    expect(getAccessToken()).toBe("new-access");
   });
 
   it("does not attach an access token to public OTP requests", async () => {
@@ -210,7 +253,7 @@ describe("auth interceptors", () => {
     await client.get("/products");
 
     expect(mockAuthPost).toHaveBeenCalledTimes(1);
-    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh, { refreshToken: "old-refresh" });
     expect(catalogCount).toBe(2);
   });
 
@@ -223,7 +266,7 @@ describe("auth interceptors", () => {
     await expect(client.get("/products/store")).rejects.toMatchObject({
       response: { status: 401 },
     });
-    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh);
+    expect(mockAuthPost).toHaveBeenCalledWith(AUTH_PATHS.refresh, { refreshToken: "old-refresh" });
   });
 
   it("does not refresh public store product 401s", async () => {

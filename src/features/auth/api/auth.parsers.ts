@@ -1,6 +1,6 @@
 import { RequestError } from "@/services/api/requestError";
 
-import type { AuthTokens, Customer } from "../types/auth.types";
+import type { AuthTokens, Customer, RefreshTokenUpdate } from "../types/auth.types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -8,6 +8,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function trimmed(value: unknown): string | undefined {
+  if (!isNonEmptyString(value)) {
+    return undefined;
+  }
+  return value.trim();
 }
 
 function malformed(): RequestError {
@@ -21,25 +28,80 @@ function requireSuccess(data: unknown): Record<string, unknown> {
   return data;
 }
 
-/** send-otp → the Cognito session that verify-otp must echo back. */
+/** send-otp nests the Cognito session under `data`. The session is not stored as a credential. */
 export function parseSendOtpResponse(data: unknown): string {
   const body = requireSuccess(data);
-  if (!isNonEmptyString(body.session)) {
+  const session = isRecord(body.data) ? trimmed(body.data.session) : undefined;
+  if (!session) {
     throw malformed();
   }
-  return body.session;
+  return session;
 }
 
-export function parseResendOtpResponse(data: unknown): void {
-  requireSuccess(data);
-}
-
-export function parseTokenResponse(data: unknown): AuthTokens {
+/**
+ * resend-otp is a flat body. `session` is optional; a blank value is not a replacement.
+ */
+export function parseResendOtpResponse(data: unknown): { session?: string } {
   const body = requireSuccess(data);
-  if (!isNonEmptyString(body.accessToken) || !isNonEmptyString(body.idToken)) {
+  if (!trimmed(body.message)) {
     throw malformed();
   }
-  return { accessToken: body.accessToken, idToken: body.idToken };
+
+  const session = trimmed(body.session);
+  return session ? { session } : {};
+}
+
+/** app verify-otp is flat. `accessToken` and `refreshToken` are required; `idToken` is optional. */
+export function parseVerifyOtpResponse(data: unknown): AuthTokens {
+  const body = requireSuccess(data);
+  const accessToken = trimmed(body.accessToken);
+  const refreshToken = trimmed(body.refreshToken);
+  if (!accessToken || !refreshToken) {
+    throw malformed();
+  }
+
+  const idToken = trimmed(body.idToken);
+  return {
+    accessToken,
+    refreshToken,
+    ...(idToken ? { idToken } : {}),
+  };
+}
+
+/** app refresh wraps tokens in `data`. Only `accessToken` is required there. */
+export function parseRefreshResponse(data: unknown): RefreshTokenUpdate {
+  const body = requireSuccess(data);
+  if (!isRecord(body.data)) {
+    throw malformed();
+  }
+
+  const accessToken = trimmed(body.data.accessToken);
+  if (!accessToken) {
+    throw malformed();
+  }
+
+  const refreshToken = trimmed(body.data.refreshToken);
+  const idToken = trimmed(body.data.idToken);
+  return {
+    accessToken,
+    ...(refreshToken ? { refreshToken } : {}),
+    ...(idToken ? { idToken } : {}),
+  };
+}
+
+/** Keeps the previous refresh and ID tokens when the refresh body omits them. */
+export function applyRefreshUpdate(current: AuthTokens | null, update: RefreshTokenUpdate): AuthTokens {
+  const refreshToken = update.refreshToken ?? current?.refreshToken;
+  if (!refreshToken) {
+    throw malformed();
+  }
+
+  const idToken = update.idToken ?? current?.idToken;
+  return {
+    accessToken: update.accessToken,
+    refreshToken,
+    ...(idToken ? { idToken } : {}),
+  };
 }
 
 export function parseGetMeResponse(data: unknown): Customer {

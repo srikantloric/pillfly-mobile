@@ -29,6 +29,7 @@ import {
   sendCustomerOtp,
   verifyCustomerOtp,
 } from "../api/auth.api";
+import { clearMemoryTokens, setMemoryTokens } from "../api/authSession";
 import { AUTH_PATHS, isPublicAuthPath, isRefreshAuthPath } from "../api/auth.paths";
 
 describe("auth.api", () => {
@@ -37,15 +38,18 @@ describe("auth.api", () => {
     mockGet.mockReset();
     mockSaveAuthTokens.mockReset();
     mockClearAuthTokens.mockReset();
+    clearMemoryTokens();
   });
 
   it("posts the mobile to send-otp and returns the session", async () => {
     mockPost.mockResolvedValue({
       data: {
         success: true,
-        message: "OTP sent successfully",
-        session: "cognito-session-token",
-        challengeName: "CUSTOM_CHALLENGE",
+        data: {
+          message: "OTP sent successfully",
+          session: "cognito-session-token",
+          challengeName: "CUSTOM_CHALLENGE",
+        },
       },
     });
 
@@ -70,6 +74,7 @@ describe("auth.api", () => {
         success: true,
         accessToken: "access",
         idToken: "id",
+        refreshToken: "refresh",
         expiresIn: 3600,
         tokenType: "Bearer",
       },
@@ -89,6 +94,7 @@ describe("auth.api", () => {
     });
     expect(mockSaveAuthTokens).toHaveBeenCalledWith({
       accessToken: "access",
+      refreshToken: "refresh",
       idToken: "id",
     });
   });
@@ -102,22 +108,51 @@ describe("auth.api", () => {
     expect(mockSaveAuthTokens).not.toHaveBeenCalled();
   });
 
+  it("stores verify tokens when the optional id token is absent", async () => {
+    mockPost.mockResolvedValue({
+      data: { success: true, accessToken: "access", refreshToken: "refresh" },
+    });
+    mockSaveAuthTokens.mockResolvedValue(undefined);
+
+    await verifyCustomerOtp({ mobile: "9876543210", otp: "123456", session: "s" });
+
+    expect(mockSaveAuthTokens).toHaveBeenCalledWith({
+      accessToken: "access",
+      refreshToken: "refresh",
+    });
+  });
+
   it("resends OTP to the challenge mobile", async () => {
     mockPost.mockResolvedValue({
       data: { success: true, message: "OTP resent successfully" },
     });
 
-    await resendCustomerOtp("9876543210");
+    await expect(resendCustomerOtp("9876543210")).resolves.toEqual({});
 
     expect(mockPost).toHaveBeenCalledWith(AUTH_PATHS.resendOtp, { mobile: "9876543210" });
   });
 
-  it("posts logout to the app logout route", async () => {
+  it("returns a replacement session from resend when the server sends one", async () => {
+    mockPost.mockResolvedValue({
+      data: { success: true, message: "OTP resent successfully", session: "next-session" },
+    });
+
+    await expect(resendCustomerOtp("9876543210")).resolves.toEqual({ session: "next-session" });
+  });
+
+  it("posts the stored refresh token to logout", async () => {
+    setMemoryTokens({ accessToken: "access", refreshToken: "refresh-token", idToken: "id" });
     mockPost.mockResolvedValue({ data: { success: true } });
 
     await logoutCustomer();
 
-    expect(mockPost).toHaveBeenCalledWith("/auth/app/logout");
+    expect(mockPost).toHaveBeenCalledWith("/auth/app/logout", { refreshToken: "refresh-token" });
+  });
+
+  it("skips logout when no refresh token is stored", async () => {
+    await logoutCustomer();
+
+    expect(mockPost).not.toHaveBeenCalled();
   });
 
   it("loads the current customer from /api/v1/customer/me", async () => {

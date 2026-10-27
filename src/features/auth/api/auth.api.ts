@@ -5,12 +5,12 @@ import {
   parseGetMeResponse,
   parseResendOtpResponse,
   parseSendOtpResponse,
-  parseTokenResponse,
+  parseVerifyOtpResponse,
 } from "./auth.parsers";
 import { AUTH_PATHS } from "./auth.paths";
 import { toAuthError } from "./authErrors";
 import { attachAuthInterceptors } from "./authInterceptors";
-import { persistSessionTokens } from "./authSession";
+import { getRefreshToken, persistSessionTokens } from "./authSession";
 
 attachAuthInterceptors(authClient);
 
@@ -38,22 +38,27 @@ export function verifyCustomerOtp(input: {
 }): Promise<AuthTokens> {
   return request(async () => {
     const response = await authClient.post<unknown>(AUTH_PATHS.verifyOtp, input);
-    const tokens = parseTokenResponse(response.data);
+    const tokens = parseVerifyOtpResponse(response.data);
     await persistSessionTokens(tokens);
     return tokens;
   });
 }
 
-export function resendCustomerOtp(mobile: string): Promise<void> {
+export function resendCustomerOtp(mobile: string): Promise<{ session?: string }> {
   return request(async () => {
     const response = await authClient.post<unknown>(AUTH_PATHS.resendOtp, { mobile });
-    parseResendOtpResponse(response.data);
+    return parseResendOtpResponse(response.data);
   });
 }
 
 export function logoutCustomer(): Promise<void> {
   return request(async () => {
-    await authClient.post(AUTH_PATHS.logout);
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      return;
+    }
+
+    await authClient.post(AUTH_PATHS.logout, { refreshToken });
   });
 }
 

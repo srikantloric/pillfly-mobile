@@ -11,6 +11,7 @@ import {
   verifyCustomerOtp,
 } from "../api/auth.api";
 import { toAuthError } from "../api/authErrors";
+import { authLog } from "../api/authLog";
 import { clearSessionTokens, setMemoryTokens, subscribeAuthTokens } from "../api/authSession";
 import { loadAuthTokens } from "../storage/tokenStorage";
 import type { Customer } from "../types/auth.types";
@@ -72,6 +73,11 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
   /** Records a user-facing error and returns it so callers can `throw fail(...)`. */
   function fail(error: unknown): RequestError {
     const authError = toAuthError(error);
+    authLog("error", {
+      message: authError.message,
+      status: authError.status,
+      kind: authError.kind,
+    });
     set({ isSubmitting: false, authError: authError.message });
     return authError;
   }
@@ -91,15 +97,18 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
 
     restoreSession: async () => {
       if (get().hasHydrated) {
+        authLog("restore.skip");
         return;
       }
 
       restoreInFlight ??= (async () => {
+        authLog("restore.start");
         set({ authError: null });
 
         try {
           const stored = await loadAuthTokens();
           if (!stored) {
+            authLog("restore.no-tokens");
             resetSessionCart();
             set({ ...initialState, hasHydrated: true });
             return;
@@ -107,12 +116,20 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
 
           setMemoryTokens(stored);
           const user = await fetchActiveCustomer();
+          authLog("restore.ok", { userId: user.id, status: user.status });
           set({ user, isAuthenticated: true, hasHydrated: true });
         } catch (error) {
           const authError = toAuthError(error);
+          const cleared = shouldClearSession(authError);
+          authLog("restore.fail", {
+            message: authError.message,
+            status: authError.status,
+            kind: authError.kind,
+            cleared,
+          });
           // Network/server errors keep the stored tokens so the next launch can retry.
           set({ user: null, isAuthenticated: false, hasHydrated: true, authError: authError.message });
-          if (shouldClearSession(authError)) {
+          if (cleared) {
             await endSession();
           }
         }
@@ -129,9 +146,11 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
         throw fail(new RequestError(normalized.message, { status: 400 }));
       }
 
+      authLog("sendOtp.start", { mobile: normalized.mobile });
       set({ isSubmitting: true, authError: null });
       try {
         const session = await sendCustomerOtp(normalized.mobile);
+        authLog("sendOtp.ok", { mobile: normalized.mobile, hasSession: session.length > 0 });
         set({ otpChallenge: { mobile: normalized.mobile, session }, isSubmitting: false });
       } catch (error) {
         throw fail(error);
@@ -144,6 +163,7 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
         throw fail(new RequestError("Enter the 6-digit OTP", { status: 400 }));
       }
 
+      authLog("verifyOtp.start", { mobile: challenge.mobile });
       set({ isSubmitting: true, authError: null });
       try {
         await verifyCustomerOtp({ ...challenge, otp });
@@ -153,9 +173,11 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
       }
 
       // Tokens are stored; the challenge is spent whatever happens next.
+      authLog("verifyOtp.tokens-stored", { mobile: challenge.mobile });
       set({ otpChallenge: null });
       try {
         const user = await fetchActiveCustomer();
+        authLog("verifyOtp.ok", { userId: user.id, status: user.status });
         set({ user, isAuthenticated: true, isSubmitting: false });
       } catch (error) {
         const authError = fail(error);
@@ -173,26 +195,42 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
     resendOtp: async () => {
       const challenge = requireChallenge();
 
+      authLog("resendOtp.start", { mobile: challenge.mobile });
       set({ isSubmitting: true, authError: null });
       try {
-        await resendCustomerOtp(challenge.mobile);
-        set({ isSubmitting: false });
+        const updated = await resendCustomerOtp(challenge.mobile);
+        authLog("resendOtp.ok", { mobile: challenge.mobile, sessionUpdated: Boolean(updated?.session) });
+        set({
+          isSubmitting: false,
+          ...(updated?.session
+            ? { otpChallenge: { mobile: challenge.mobile, session: updated.session } }
+            : {}),
+        });
       } catch (error) {
         throw fail(error);
       }
     },
 
     signOut: async () => {
+      authLog("signOut.start");
       set({ isSubmitting: true, authError: null });
 
       try {
         await logoutCustomer();
-      } catch {
+        authLog("signOut.api-ok");
+      } catch (error) {
+        const authError = toAuthError(error);
+        authLog("signOut.api-failed", {
+          message: authError.message,
+          status: authError.status,
+          kind: authError.kind,
+        });
         // Cookie/API logout can fail; local credentials must still be removed.
       }
 
       // Clearing notifies listeners, which also resets the cart.
       await endSession();
+      authLog("signOut.local-cleared");
       set({ ...initialState, hasHydrated: true });
     },
   };
@@ -201,8 +239,12 @@ export const useAuthStore = create<AuthStoreState>((set, get) => {
 // Tokens can be cleared outside the store (e.g. a failed refresh in the interceptor).
 subscribeAuthTokens((tokens) => {
   if (!tokens) {
+    authLog("session.cleared");
     useAuthStore.setState({ user: null, isAuthenticated: false });
+    return;
   }
+
+  authLog("session.updated");
 });
 
 export function resetAuthStoreForTests(): void {
