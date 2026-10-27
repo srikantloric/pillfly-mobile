@@ -38,16 +38,14 @@ export function parseSendOtpResponse(data: unknown): string {
   return session;
 }
 
-/**
- * resend-otp is a flat body. `session` is optional; a blank value is not a replacement.
- */
+/** resend-otp nests `message` under `data`. The live body does not return a session. */
 export function parseResendOtpResponse(data: unknown): { session?: string } {
   const body = requireSuccess(data);
-  if (!trimmed(body.message)) {
+  if (!isRecord(body.data) || !trimmed(body.data.message)) {
     throw malformed();
   }
 
-  const session = trimmed(body.session);
+  const session = trimmed(body.data.session);
   return session ? { session } : {};
 }
 

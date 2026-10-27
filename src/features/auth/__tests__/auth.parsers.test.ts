@@ -40,35 +40,34 @@ describe("auth parsers", () => {
     );
   });
 
-  it("parses a flat resend body and keeps a missing session unset", () => {
+  it("accepts the nested resend body and does not invent a session", () => {
     expect(
       parseResendOtpResponse({
         success: true,
-        message: "OTP resent successfully",
-        challengeName: "CUSTOM_CHALLENGE",
+        data: { message: "OTP resent successfully" },
       }),
     ).toEqual({});
   });
 
-  it("returns a resend session only when it is a non-empty string", () => {
+  it("returns a nested resend session only when it is a non-empty string", () => {
     expect(
       parseResendOtpResponse({
         success: true,
-        message: "OTP resent successfully",
-        session: "next-session",
+        data: { message: "OTP resent successfully", session: "next-session" },
       }),
     ).toEqual({ session: "next-session" });
     expect(
       parseResendOtpResponse({
         success: true,
-        message: "OTP resent successfully",
-        session: "   ",
+        data: { message: "OTP resent successfully", session: "   " },
       }),
     ).toEqual({});
   });
 
-  it("rejects a resend body without the required message", () => {
-    expect(() => parseResendOtpResponse({ success: true })).toThrow(RequestError);
+  it("rejects a resend body whose message is only at the root", () => {
+    expect(() =>
+      parseResendOtpResponse({ success: true, message: "OTP resent successfully" }),
+    ).toThrow(RequestError);
   });
 
   it("requires access and refresh tokens from the flat verify body", () => {

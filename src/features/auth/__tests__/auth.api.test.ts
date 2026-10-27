@@ -124,7 +124,7 @@ describe("auth.api", () => {
 
   it("resends OTP to the challenge mobile", async () => {
     mockPost.mockResolvedValue({
-      data: { success: true, message: "OTP resent successfully" },
+      data: { success: true, data: { message: "OTP resent successfully" } },
     });
 
     await expect(resendCustomerOtp("9876543210")).resolves.toEqual({});
@@ -134,7 +134,10 @@ describe("auth.api", () => {
 
   it("returns a replacement session from resend when the server sends one", async () => {
     mockPost.mockResolvedValue({
-      data: { success: true, message: "OTP resent successfully", session: "next-session" },
+      data: {
+        success: true,
+        data: { message: "OTP resent successfully", session: "next-session" },
+      },
     });
 
     await expect(resendCustomerOtp("9876543210")).resolves.toEqual({ session: "next-session" });
