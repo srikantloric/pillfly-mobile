@@ -248,9 +248,78 @@ describe("store product parsers", () => {
     ).toThrow(RequestError);
   });
 
-  it("parses a detail payload and rejects missing products", () => {
-    expect(parseStoreProductResponse({ data: medicinePayload() }).data.id).toBe("prod_123");
-    expect(() => parseStoreProductResponse({ data: { id: "prod_123" } })).toThrow(RequestError);
+  it("parses a medicine detail payload and rejects a medicine that has variant options", () => {
+    const parsed = parseStoreProductResponse({ success: true, data: medicinePayload() });
+    expect(parsed.data.id).toBe("prod_123");
+    expect(parsed.data.productType).toBe("MEDICINE");
+    if (parsed.data.productType === "MEDICINE") {
+      expect(parsed.data.variantOptions).toEqual([]);
+    }
+
+    expect(
+      parseStoreProduct(
+        medicinePayload({
+          variantOptions: [{ id: "size", name: "Size", values: [{ id: "10", value: "10" }] }],
+        }),
+      ),
+    ).toBeNull();
+    expect(() =>
+      parseStoreProductResponse({
+        success: true,
+        data: medicinePayload({
+          variantOptions: [{ id: "size", name: "Size", values: [{ id: "10", value: "10" }] }],
+        }),
+      }),
+    ).toThrow(RequestError);
+  });
+
+  it("parses healthcare detail options and rejects a broken option", () => {
+    const parsed = parseStoreProductResponse({ success: true, data: healthcarePayload() });
+    expect(parsed.data.productType).toBe("HEALTHCARE");
+    if (parsed.data.productType === "HEALTHCARE") {
+      expect(parsed.data.variantOptions).toEqual([
+        {
+          id: "size",
+          name: "Size",
+          values: [
+            { id: "50ml", value: "50ml" },
+            { id: "100ml", value: "100ml" },
+          ],
+        },
+      ]);
+    }
+
+    expect(
+      parseStoreProduct({
+        ...healthcarePayload(),
+        variantOptions: [{ id: "size", values: [] }],
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects a detail body that is missing success", () => {
+    expect(() => parseStoreProductResponse({ data: medicinePayload() })).toThrow(RequestError);
+    expect(() => parseStoreProductResponse({ success: true, data: { id: "prod_123" } })).toThrow(
+      RequestError,
+    );
+  });
+
+  it("skips an invalid medicine in a store list and keeps the valid products", () => {
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [
+          healthcarePayload(),
+          medicinePayload({
+            variantOptions: [{ id: "size", name: "Size", values: [{ id: "10", value: "10" }] }],
+          }),
+        ],
+        pagination: { hitsPerPage: 20, hasMore: false },
+      },
+    });
+
+    expect(parsed.data.map((product) => product.id)).toEqual(["prod_h1"]);
+    expect(parsed.nextCursor).toBeUndefined();
   });
 
   it("parses search hits and pagination metadata", () => {

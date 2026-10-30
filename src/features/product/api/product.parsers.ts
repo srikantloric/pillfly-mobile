@@ -203,9 +203,14 @@ function parseVariantOption(value: unknown): ProductVariantOption | null {
     return null;
   }
 
-  const values = value.values
-    .map(parseOptionValue)
-    .filter((item): item is ProductVariantOptionValue => item != null);
+  const values: ProductVariantOptionValue[] = [];
+  for (const item of value.values) {
+    const parsed = parseOptionValue(item);
+    if (!parsed) {
+      return null;
+    }
+    values.push(parsed);
+  }
 
   return { id, name, values };
 }
@@ -332,7 +337,7 @@ export function parseStoreProduct(value: unknown): StoreProduct | null {
 
   if (value.productType === "MEDICINE") {
     const details = parseMedicineDetails(value.details);
-    if (!details) {
+    if (!details || !Array.isArray(value.variantOptions) || value.variantOptions.length !== 0) {
       return null;
     }
 
@@ -352,9 +357,14 @@ export function parseStoreProduct(value: unknown): StoreProduct | null {
       return null;
     }
 
-    const variantOptions = value.variantOptions
-      .map(parseVariantOption)
-      .filter((option): option is ProductVariantOption => option != null);
+    const variantOptions: ProductVariantOption[] = [];
+    for (const option of value.variantOptions) {
+      const parsed = parseVariantOption(option);
+      if (!parsed) {
+        return null;
+      }
+      variantOptions.push(parsed);
+    }
 
     const product: StoreHealthcareProduct = {
       ...base,
@@ -370,7 +380,7 @@ export function parseStoreProduct(value: unknown): StoreProduct | null {
 }
 
 export function parseStoreProductResponse(data: unknown): StoreProductResponse {
-  if (!isRecord(data)) {
+  if (!isRecord(data) || data.success !== true || !isRecord(data.data)) {
     throw malformed();
   }
 

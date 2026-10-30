@@ -114,7 +114,9 @@ describe("product.api", () => {
   });
 
   it("fetches a store product by id", async () => {
-    mockGet.mockResolvedValue({ data: { data: medicineProduct } });
+    mockGet.mockResolvedValue({
+      data: { success: true, data: medicineProduct },
+    });
 
     const result = await getStoreProduct("prod_123");
 
