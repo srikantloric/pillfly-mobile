@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo } from "react";
-import { ActivityIndicator, FlatList, Pressable, Text, View, useWindowDimensions } from "react-native";
-import { Feather } from "@react-native-vector-icons/feather";
+import { ActivityIndicator, FlatList, Text, View, useWindowDimensions } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useSharedHeaderNavigation } from "@/components/header";
 import { BouncingDotsLoader, PrimaryButton } from "@/components/ui";
+import { useCartSummary } from "@/features/cart";
 import { StoreProductCard } from "@/features/product/components/StoreProductCard";
+import { StoreProductsHeader } from "@/features/product/components/StoreProductsHeader";
 import { useProducts } from "@/features/product/hooks/useProducts";
 import type { Product } from "@/features/product/types/product";
 import type { AppStackParamList } from "@/types/navigation.types";
@@ -20,6 +22,8 @@ export function StoreProductsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { products, loading, loadingMore, error, hasMore, loadMore, retry } = useProducts();
+  const { lineCount } = useCartSummary();
+  const { onPressSearch, onPressCart } = useSharedHeaderNavigation(navigation);
 
   const cardWidth = useMemo(() => {
     const inner = windowWidth - GRID_PADDING * 2 - GRID_GAP;
@@ -92,18 +96,14 @@ export function StoreProductsScreen({ navigation }: Props) {
     ) : null;
 
   return (
-    <View className="flex-1 bg-pillfly-background" style={{ paddingTop: insets.top }}>
-      <View className="flex-row items-center border-b border-pillfly-line bg-pillfly-surface">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          onPress={onPressBack}
-          className="h-12 w-12 items-center justify-center"
-        >
-          <Feather name="arrow-left" size={24} color={colors.textPrimary} />
-        </Pressable>
-        <Text className="text-[16px] font-bold text-pillfly-ink">Medicines</Text>
-      </View>
+    <View className="flex-1 bg-pillfly-background">
+      <StoreProductsHeader
+        title="Medicine"
+        cartBadgeCount={lineCount}
+        onPressBack={onPressBack}
+        onPressSearch={onPressSearch}
+        onPressCart={onPressCart}
+      />
 
       {loading && products.length === 0 ? (
         <BouncingDotsLoader />
