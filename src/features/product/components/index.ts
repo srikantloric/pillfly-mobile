@@ -9,3 +9,4 @@ export { ProductDetailPromoCarousel } from "./ProductDetailPromoCarousel";
 export { ProductImageCarousel, getPdpHeroImageHeight } from "./ProductImageCarousel";
 export { ProductInformationCard } from "./ProductInformationCard";
 export { ProductListRow } from "./ProductListRow";
+export { StoreProductCard } from "./StoreProductCard";

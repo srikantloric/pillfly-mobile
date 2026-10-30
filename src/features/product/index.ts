@@ -13,3 +13,4 @@ export {
 } from "./utils/productDisplay";
 export { ProductListRow } from "./components/ProductListRow";
 export { ProductDetailScreen } from "./screens/ProductDetailScreen";
+export { StoreProductsScreen } from "./screens/StoreProductsScreen";
