@@ -383,16 +383,21 @@ export function parseStoreProductResponse(data: unknown): StoreProductResponse {
 }
 
 export function parseStoreProductListResponse(data: unknown): StoreProductListResponse {
-  if (!isRecord(data) || !Array.isArray(data.data)) {
+  if (!isRecord(data) || data.success !== true || !isRecord(data.data)) {
     throw malformed();
   }
 
-  const products = data.data
+  const payload = data.data;
+  if (!Array.isArray(payload.items) || !isRecord(payload.pagination)) {
+    throw malformed();
+  }
+
+  const products = payload.items
     .map(parseStoreProduct)
     .filter((product): product is StoreProduct => product != null);
 
   const response: StoreProductListResponse = { data: products };
-  const nextCursor = optionalString(data.nextCursor);
+  const nextCursor = optionalString(payload.pagination.nextCursor);
   if (nextCursor) {
     response.nextCursor = nextCursor;
   }

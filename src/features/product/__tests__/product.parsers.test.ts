@@ -181,8 +181,15 @@ describe("store product parsers", () => {
 
   it("parses list pagination and skips malformed products", () => {
     const parsed = parseStoreProductListResponse({
-      data: [medicinePayload(), { id: "broken" }, healthcarePayload()],
-      nextCursor: "eyJpZCI6InByb2RfMTIzIn0=",
+      success: true,
+      data: {
+        items: [medicinePayload(), { id: "broken" }, healthcarePayload()],
+        pagination: {
+          hitsPerPage: 20,
+          nextCursor: "eyJpZCI6InByb2RfMTIzIn0=",
+          hasMore: true,
+        },
+      },
     });
 
     expect(parsed.data.map((product) => product.id)).toEqual(["prod_123", "prod_h1"]);
@@ -190,9 +197,55 @@ describe("store product parsers", () => {
   });
 
   it("omits nextCursor when the backend does not send one", () => {
-    const parsed = parseStoreProductListResponse({ data: [] });
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [],
+        pagination: { hitsPerPage: 20, hasMore: false },
+      },
+    });
     expect(parsed.data).toEqual([]);
     expect(parsed.nextCursor).toBeUndefined();
+  });
+
+  it("treats a null nextCursor as the end of the list", () => {
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [medicinePayload()],
+        pagination: { hitsPerPage: 20, nextCursor: null, hasMore: false },
+      },
+    });
+
+    expect(parsed.data).toHaveLength(1);
+    expect(parsed.nextCursor).toBeUndefined();
+  });
+
+  it("keeps a short page when the backend filtered products and still sent a cursor", () => {
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [medicinePayload()],
+        pagination: {
+          hitsPerPage: 20,
+          nextCursor: "eyJuZXh0IjoxfQ==",
+          hasMore: true,
+        },
+      },
+    });
+
+    expect(parsed.data).toHaveLength(1);
+    expect(parsed.nextCursor).toBe("eyJuZXh0IjoxfQ==");
+  });
+
+  it("rejects a list body that is missing the documented envelope", () => {
+    expect(() => parseStoreProductListResponse({ data: [medicinePayload()] })).toThrow(RequestError);
+    expect(() =>
+      parseStoreProductListResponse({
+        success: false,
+        data: { items: [], pagination: { hitsPerPage: 20, hasMore: false } },
+      }),
+    ).toThrow(RequestError);
   });
 
   it("parses a detail payload and rejects missing products", () => {
