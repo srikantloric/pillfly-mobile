@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Modal, Pressable, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -7,6 +7,9 @@ import { colors } from "@/theme";
 
 import type { CustomerAddress } from "../types/address.types";
 import { addressSummaryLine } from "../utils/addressSelection";
+
+const MENU_WIDTH = 156;
+const MENU_HEIGHT = 92;
 
 type Props = {
   visible: boolean;
@@ -38,7 +41,10 @@ export function AddressPickerSheet({
   onDelete,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const [menuAddress, setMenuAddress] = useState<CustomerAddress | null>(null);
+  const dotRefs = useRef<Record<string, View | null>>({});
+  const [menu, setMenu] = useState<{ address: CustomerAddress; top: number; left: number } | null>(
+    null,
+  );
   const showInitialError = status === "error";
   const showLoading = (status === "loading" || status === "idle") && addresses.length === 0;
 
@@ -46,11 +52,10 @@ export function AddressPickerSheet({
     <>
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/40">
-        <Pressable accessibilityRole="button" accessibilityLabel="Close addresses" className="flex-1" onPress={onClose} />
-        <View
-          className="max-h-[80%] rounded-t-2xl bg-pillfly-surface px-4 pt-4"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
+      <View
+        className="flex-1 overflow-hidden rounded-t-3xl bg-pillfly-surface px-4"
+        style={{ marginTop: insets.top + 8, paddingTop: 16, paddingBottom: insets.bottom + 16 }}
+      >
           <View className="mb-4 flex-row items-center justify-between">
             <Text className="text-[18px] font-bold text-pillfly-ink">Choose your location</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={onClose} className="h-8 w-8 items-center justify-center">
@@ -69,6 +74,7 @@ export function AddressPickerSheet({
           </Pressable>
 
           <Text className="mb-3 text-[13px] font-semibold text-pillfly-muted">Saved Address</Text>
+          <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
           {showLoading ? <Text className="py-6 text-[14px] text-pillfly-muted">Loading addresses</Text> : null}
 
@@ -123,34 +129,57 @@ export function AddressPickerSheet({
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Address options for ${address.recipientName}`}
-                      onPress={() => setMenuAddress(address)}
+                      onPress={() => {
+                        dotRefs.current[address.id]?.measureInWindow((x, y, width, height) => {
+                          setMenu({
+                            address,
+                            top: Math.max(insets.top + 8, y - MENU_HEIGHT + Math.round(height * 0.3)),
+                            left: Math.max(12, x - MENU_WIDTH + Math.round(width * 0.2)),
+                          });
+                        });
+                      }}
                       className="h-8 w-8 items-center justify-center"
                     >
-                      <Feather name="more-vertical" size={18} color={colors.textSecondary} />
+                      <View
+                        ref={(node) => {
+                          dotRefs.current[address.id] = node;
+                        }}
+                        collapsable={false}
+                      >
+                        <Feather name="more-vertical" size={18} color={colors.textSecondary} />
+                      </View>
                     </Pressable>
                   </Pressable>
                 );
               })
             : null}
-        </View>
+          </ScrollView>
+      </View>
       </View>
     </Modal>
 
-    <Modal visible={menuAddress != null} transparent animationType="fade" onRequestClose={() => setMenuAddress(null)}>
-        <Pressable className="flex-1 items-center justify-center bg-black/30 px-8" onPress={() => setMenuAddress(null)}>
-          <View className="w-full rounded-2xl bg-pillfly-surface p-2">
+    <Modal visible={menu != null} transparent animationType="fade" onRequestClose={() => setMenu(null)}>
+      <View className="flex-1">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close address options"
+          style={StyleSheet.absoluteFill}
+          onPress={() => setMenu(null)}
+        />
+        {menu ? (
+          <View
+            className="absolute rounded-2xl bg-pillfly-surface py-1"
+            style={[styles.menu, { top: menu.top, left: menu.left, width: MENU_WIDTH }]}
+          >
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Edit address"
               onPress={() => {
-                if (!menuAddress) {
-                  return;
-                }
-                const address = menuAddress;
-                setMenuAddress(null);
+                const address = menu.address;
+                setMenu(null);
                 onEdit(address);
               }}
-              className="flex-row items-center gap-3 px-3 py-3"
+              className="flex-row items-center gap-3 px-4 py-3"
             >
               <Feather name="edit-2" size={18} color={colors.textPrimary} />
               <Text className="text-[15px] font-semibold text-pillfly-ink">Edit</Text>
@@ -158,25 +187,33 @@ export function AddressPickerSheet({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Delete address"
-              disabled={deletingId === menuAddress?.id}
+              disabled={deletingId === menu.address.id}
               onPress={() => {
-                if (!menuAddress) {
-                  return;
-                }
-                const address = menuAddress;
-                setMenuAddress(null);
+                const address = menu.address;
+                setMenu(null);
                 onDelete(address);
               }}
-              className="flex-row items-center gap-3 px-3 py-3"
+              className="flex-row items-center gap-3 px-4 py-3"
             >
               <Feather name="trash-2" size={18} color={colors.textPrimary} />
               <Text className="text-[15px] font-semibold text-pillfly-ink">
-                {deletingId === menuAddress?.id ? "Deleting..." : "Delete"}
+                {deletingId === menu.address.id ? "Deleting..." : "Delete"}
               </Text>
             </Pressable>
           </View>
-        </Pressable>
-      </Modal>
+        ) : null}
+      </View>
+    </Modal>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  menu: {
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+});
