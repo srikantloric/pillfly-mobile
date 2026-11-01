@@ -4,7 +4,7 @@ export type ProductStatus = "ACTIVE";
 
 export type VariantStatus = "ACTIVE" | "INACTIVE";
 
-export type ProductImageType = "PRIMARY" | "SECONDARY";
+export type ProductImageType = "PRIMARY" | "SECONDARY" | "GALLERY";
 
 export interface StoreProductVariantImage {
   key: string;

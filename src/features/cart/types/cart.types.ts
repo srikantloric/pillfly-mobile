@@ -1,5 +1,6 @@
 export type CartLineItem = {
   productId: string;
+  variantId?: string;
   quantity: number;
 };
 
@@ -34,6 +35,7 @@ export type CartBill = {
 
 export type ResolvedCartLine = {
   productId: string;
+  variantId?: string;
   quantity: number;
   title: string;
   subtitle?: string;

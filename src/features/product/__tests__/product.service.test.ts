@@ -78,6 +78,22 @@ describe("product.service", () => {
     expect(productService.getProductById("prod_123")?.id).toBe("prod_123");
   });
 
+  it("requests the detail endpoint again when a fresh copy is required", async () => {
+    mockGetStoreProduct.mockResolvedValue({ data: medicine });
+    await productService.fetchProductById("prod_123");
+    mockGetStoreProduct.mockClear();
+    mockGetStoreProduct.mockResolvedValue({
+      data: { ...medicine, title: "Paracetamol 650 mg" },
+    });
+
+    const loaded = await productService.fetchProductById("prod_123", { fresh: true });
+
+    expect(mockGetStoreProduct).toHaveBeenCalledTimes(1);
+    expect(mockGetStoreProduct).toHaveBeenCalledWith("prod_123");
+    expect(loaded?.title).toBe("Paracetamol 650 mg");
+    expect(productService.getProductById("prod_123")?.title).toBe("Paracetamol 650 mg");
+  });
+
   it("returns undefined for a 404 without using catalog mocks", async () => {
     mockGetStoreProduct.mockRejectedValue(
       new RequestError("Product not found.", { status: 404, kind: "http" }),

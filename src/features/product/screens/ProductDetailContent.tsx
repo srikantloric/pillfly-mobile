@@ -3,6 +3,7 @@ import {
   Alert,
   Animated,
   ScrollView,
+  Pressable,
   Text,
   View,
   useWindowDimensions,
@@ -10,6 +11,7 @@ import {
   type NativeSyntheticEvent,
 } from "react-native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Feather } from "@react-native-vector-icons/feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CART_STICKY_BAR_SCROLL_PADDING, CartStickyBar } from "@/features/cart";
@@ -17,13 +19,13 @@ import {
   ProductDetailAccordionSections,
   ProductDetailFooterSections,
   ProductDetailHeader,
-  ProductDetailMembershipBanner,
   ProductDetailMedicalContent,
   ProductDetailMetaSections,
   ProductDetailProductCarousels,
   ProductDetailPromoCarousel,
   ProductImageCarousel,
   ProductInformationCard,
+  VariantPickerSheet,
   getPdpHeroImageHeight,
 } from "@/features/product/components";
 import {
@@ -41,7 +43,14 @@ import type { SavingsCoupon } from "@/features/savings";
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { AppStackParamList } from "@/types/navigation.types";
 import type { Product } from "@/features/product/types/product";
-import { getProductPlusCreditsAmount } from "@/features/product/utils/productDisplay";
+import { isHealthcareProduct, isMedicineProduct } from "@/features/product/utils/productDisplay";
+import {
+  countOtherOptionValues,
+  getSelectedOptionLabel,
+  isVariantAvailable,
+  selectInitialVariant,
+} from "@/features/product/utils/variantSelection";
+import { colors } from "@/theme";
 import { shareProductOnChannel } from "@/features/product/utils/shareProduct";
 
 type Props = {
@@ -100,6 +109,52 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
 
   const { itemCount, lineCount, stickyLabel } = useCartSummary();
   const { addToCart } = useCartActions();
+  const [variantSheetOpen, setVariantSheetOpen] = useState(false);
+
+  const selectedVariant = useMemo(() => {
+    if (!isHealthcareProduct(product)) {
+      return undefined;
+    }
+
+    return selectInitialVariant(product.variants);
+  }, [product]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(
+    selectedVariant?.id,
+  );
+
+  useEffect(() => {
+    setSelectedVariantId(selectedVariant?.id);
+    setVariantSheetOpen(false);
+  }, [product.id, selectedVariant?.id]);
+
+  const activeVariant = useMemo(() => {
+    if (!isHealthcareProduct(product)) {
+      return undefined;
+    }
+
+    return (
+      product.variants.find((variant) => variant.id === selectedVariantId) ?? selectedVariant
+    );
+  }, [product, selectedVariant, selectedVariantId]);
+
+  const variantImageUrls = useMemo(
+    () => activeVariant?.images.map((image) => image.url).filter((url): url is string => Boolean(url)),
+    [activeVariant],
+  );
+
+  const variantChoice = useMemo(() => {
+    if (!isHealthcareProduct(product) || !activeVariant) {
+      return null;
+    }
+
+    const label = getSelectedOptionLabel(product, activeVariant);
+    const moreCount = countOtherOptionValues(product.variantOptions);
+    if (!label || moreCount < 1) {
+      return null;
+    }
+
+    return { label, moreCount };
+  }, [activeVariant, product]);
 
   const showFeatureComingSoon = useCallback(() => {
     Alert.alert("Coming soon", "This feature will be available soon.");
@@ -118,8 +173,20 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
   }, [navigation]);
 
   const onAddToCart = useCallback(() => {
-    addToCart(product.id);
-  }, [addToCart, product.id]);
+    if (isHealthcareProduct(product)) {
+      if (!activeVariant || !isVariantAvailable(activeVariant)) {
+        return;
+      }
+
+      addToCart(product.id, activeVariant.id);
+      setVariantSheetOpen(false);
+      return;
+    }
+
+    if (isMedicineProduct(product)) {
+      addToCart(product.id, product.variantId);
+    }
+  }, [activeVariant, addToCart, product]);
 
   const onAddCarouselProductToCart = useCallback(
     (item: Product) => {
@@ -152,8 +219,6 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
     },
     [showFeatureComingSoon],
   );
-
-  const plusCredits = useMemo(() => getProductPlusCreditsAmount(product), [product]);
 
   const handleStickyHeaderLayout = useCallback(
     (height: number) => {
@@ -208,6 +273,12 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
           onPressCart={onPressCart}
           onAddToCart={onAddToCart}
           onNotify={showFeatureComingSoon}
+          selectedInStock={activeVariant ? isVariantAvailable(activeVariant) : undefined}
+          selectedSalePrice={
+            activeVariant && isVariantAvailable(activeVariant)
+              ? (activeVariant.sellingPrice ?? activeVariant.mrp)
+              : undefined
+          }
         />
       </View>
 
@@ -224,23 +295,39 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
         <ProductImageCarousel
           product={product}
           headerOverlayHeight={stickyHeaderHeight}
+          imageUrls={variantImageUrls}
           onPressWishlist={showFeatureComingSoon}
           onPressShare={showFeatureComingSoon}
         />
 
         <ProductInformationCard
           product={product}
+          variant={activeVariant}
           onAddToCart={onAddToCart}
           onNotify={showFeatureComingSoon}
         />
 
         <View className={`bg-pillfly-surface ${PDP_HORIZONTAL_PADDING} pb-4`}>
-          <ProductDetailMembershipBanner
-            creditsAmount={plusCredits}
-            onPressViewBenefits={showFeatureComingSoon}
-            onPressAddPlus={showFeatureComingSoon}
-          />
           <Text className={`mt-2 ${PDP_SUBTITLE_CLASS}`}>{PRODUCT_DETAIL_OFFER_FOOTNOTE}</Text>
+          {variantChoice ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${variantChoice.label.name}: ${variantChoice.label.value}`}
+              onPress={() => setVariantSheetOpen(true)}
+              className="mt-3 flex-row items-center justify-between border-t border-pillfly-line py-3"
+            >
+              <Text className="text-[14px] text-pillfly-ink">
+                {variantChoice.label.name}:{" "}
+                <Text className="font-semibold">{variantChoice.label.value}</Text>
+              </Text>
+              <View className="flex-row items-center gap-1">
+                <Text className="text-[13px] font-semibold text-pillfly-primary">
+                  {variantChoice.moreCount} more
+                </Text>
+                <Feather name="chevron-right" size={16} color={colors.primary} />
+              </View>
+            </Pressable>
+          ) : null}
         </View>
 
         <ProductDetailMetaSections
@@ -283,6 +370,21 @@ export function ProductDetailContent({ product, navigation, onReady }: Props) {
           itemCount={itemCount}
           label={stickyLabel}
           onPressViewCart={onViewCart}
+        />
+      ) : null}
+
+      {isHealthcareProduct(product) && variantChoice ? (
+        <VariantPickerSheet
+          visible={variantSheetOpen}
+          product={product}
+          selectedVariant={activeVariant}
+          onClose={() => setVariantSheetOpen(false)}
+          onSelect={(variant) => {
+            if (isVariantAvailable(variant)) {
+              setSelectedVariantId(variant.id);
+            }
+          }}
+          onAdd={onAddToCart}
         />
       ) : null}
     </View>

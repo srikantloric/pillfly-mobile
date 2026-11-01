@@ -33,15 +33,22 @@ export const productService = {
   },
 
   /** Resolves `undefined` when the product does not exist (404). */
-  async fetchProductById(id: string): Promise<Product | undefined> {
-    const cached = productCache.get(id);
-    if (cached) {
-      return cached;
+  async fetchProductById(
+    id: string,
+    options?: { fresh?: boolean },
+  ): Promise<Product | undefined> {
+    if (!options?.fresh) {
+      const cached = productCache.get(id);
+      if (cached) {
+        return cached;
+      }
     }
 
-    const pending = productFetchInFlight.get(id);
-    if (pending) {
-      return pending;
+    if (!options?.fresh) {
+      const pending = productFetchInFlight.get(id);
+      if (pending) {
+        return pending;
+      }
     }
 
     const request = (async () => {

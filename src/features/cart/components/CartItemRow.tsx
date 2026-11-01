@@ -11,7 +11,7 @@ import type { ResolvedCartLine } from "../types/cart.types";
 
 type Props = {
   line: ResolvedCartLine;
-  onRemove: (productId: string) => void;
+  onRemove: (productId: string, variantId?: string) => void;
 };
 
 export const CartItemRow = memo(function CartItemRow({ line, onRemove }: Props) {
@@ -32,7 +32,7 @@ export const CartItemRow = memo(function CartItemRow({ line, onRemove }: Props) 
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Remove ${line.title} from cart`}
-              onPress={() => onRemove(line.productId)}
+              onPress={() => onRemove(line.productId, line.variantId)}
               className="h-8 w-8 items-center justify-center"
             >
               <Feather name="trash-2" size={18} color={colors.textSecondary} />

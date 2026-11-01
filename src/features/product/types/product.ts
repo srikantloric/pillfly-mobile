@@ -6,7 +6,7 @@ export type ProductStatus = "ACTIVE" | "INACTIVE" | "DRAFT";
 
 export type ImageType = {
   url: string;
-  type?: "PRIMARY" | "SECONDARY";
+  type?: "PRIMARY" | "SECONDARY" | "GALLERY";
   order?: number;
 };
 
@@ -86,6 +86,8 @@ export interface MedicineProduct extends BaseProduct {
   sku: string;
 
   isPrescriptionRequired: boolean;
+
+  variantId?: string;
 
   medicineDetails: MedicineDetails;
 }

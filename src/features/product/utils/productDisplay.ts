@@ -204,12 +204,3 @@ export function getProductTherapeuticClassDisplay(product: Product): string | un
   const therapy = product.medicineDetails.therapy.trim();
   return therapy ? therapy.toUpperCase() : undefined;
 }
-
-export function getProductPlusCreditsAmount(product: Product): number {
-  const pricing = getProductPricing(product);
-  if (!pricing) {
-    return 2;
-  }
-
-  return Math.max(1, Math.round(pricing.salePrice * 0.08));
-}

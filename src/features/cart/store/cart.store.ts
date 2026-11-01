@@ -6,12 +6,20 @@ import { subscribeAuthTokens } from "@/features/auth/api/authSession";
 
 import type { CartLineItem, DeliveryAddress } from "../types/cart.types";
 
+function isSameCartLine(
+  item: CartLineItem,
+  productId: string,
+  variantId?: string,
+): boolean {
+  return item.productId === productId && item.variantId === variantId;
+}
+
 type CartState = {
   items: CartLineItem[];
   deliveryAddress: DeliveryAddress | null;
-  addItem: (productId: string) => void;
-  removeItem: (productId: string) => void;
-  setQuantity: (productId: string, quantity: number) => void;
+  addItem: (productId: string, variantId?: string) => void;
+  removeItem: (productId: string, variantId?: string) => void;
+  setQuantity: (productId: string, quantity: number, variantId?: string) => void;
   clearCart: () => void;
   setDeliveryAddress: (address: DeliveryAddress | null) => void;
 };
@@ -22,14 +30,14 @@ export const useCartStore = create<CartState>()(
       items: [],
       deliveryAddress: null,
 
-      addItem: (productId) => {
+      addItem: (productId, variantId) => {
         set((state) => {
-          const existing = state.items.find((item) => item.productId === productId);
+          const existing = state.items.find((item) => isSameCartLine(item, productId, variantId));
 
           if (existing) {
             return {
               items: state.items.map((item) =>
-                item.productId === productId
+                isSameCartLine(item, productId, variantId)
                   ? { ...item, quantity: item.quantity + 1 }
                   : item,
               ),
@@ -37,28 +45,28 @@ export const useCartStore = create<CartState>()(
           }
 
           return {
-            items: [...state.items, { productId, quantity: 1 }],
+            items: [...state.items, { productId, variantId, quantity: 1 }],
           };
         });
       },
 
-      removeItem: (productId) => {
+      removeItem: (productId, variantId) => {
         set((state) => ({
-          items: state.items.filter((item) => item.productId !== productId),
+          items: state.items.filter((item) => !isSameCartLine(item, productId, variantId)),
         }));
       },
 
-      setQuantity: (productId, quantity) => {
+      setQuantity: (productId, quantity, variantId) => {
         if (quantity <= 0) {
           set((state) => ({
-            items: state.items.filter((item) => item.productId !== productId),
+            items: state.items.filter((item) => !isSameCartLine(item, productId, variantId)),
           }));
           return;
         }
 
         set((state) => ({
           items: state.items.map((item) =>
-            item.productId === productId ? { ...item, quantity } : item,
+            isSameCartLine(item, productId, variantId) ? { ...item, quantity } : item,
           ),
         }));
       },

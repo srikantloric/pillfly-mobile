@@ -10,8 +10,10 @@ import {
   resolveCartLines,
 } from "../utils/cartPricing";
 
-function cartItemKey(items: { productId: string; quantity: number }[]): string {
-  return items.map((item) => `${item.productId}:${item.quantity}`).join("|");
+function cartItemKey(items: { productId: string; variantId?: string; quantity: number }[]): string {
+  return items
+    .map((item) => `${item.productId}:${item.variantId ?? ""}:${item.quantity}`)
+    .join("|");
 }
 
 export function useCartSummary() {

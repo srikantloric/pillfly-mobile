@@ -297,11 +297,47 @@ describe("store product parsers", () => {
     ).toBeNull();
   });
 
-  it("rejects a detail body that is missing success", () => {
-    expect(() => parseStoreProductResponse({ data: medicinePayload() })).toThrow(RequestError);
+  it("parses a detail body when success is omitted and rejects an unsuccessful body", () => {
+    const parsed = parseStoreProductResponse({ data: medicinePayload() });
+
+    expect(parsed.data.id).toBe("prod_123");
+    expect(() => parseStoreProductResponse({ success: false, data: medicinePayload() })).toThrow(
+      RequestError,
+    );
     expect(() => parseStoreProductResponse({ success: true, data: { id: "prod_123" } })).toThrow(
       RequestError,
     );
+  });
+
+  it("keeps gallery images on a medicine detail response", () => {
+    const parsed = parseStoreProductResponse({
+      data: medicinePayload({
+        variants: [
+          {
+            ...medicinePayload().variants[0],
+            images: [
+              {
+                key: "products/prod_123/primary.jpg",
+                url: "https://cdn.example.com/products/primary.jpg",
+                type: "PRIMARY",
+                order: 0,
+              },
+              {
+                key: "products/prod_123/gallery.jpg",
+                url: "https://cdn.example.com/products/gallery.jpg",
+                type: "GALLERY",
+                order: 1,
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    expect(parsed.data.variants[0]?.images.map((image) => image.type)).toEqual([
+      "PRIMARY",
+      "GALLERY",
+    ]);
   });
 
   it("skips an invalid medicine in a store list and keeps the valid products", () => {

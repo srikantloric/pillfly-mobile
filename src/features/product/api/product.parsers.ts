@@ -84,7 +84,7 @@ export function isStoreHealthcare(
 }
 
 function parseImageType(value: unknown): ProductImageType | null {
-  if (value === "PRIMARY" || value === "SECONDARY") {
+  if (value === "PRIMARY" || value === "SECONDARY" || value === "GALLERY") {
     return value;
   }
 
@@ -380,7 +380,7 @@ export function parseStoreProduct(value: unknown): StoreProduct | null {
 }
 
 export function parseStoreProductResponse(data: unknown): StoreProductResponse {
-  if (!isRecord(data) || data.success !== true || !isRecord(data.data)) {
+  if (!isRecord(data) || !isRecord(data.data) || ("success" in data && data.success !== true)) {
     throw malformed();
   }
 

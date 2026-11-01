@@ -135,7 +135,11 @@ export function CartScreen({ navigation }: Props) {
       >
         <View className="mx-4 mt-4 overflow-hidden rounded-xl border border-pillfly-line bg-pillfly-surface">
           {resolvedLines.map((line) => (
-            <CartItemRow key={line.productId} line={line} onRemove={removeFromCart} />
+            <CartItemRow
+              key={`${line.productId}:${line.variantId ?? ""}`}
+              line={line}
+              onRemove={removeFromCart}
+            />
           ))}
         </View>
 

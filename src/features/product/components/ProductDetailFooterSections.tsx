@@ -8,9 +8,7 @@ import {
   PRODUCT_DETAIL_SHARE_CHANNELS,
   type ProductDetailShareChannelId,
 } from "@/features/product/mocks/detail.mock";
-import { getProductDetailOffers } from "@/features/product/utils/productDetailOffers";
 import type { SavingsCoupon } from "@/features/savings";
-import { CouponCard } from "@/features/savings/components/CouponCard";
 
 import {
   PDP_HORIZONTAL_PADDING,
@@ -24,24 +22,10 @@ type Props = {
 };
 
 export const ProductDetailFooterSections = memo(function ProductDetailFooterSections({
-  onPressCoupon,
   onPressShareChannel,
 }: Props) {
-  const offers = getProductDetailOffers();
-
   return (
     <View>
-      {offers.length > 0 ? (
-        <View className={`${PDP_SECTION_SPACING} bg-pillfly-surface ${PDP_HORIZONTAL_PADDING} pb-4 pt-4`}>
-          <SectionHeaderRow title="Offers just for you" className="mb-3" />
-          <View className="gap-3">
-            {offers.map((coupon) => (
-              <CouponCard key={coupon.id} coupon={coupon} onPress={onPressCoupon} />
-            ))}
-          </View>
-        </View>
-      ) : null}
-
       <View className={`${PDP_SECTION_SPACING} bg-pillfly-background ${PDP_HORIZONTAL_PADDING} pb-2 pt-4`}>
         <SectionHeaderRow title="Share with friends" className="mb-4" />
         <View className="flex-row items-center gap-6 pb-2">
