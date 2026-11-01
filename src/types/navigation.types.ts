@@ -22,6 +22,7 @@ export type SearchStackParamList = {
 
 export type CartStackParamList = {
   CartMain: undefined;
+  AddressForm: { addressId?: string } | undefined;
   Checkout: undefined;
 };
 

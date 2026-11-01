@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { subscribeAuthTokens } from "@/features/auth/api/authSession";
+import { isCustomerAddress } from "@/features/address/types/address.types";
 
 import type { CartLineItem, DeliveryAddress } from "../types/cart.types";
 
@@ -82,6 +83,11 @@ export const useCartStore = create<CartState>()(
         items: state.items,
         deliveryAddress: state.deliveryAddress,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.deliveryAddress && !isCustomerAddress(state.deliveryAddress)) {
+          useCartStore.setState({ deliveryAddress: null });
+        }
+      },
     },
   ),
 );

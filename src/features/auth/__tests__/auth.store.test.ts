@@ -35,10 +35,16 @@ import { resetAuthStoreForTests, useAuthStore } from "../store/auth.store";
 
 const leftoverCartAddress = {
   id: "addr_1",
-  label: "Home",
-  line1: "12 MG Road",
+  label: "HOME" as const,
+  recipientName: "Priya",
+  phoneNumber: "+919876543210",
+  addressLine1: "12 MG Road",
   city: "Bengaluru",
-  pincode: "560001",
+  state: "Karnataka",
+  postalCode: "560001",
+  countryCode: "IN",
+  createdAt: "2026-08-26T10:00:00.000Z",
+  updatedAt: "2026-08-26T10:00:00.000Z",
 };
 
 const activeUser = {
