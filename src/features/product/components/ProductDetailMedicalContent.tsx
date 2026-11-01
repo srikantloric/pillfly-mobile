@@ -3,13 +3,15 @@ import { Pressable, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 
-import { BulletList, HorizontalScrollRow, ReadMoreText } from "@/components/ui";
+import { BulletList, HorizontalScrollRow } from "@/components/ui";
+import { parseProductDescription } from "@/features/product/utils/productDescription";
+
+import { ProductDescriptionText } from "./ProductDescriptionText";
 import type { Product } from "@/features/product/types/product";
 import {
   MEDICAL_INFO_TABS,
   getProductMedicalDescription,
   getProductMedicalSections,
-  hasProductMedicalContent,
   type MedicalInfoTabId,
 } from "@/features/product/utils/productMedicalContent";
 import { colors } from "@/theme";
@@ -43,7 +45,10 @@ export const ProductDetailMedicalContent = memo(function ProductDetailMedicalCon
   onTabsLayout,
   onTabPress,
 }: Props) {
-  const description = getProductMedicalDescription(product);
+  const description = useMemo(() => {
+    const text = getProductMedicalDescription(product);
+    return text ? parseProductDescription(text) : [];
+  }, [product]);
   const sections = useMemo(() => getProductMedicalSections(product), [product]);
   const visibleTabs = useMemo(
     () => MEDICAL_INFO_TABS.filter((tab) => sections.some((section) => section.id === tab.id)),
@@ -51,16 +56,20 @@ export const ProductDetailMedicalContent = memo(function ProductDetailMedicalCon
   );
   const [activeTabId, setActiveTabId] = useState<MedicalInfoTabId>(visibleTabs[0]?.id ?? "uses");
 
-  if (!hasProductMedicalContent(product)) {
+  if (description.length === 0 && sections.length === 0) {
     return null;
   }
 
   return (
     <View className={`${PDP_SECTION_SPACING} bg-pillfly-background`}>
-      {description ? (
+      {description.length > 0 ? (
         <View className={`${PDP_DIVIDER} bg-pillfly-surface ${PDP_HORIZONTAL_PADDING} ${PDP_ROW_PADDING}`}>
           <Text className={`mb-3 ${PDP_SECTION_TITLE_CLASS}`}>Medical description</Text>
-          <ReadMoreText text={description} collapsedLines={3} textClassName={PDP_BODY_TEXT_CLASS} />
+          <ProductDescriptionText
+            paragraphs={description}
+            collapsedLines={3}
+            textClassName={PDP_BODY_TEXT_CLASS}
+          />
         </View>
       ) : null}
 

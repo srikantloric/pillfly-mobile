@@ -13,9 +13,10 @@ import {
   PDP_HORIZONTAL_PADDING,
   PDP_SECTION_SPACING,
 } from "../constants/productDetail.constants";
+import { ProductDescriptionText } from "./ProductDescriptionText";
 
 function AccordionBody({ section }: { section: ProductAccordionSection }) {
-  const { faqItems, paragraphs, bullets } = section;
+  const { faqItems, paragraphs, richText, bullets } = section;
 
   if (faqItems?.length) {
     return (
@@ -37,6 +38,9 @@ function AccordionBody({ section }: { section: ProductAccordionSection }) {
 
   return (
     <View>
+      {richText?.length ? (
+        <ProductDescriptionText paragraphs={richText} textClassName={PDP_BODY_TEXT_CLASS} />
+      ) : null}
       {paragraphs?.map((paragraph, index) => (
         <Text
           key={`p-${index}`}

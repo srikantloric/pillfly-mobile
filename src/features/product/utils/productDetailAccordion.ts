@@ -1,6 +1,7 @@
 import type { HealthcareProduct, MedicineProduct, Product } from "@/features/product/types/product";
 import { getDefaultVariant, isHealthcareProduct, isMedicineProduct } from "@/features/product/utils/productDisplay";
 
+import { parseProductDescription, type DescriptionParagraph } from "./productDescription";
 import { parseBulletList } from "./productMedicalContent";
 
 export type ProductAccordionSectionId =
@@ -13,6 +14,7 @@ export type ProductAccordionSection = {
   id: ProductAccordionSectionId;
   title: string;
   paragraphs?: string[];
+  richText?: DescriptionParagraph[];
   bullets?: string[];
   faqItems?: ReadonlyArray<{ question: string; answer: string }>;
 };
@@ -94,14 +96,15 @@ function getAdditionalInformationSection(product: Product): ProductAccordionSect
   }
 
   const text = product.description?.trim();
-  if (!text) {
+  const richText = text ? parseProductDescription(text) : [];
+  if (richText.length === 0) {
     return null;
   }
 
   return {
     id: "additionalInformation",
     title: "Additional Information",
-    paragraphs: [text],
+    richText,
   };
 }
 
