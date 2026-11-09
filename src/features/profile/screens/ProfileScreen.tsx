@@ -24,6 +24,7 @@ import { useSharedHeaderNavigation } from '@/components/header';
 import { useAuth } from '@/features/auth';
 import { useCartSummary } from '@/features/cart';
 import { MOCK_PROFILE_USER } from '../mocks/profile.mock';
+import type { ProfileMenuEntry } from '../types/profile.types';
 import { normalizeIndianMobile } from '@/features/auth';
 
 function formatProfilePhone(phoneNumber: string | undefined): string {
@@ -68,6 +69,18 @@ export function ProfileScreen() {
   const onPressPlus = useCallback(() => {
     Alert.alert('Plus membership', 'Membership details will open here.');
   }, []);
+
+  const onPressMenu = useCallback(
+    (entry: ProfileMenuEntry) => {
+      if (entry.id === 'orders') {
+        navigation.navigate('Orders');
+        return;
+      }
+
+      Alert.alert(entry.title, 'This section will be available soon.');
+    },
+    [navigation],
+  );
 
   const onPressLogout = useCallback(() => {
     if (isSubmitting) {
@@ -121,7 +134,10 @@ export function ProfileScreen() {
             <PlusMembershipBanner onPress={onPressPlus} />
           </View>
 
-          <ProfileMenuList dynamicBadges={MOCK_PROFILE_USER.dynamicMenuBadges} />
+          <ProfileMenuList
+            dynamicBadges={MOCK_PROFILE_USER.dynamicMenuBadges}
+            onPressEntry={onPressMenu}
+          />
 
           <View className="mt-6 flex-row items-center justify-between px-1">
             <Pressable

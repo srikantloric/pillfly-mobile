@@ -8,17 +8,22 @@ import type { ProfileMenuDynamicBadges, ProfileMenuEntry } from '../types/profil
 
 type Props = {
   dynamicBadges?: ProfileMenuDynamicBadges;
+  onPressEntry?: (entry: ProfileMenuEntry) => void;
 };
 
-export const ProfileMenuList = memo(function ProfileMenuList({ dynamicBadges }: Props) {
+export const ProfileMenuList = memo(function ProfileMenuList({
+  dynamicBadges,
+  onPressEntry,
+}: Props) {
   const menuEntries = useMemo(
     () => resolveProfileMenuEntries(dynamicBadges),
     [dynamicBadges],
   );
 
-  const onPressEntry = useCallback((entry: ProfileMenuEntry) => {
+  const onPressDefault = useCallback((entry: ProfileMenuEntry) => {
     Alert.alert(entry.title, 'This section will be available soon.');
   }, []);
+  const onPress = onPressEntry ?? onPressDefault;
 
   return (
     <View
@@ -35,7 +40,7 @@ export const ProfileMenuList = memo(function ProfileMenuList({ dynamicBadges }: 
             icon={entry.icon}
             badge={entry.badge}
             showDivider={!isLastItem}
-            onPress={() => onPressEntry(entry)}
+            onPress={() => onPress(entry)}
           />
         );
       })}

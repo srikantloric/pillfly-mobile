@@ -13,6 +13,8 @@ export type MainTabParamList = {
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
+  Orders: undefined;
+  OrderDetail: { orderId: string };
 };
 
 export type SearchStackParamList = {

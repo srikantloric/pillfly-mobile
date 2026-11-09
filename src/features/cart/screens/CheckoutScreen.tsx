@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useNavigation, type NavigationProp, type ParamListBase } from "@react-navigation/native";
 import { Feather } from "@react-native-vector-icons/feather";
 import RazorpayCheckout from "react-native-razorpay";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import { addressLabelText, addressSummaryLine } from "@/features/address/utils/addressSelection";
 import { isCustomerAddress } from "@/features/address/types/address.types";
 import { createCustomerOrder, verifyOrderPayment } from "@/features/order/api/order.api";
@@ -24,6 +26,7 @@ import { useCartStore } from "../store/cart.store";
 const MISSING_ITEM_MESSAGE = "Each item needs a product, variant, SKU, and a quantity of at least 1.";
 
 export function CheckoutScreen() {
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const items = useCartStore((state) => state.items);
   const deliveryAddress = useCartStore((state) => state.deliveryAddress);
   const selectedAddress = isCustomerAddress(deliveryAddress) ? deliveryAddress : null;
@@ -117,6 +120,18 @@ export function CheckoutScreen() {
         <Text className="mt-2 text-[20px] font-bold text-pillfly-ink">
           {formatInr(paid.order.totalAmount)}
         </Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            navigateToSharedRoute(navigation, "Profile", {
+              screen: "OrderDetail",
+              params: { orderId: paid.order.id },
+            })
+          }
+          className="mt-6 rounded-xl bg-pillfly-primary px-5 py-3.5 active:opacity-90"
+        >
+          <Text className="text-[14px] font-bold text-white">View order</Text>
+        </Pressable>
       </SafeAreaView>
     );
   }
