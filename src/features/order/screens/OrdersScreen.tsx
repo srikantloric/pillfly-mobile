@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -17,6 +17,7 @@ import { RequestError } from "@/services/api/requestError";
 import { listCustomerOrders } from "../api/order.api";
 import type { CustomerOrder, OrderItem } from "../types/order.types";
 import { canReorderOrder, formatOrderPlacedOn, formatOrderStatusLabel } from "../utils/orderDisplay";
+import { prepareReorder, type ReorderAddition } from "../utils/reorderAvailability";
 
 const VISIBLE_TITLES = 2; 
 const VISIBLE_IMAGES = 3;
@@ -56,16 +57,17 @@ function titleLines(items: OrderItem[]): string[] {
   });
 }
 
-function reorder(order: CustomerOrder) {
-  for (const line of order.items) {
+function applyReorderAdditions(additions: readonly ReorderAddition[]): void {
+  for (const line of additions) {
     const existing = useCartStore
       .getState()
-      .items.find((item) => item.productId === line.productId && item.variantId === line.variantId);
-    const currentQuantity = existing?.quantity ?? 0;
-    if (!existing) {
-      useCartStore.getState().addItem(line.productId, line.variantId);
+      .items.some((item) => item.productId === line.productId && item.variantId === line.variantId);
+    if (existing) {
+      continue;
     }
-    useCartStore.getState().setQuantity(line.productId, currentQuantity + line.quantity, line.variantId);
+
+    useCartStore.getState().addItem(line.productId, line.variantId);
+    useCartStore.getState().setQuantity(line.productId, line.quantity, line.variantId);
   }
 }
 
@@ -73,10 +75,14 @@ function OrderCard({
   order,
   onPress,
   onReorder,
+  reorderDisabled,
+  reordering,
 }: {
   order: CustomerOrder;
   onPress: () => void;
   onReorder: () => void;
+  reorderDisabled: boolean;
+  reordering: boolean;
 }) {
   const images = order.items.slice(0, VISIBLE_IMAGES);
 
@@ -123,10 +129,14 @@ function OrderCard({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Reorder ${order.shippingAddress.recipientName}`}
+              accessibilityState={{ disabled: reorderDisabled }}
+              disabled={reorderDisabled}
               onPress={onReorder}
-              className="rounded-lg bg-pillfly-primary px-4 py-2 active:opacity-90"
+              className={`rounded-lg bg-pillfly-primary px-4 py-2 ${
+                reorderDisabled ? "opacity-60" : "active:opacity-90"
+              }`}
             >
-              <Text className="text-[13px] font-bold text-white">Reorder</Text>
+              <Text className="text-[13px] font-bold text-white">{reordering ? "Checking..." : "Reorder"}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -138,6 +148,7 @@ function OrderCard({
 export function OrdersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | undefined>();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loadingMore, setLoadingMore] = useState(false);
@@ -172,12 +183,49 @@ export function OrdersScreen() {
     load();
   }, [load]);
 
+  const openCart = useCallback(() => {
+    navigateToSharedRoute(navigation as NavigationProp<ParamListBase>, "Cart");
+  }, [navigation]);
+
   const onReorder = useCallback(
     (order: CustomerOrder) => {
-      reorder(order);
-      navigateToSharedRoute(navigation as NavigationProp<ParamListBase>, "Cart");
+      if (reorderingId) {
+        return;
+      }
+
+      setReorderingId(order.id);
+      const items = order.items;
+      setTimeout(() => {
+        prepareReorder(items, useCartStore.getState().items)
+          .then((plan) => {
+            applyReorderAdditions(plan.additions);
+            if (plan.notices.length > 0) {
+              Alert.alert("Reorder", plan.notices.join("\n"), [
+                {
+                  text: "OK",
+                  onPress: () => {
+                    if (plan.openCart) {
+                      openCart();
+                    }
+                  },
+                },
+              ]);
+              return;
+            }
+
+            if (plan.openCart) {
+              openCart();
+            }
+          })
+          .catch(() => {
+            Alert.alert("Reorder", "Couldn't check these items. Nothing was added.");
+          })
+          .finally(() => {
+            setReorderingId(null);
+          });
+      }, 0);
     },
-    [navigation],
+    [openCart, reorderingId],
   );
 
   if (status === "loading") {
@@ -218,6 +266,8 @@ export function OrdersScreen() {
         <OrderCard
           order={item}
           onPress={() => navigation.navigate("OrderDetail", { orderId: item.id })}
+          reorderDisabled={reorderingId != null}
+          reordering={reorderingId === item.id}
           onReorder={() => onReorder(item)}
         />
       )}
