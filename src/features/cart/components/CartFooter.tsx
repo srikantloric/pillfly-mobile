@@ -7,7 +7,8 @@ import { formatCartTotal } from "../utils/cartPricing";
 
 type Props = {
   totalAmount: number;
-  hasDeliveryAddress: boolean;
+  primaryLabel: string;
+  primaryDisabled?: boolean;
   onPressViewBill: () => void;
   onPressPrimary: () => void;
 };
@@ -15,12 +16,12 @@ type Props = {
 
 export function CartFooter({
   totalAmount,
-  hasDeliveryAddress,
+  primaryLabel,
+  primaryDisabled = false,
   onPressViewBill,
   onPressPrimary,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const primaryLabel = hasDeliveryAddress ? "Proceed To Buy" : "Add Delivery Address";
 
   return (
     <View
@@ -44,10 +45,15 @@ export function CartFooter({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={primaryLabel}
+        disabled={primaryDisabled}
         onPress={onPressPrimary}
-        className="min-w-[190px] flex-row items-center justify-center gap-2 rounded-xl bg-pillfly-primary px-4 py-3.5 active:opacity-90"
+        className={`min-w-[160px] max-w-[210px] flex-row items-center justify-center gap-2 rounded-xl bg-pillfly-primary px-4 py-3.5 ${
+          primaryDisabled ? "opacity-60" : "active:opacity-90"
+        }`}
       >
-        <Text className="text-[14px] font-bold text-white">{primaryLabel}</Text>
+        <Text className="shrink text-center text-[14px] font-bold text-white" numberOfLines={2}>
+          {primaryLabel}
+        </Text>
         <View className="h-7 w-7 items-center justify-center rounded-full bg-white">
           <Feather name="arrow-right" size={16} color="#0D9488" />
         </View>

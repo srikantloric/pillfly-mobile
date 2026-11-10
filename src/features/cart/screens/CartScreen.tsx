@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { NavigationProp, ParamListBase } from "@react-navigation/native";
+import { useFocusEffect, type NavigationProp, type ParamListBase } from "@react-navigation/native";
+
+import { getAccessToken } from "@/features/auth/api/authSession";
 
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { CartStackParamList } from "@/types/navigation.types";
@@ -41,9 +43,13 @@ export function CartScreen({ navigation }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | undefined>();
 
-  useEffect(() => {
-    void useAddressListStore.getState().load();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      if (useAddressListStore.getState().status === "idle" && getAccessToken()) {
+        useAddressListStore.getState().load().catch(() => undefined);
+      }
+    }, []),
+  );
 
   const { removeFromCart } = useCartActions();
   const { resolvedLines, bill, hasPersistedItems, isResolving, persistHydrated, retryResolve } =
@@ -73,13 +79,36 @@ export function CartScreen({ navigation }: Props) {
     scrollRef.current?.scrollTo({ y: Math.max(0, billOffsetRef.current - 12), animated: true });
   }, []);
 
+  const savedAddressesReady = listStatus === "ready" && addresses.length > 0;
+  const noSavedAddresses = listStatus === "ready" && addresses.length === 0;
+  const waitingForAddresses = !selectedAddress && (listStatus === "idle" || listStatus === "loading");
+  const primaryLabel = selectedAddress
+    ? "Proceed To Buy"
+    : savedAddressesReady
+      ? "Select Address"
+      : waitingForAddresses
+        ? "Loading addresses..."
+        : listStatus === "error"
+          ? "Select Address"
+          : "Add Delivery Address";
+
   const onPressPrimary = useCallback(() => {
-    if (!selectedAddress) {
-      navigation.navigate("AddressForm");
+    if (selectedAddress) {
+      navigation.navigate("Checkout");
       return;
     }
-    navigation.navigate("Checkout");
-  }, [navigation, selectedAddress]);
+
+    if (listStatus !== "ready") {
+      return;
+    }
+
+    if (addresses.length > 0) {
+      setPickerOpen(true);
+      return;
+    }
+
+    navigation.navigate("AddressForm");
+  }, [addresses.length, listStatus, navigation, selectedAddress]);
 
   const onSelectAddress = useCallback((address: CustomerAddress) => {
     useCartStore.getState().setDeliveryAddress(address);
@@ -220,7 +249,8 @@ export function CartScreen({ navigation }: Props) {
           ) : null}
           <CartFooter
             totalAmount={bill.amountToPay}
-            hasDeliveryAddress={selectedAddress != null}
+            primaryLabel={primaryLabel}
+            primaryDisabled={!selectedAddress && !savedAddressesReady && !noSavedAddresses}
             onPressViewBill={onPressViewBill}
             onPressPrimary={onPressPrimary}
           />

@@ -50,7 +50,7 @@ export function CheckoutScreen() {
       return;
     }
 
-    useCartStore.getState().clearCart();
+    useCartStore.setState({ items: [] });
   }, [paid]);
 
   const onContinue = useCallback(() => {

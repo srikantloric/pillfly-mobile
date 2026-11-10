@@ -1,5 +1,6 @@
 import { create } from "zustand";
 
+import { subscribeAuthTokens } from "@/features/auth/api/authSession";
 import { useCartStore } from "@/features/cart/store/cart.store";
 import { RequestError } from "@/services/api/requestError";
 
@@ -37,18 +38,29 @@ function syncSelection(addresses: readonly CustomerAddress[]): void {
   }
 }
 
+let fetchGeneration = 0;
+
 async function fetchAddresses(
   set: (partial: Partial<AddressListState>) => void,
   get: () => AddressListState,
 ): Promise<void> {
+  const generation = ++fetchGeneration;
   const previous = get().status;
   set({ status: "loading", error: null });
 
   try {
     const addresses = await listCustomerAddresses();
+    if (generation !== fetchGeneration) {
+      return;
+    }
+
     set({ status: "ready", addresses, error: null });
     syncSelection(addresses);
   } catch (error) {
+    if (generation !== fetchGeneration) {
+      return;
+    }
+
     if (previous === "ready") {
       set({ status: "ready", error: errorMessage(error) });
       return;
@@ -99,3 +111,10 @@ export const useAddressListStore = create<AddressListState>((set, get) => ({
     }));
   },
 }));
+
+subscribeAuthTokens((tokens) => {
+  if (!tokens) {
+    fetchGeneration += 1;
+    useAddressListStore.setState({ status: "idle", addresses: [], error: null });
+  }
+});

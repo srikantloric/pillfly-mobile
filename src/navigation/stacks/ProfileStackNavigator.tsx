@@ -11,7 +11,7 @@ export function ProfileStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
-      <Stack.Screen name="Orders" component={OrdersScreen} options={{ headerShown: true, title: 'My Orders' }} />
+      <Stack.Screen name="Orders" component={OrdersScreen} options={{ headerShown: true, title: 'Orders' }} />
       <Stack.Screen
         name="OrderDetail"
         component={OrderDetailScreen}
