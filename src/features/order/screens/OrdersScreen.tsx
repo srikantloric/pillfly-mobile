@@ -16,7 +16,7 @@ import { RequestError } from "@/services/api/requestError";
 
 import { listCustomerOrders } from "../api/order.api";
 import type { CustomerOrder, OrderItem } from "../types/order.types";
-import { formatOrderPlacedOn } from "../utils/orderDisplay";
+import { canReorderOrder, formatOrderPlacedOn, formatOrderStatusLabel } from "../utils/orderDisplay";
 
 const VISIBLE_TITLES = 2; 
 const VISIBLE_IMAGES = 3;
@@ -83,8 +83,8 @@ function OrderCard({
   return (
     <View className="mx-4 mb-4">
       <View className="z-10 -mb-2.5 ml-3 self-start rounded-md border border-pillfly-line bg-pillfly-background px-2 py-1">
-        <Text className="text-[11px] font-semibold uppercase text-pillfly-muted">
-          {order.status.replace(/_/g, " ")}
+        <Text className="text-[11px] font-semibold text-pillfly-muted">
+          {formatOrderStatusLabel(order.status)}
         </Text>
       </View>
 
@@ -119,14 +119,16 @@ function OrderCard({
 
         <View className="mt-3 flex-row items-center justify-between border-t border-pillfly-line pt-3">
           <Text className="text-[13px] text-pillfly-ink">Placed On {formatOrderPlacedOn(order.createdAt)}</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Reorder ${order.shippingAddress.recipientName}`}
-            onPress={onReorder}
-            className="rounded-lg bg-pillfly-primary px-4 py-2 active:opacity-90"
-          >
-            <Text className="text-[13px] font-bold text-white">Reorder</Text>
-          </Pressable>
+          {canReorderOrder(order.status) ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Reorder ${order.shippingAddress.recipientName}`}
+              onPress={onReorder}
+              className="rounded-lg bg-pillfly-primary px-4 py-2 active:opacity-90"
+            >
+              <Text className="text-[13px] font-bold text-white">Reorder</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </View>

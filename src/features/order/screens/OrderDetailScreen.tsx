@@ -8,12 +8,74 @@ import { RequestError } from "@/services/api/requestError";
 
 import { cancelCustomerOrder, getCustomerOrder, refundCustomerOrder } from "../api/order.api";
 import type { CustomerOrder, OrderRefund } from "../types/order.types";
-import { formatOrderDate, formatOrderLabel } from "../utils/orderDisplay";
+import {
+  buildOrderTimeline,
+  formatOrderDate,
+  formatOrderLabel,
+  formatOrderStatusLabel,
+  type TimelineStepState,
+} from "../utils/orderDisplay";
 
 type Props = NativeStackScreenProps<ProfileStackParamList, "OrderDetail">;
 
 function errorMessage(error: unknown): string {
   return error instanceof RequestError ? error.message : "Something went wrong. Please try again.";
+}
+
+function stepTextClass(state: TimelineStepState): string {
+  if (state === "pending") {
+    return "text-[14px] text-pillfly-muted";
+  }
+
+  if (state === "current") {
+    return "text-[14px] font-bold text-pillfly-ink";
+  }
+
+  return "text-[14px] font-semibold text-pillfly-ink";
+}
+
+function OrderStatusTimeline({ status }: { status: string }) {
+  const timeline = buildOrderTimeline(status);
+
+  if (timeline.kind === "single") {
+    return (
+      <View className="mt-4 rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-3">
+        <Text
+          className={`text-[14px] font-bold ${
+            timeline.tone === "cancelled" ? "text-pillfly-promo-red" : "text-pillfly-ink"
+          }`}
+        >
+          {timeline.label}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="mt-4 rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-3">
+      {timeline.steps.map((step, index) => {
+        const last = index === timeline.steps.length - 1;
+        const next = timeline.steps[index + 1];
+        const lineReached = step.state !== "pending" && next?.state !== "pending";
+
+        return (
+          <View key={step.status} className="flex-row">
+            <View className="mr-3 w-4 items-center">
+              <View
+                className={`mt-1 h-2.5 w-2.5 rounded-full ${
+                  step.state === "pending" ? "border border-pillfly-line bg-pillfly-surface" : "bg-pillfly-primary"
+                }`}
+              />
+              {last ? null : (
+                <View className={`mt-1 h-6 w-px ${lineReached ? "bg-pillfly-primary" : "bg-pillfly-line"}`} />
+              )}
+            </View>
+            <Text className={`${stepTextClass(step.state)} ${last ? "" : "mb-3"}`}>{step.label}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
 }
 
 export function OrderDetailScreen({ route }: Props) {
@@ -132,12 +194,14 @@ export function OrderDetailScreen({ route }: Props) {
         <Text className="text-[14px] font-bold text-pillfly-ink">{order.id}</Text>
         <Text className="mt-1 text-[13px] text-pillfly-muted">{formatOrderDate(order.createdAt)}</Text>
         <Text className="mt-2 text-[14px] font-semibold text-pillfly-ink">
-          {formatOrderLabel(order.status)}
+          {formatOrderStatusLabel(order.status)}
         </Text>
         <Text className="mt-1 text-[13px] text-pillfly-muted">
           Payment {formatOrderLabel(order.paymentStatus)}
         </Text>
       </View>
+
+      <OrderStatusTimeline status={order.status} />
 
       <View className="mt-4 overflow-hidden rounded-xl border border-pillfly-line bg-pillfly-surface">
         {order.items.map((item) => (
