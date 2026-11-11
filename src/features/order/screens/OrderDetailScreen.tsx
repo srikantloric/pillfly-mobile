@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
+import { BouncingDotsLoader } from "@/components/ui";
 import type { ProfileStackParamList } from "@/types/navigation.types";
 import { formatInr } from "@/features/product/utils/productDisplay";
 import { toCustomerMessage } from "@/utils/customerMessage";
@@ -161,11 +162,7 @@ export function OrderDetailScreen({ route }: Props) {
   }, [busy, orderId]);
 
   if (status === "loading" && !order) {
-    return (
-      <View className="flex-1 items-center justify-center bg-pillfly-background px-8">
-        <Text className="text-[18px] font-bold text-pillfly-ink">Loading order</Text>
-      </View>
-    );
+    return <BouncingDotsLoader />;
   }
 
   if (!order) {

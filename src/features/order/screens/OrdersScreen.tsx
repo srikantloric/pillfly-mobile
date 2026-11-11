@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { NavigationProp, ParamListBase } from "@react-navigation/native";
 
-import { ProductImageWithPlaceholder } from "@/components/ui";
+import { BouncingDotsLoader, ProductImageWithPlaceholder } from "@/components/ui";
 import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import { useCartStore } from "@/features/cart/store/cart.store";
 import { productService } from "@/features/product/services/product.service";
@@ -229,11 +229,7 @@ export function OrdersScreen() {
   );
 
   if (status === "loading") {
-    return (
-      <View className="flex-1 items-center justify-center bg-pillfly-background px-8">
-        <Text className="text-[18px] font-bold text-pillfly-ink">Loading orders</Text>
-      </View>
-    );
+    return <BouncingDotsLoader />;
   }
 
   if (status === "error") {
