@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import type { ProfileStackParamList } from "@/types/navigation.types";
 import { formatInr } from "@/features/product/utils/productDisplay";
-import { RequestError } from "@/services/api/requestError";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 import { cancelCustomerOrder, getCustomerOrder, refundCustomerOrder } from "../api/order.api";
 import type { CustomerOrder, OrderRefund } from "../types/order.types";
@@ -19,7 +19,7 @@ import {
 type Props = NativeStackScreenProps<ProfileStackParamList, "OrderDetail">;
 
 function errorMessage(error: unknown): string {
-  return error instanceof RequestError ? error.message : "Something went wrong. Please try again.";
+  return toCustomerMessage(error);
 }
 
 function stepTextClass(state: TimelineStepState): string {

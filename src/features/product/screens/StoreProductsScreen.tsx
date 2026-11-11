@@ -12,6 +12,7 @@ import { useProducts } from "@/features/product/hooks/useProducts";
 import type { Product } from "@/features/product/types/product";
 import type { AppStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 type Props = NativeStackScreenProps<AppStackParamList, "StoreProducts">;
 
@@ -59,7 +60,7 @@ export function StoreProductsScreen({ navigation }: Props) {
     <View className="flex-1 items-center justify-center px-6 py-8">
       {error ? (
         <View className="w-full rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-5">
-          <Text className="text-center text-[14px] text-pillfly-promo-red">{error.message}</Text>
+          <Text className="text-center text-[14px] text-pillfly-promo-red">{toCustomerMessage(error)}</Text>
           <View className="mt-4">
             <PrimaryButton label="Retry" accessibilityLabel="Retry loading products" onPress={retry} />
           </View>
@@ -82,7 +83,7 @@ export function StoreProductsScreen({ navigation }: Props) {
         {loadingMore ? <ActivityIndicator color={colors.primary} /> : null}
         {showPageError ? (
           <View className="w-full items-center">
-            <Text className="text-center text-[14px] text-pillfly-promo-red">{error.message}</Text>
+            <Text className="text-center text-[14px] text-pillfly-promo-red">{toCustomerMessage(error)}</Text>
             <View className="mt-3 w-40">
               <PrimaryButton
                 label="Retry"

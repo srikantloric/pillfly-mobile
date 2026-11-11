@@ -12,7 +12,7 @@ import { productService } from "@/features/product/services/product.service";
 import { getProductImageUrl, isHealthcareProduct } from "@/features/product/utils/productDisplay";
 import type { ProfileStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
-import { RequestError } from "@/services/api/requestError";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 import { listCustomerOrders } from "../api/order.api";
 import type { CustomerOrder, OrderItem } from "../types/order.types";
@@ -28,7 +28,7 @@ function appendOrders(current: CustomerOrder[], next: CustomerOrder[]): Customer
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof RequestError ? error.message : "Something went wrong. Please try again.";
+  return toCustomerMessage(error);
 }
 
 function itemImage(item: OrderItem): string | undefined {

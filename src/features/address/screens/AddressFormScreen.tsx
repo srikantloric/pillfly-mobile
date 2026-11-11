@@ -10,6 +10,7 @@ import { HEADER_HIT_SLOP } from "@/components/header/appHeader.constants";
 import type { CartStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 import { RequestError } from "@/services/api/requestError";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 import {
   createCustomerAddress,
@@ -28,6 +29,18 @@ import {
   type AddressFormValues,
 } from "../utils/addressForm";
 import { addressLabelText } from "../utils/addressSelection";
+
+function formErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof RequestError) {
+    return toCustomerMessage(error);
+  }
+
+  if (typeof error === "object" && error !== null && ("response" in error || "request" in error)) {
+    return toCustomerMessage(error);
+  }
+
+  return fallback;
+}
 
 type Props = NativeStackScreenProps<CartStackParamList, "AddressForm">;
 
@@ -52,7 +65,7 @@ export function AddressFormScreen({ navigation, route }: Props) {
       const address = await getCustomerAddress(addressId);
       setValues(addressToFormValues(address));
     } catch (error) {
-      setFormError(error instanceof RequestError ? error.message : "Unable to load this address.");
+      setFormError(formErrorMessage(error, "Unable to load this address."));
     } finally {
       setLoadingAddress(false);
     }
@@ -91,7 +104,7 @@ export function AddressFormScreen({ navigation, route }: Props) {
       }
       navigation.goBack();
     } catch (error) {
-      setFormError(error instanceof RequestError ? error.message : "Unable to save this address.");
+      setFormError(formErrorMessage(error, "Unable to save this address."));
     } finally {
       setSubmitting(false);
     }

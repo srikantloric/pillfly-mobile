@@ -13,6 +13,7 @@ import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { ProductSearchHit } from "@/features/product/types/storeProduct";
 import type { SearchStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 type Props = NativeStackScreenProps<SearchStackParamList, "SearchResults">;
 
@@ -92,7 +93,7 @@ export function SearchResultsScreen({ navigation, route }: Props) {
         <ActivityIndicator color={colors.primary} />
       ) : error ? (
         <>
-          <Text className="text-center text-[14px] text-pillfly-promo-red">{error.message}</Text>
+          <Text className="text-center text-[14px] text-pillfly-promo-red">{toCustomerMessage(error)}</Text>
           <View className="mt-4 w-40">
             <PrimaryButton label="Retry" onPress={retry} />
           </View>

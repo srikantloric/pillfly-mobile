@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 import { subscribeAuthTokens } from "@/features/auth/api/authSession";
 import { useCartStore } from "@/features/cart/store/cart.store";
-import { RequestError } from "@/services/api/requestError";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 import { listCustomerAddresses } from "../api/address.api";
 import { isCustomerAddress, type CustomerAddress } from "../types/address.types";
@@ -22,11 +22,7 @@ type AddressListState = {
 };
 
 function errorMessage(error: unknown): string {
-  if (error instanceof RequestError) {
-    return error.message;
-  }
-
-  return "Something went wrong. Please try again.";
+  return toCustomerMessage(error);
 }
 
 function syncSelection(addresses: readonly CustomerAddress[]): void {

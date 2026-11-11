@@ -12,7 +12,7 @@ import { SelectedAddressBar } from "@/features/address/components/SelectedAddres
 import { deleteCustomerAddress } from "@/features/address/api/address.api";
 import { useAddressListStore } from "@/features/address/store/addressList.store";
 import { isCustomerAddress, type CustomerAddress } from "@/features/address/types/address.types";
-import { RequestError } from "@/services/api/requestError";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 import {
   AddMoreItemsRow,
@@ -131,7 +131,7 @@ export function CartScreen({ navigation }: Props) {
       .catch((error: unknown) => {
         Alert.alert(
           "Unable to delete address",
-          error instanceof RequestError ? error.message : "Something went wrong. Please try again.",
+          toCustomerMessage(error),
         );
       })
       .finally(() => {

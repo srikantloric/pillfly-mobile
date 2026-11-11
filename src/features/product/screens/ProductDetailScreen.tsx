@@ -10,6 +10,7 @@ import { useProductDetail } from "@/features/product/hooks/useProductDetail";
 import { ProductDetailContent } from "@/features/product/screens/ProductDetailContent";
 import type { AppStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 const LOADER_FADE_MS = 220;
 
@@ -71,7 +72,7 @@ export function ProductDetailScreen({ route, navigation }: Props) {
         </Pressable>
         <View className={`flex-1 justify-center ${PDP_HORIZONTAL_PADDING}`}>
           <View className="rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-5">
-            <Text className="text-center text-[14px] text-pillfly-promo-red">{error.message}</Text>
+            <Text className="text-center text-[14px] text-pillfly-promo-red">{toCustomerMessage(error)}</Text>
             <View className="mt-4">
               <PrimaryButton label="Retry" accessibilityLabel="Retry loading product" onPress={retry} />
             </View>

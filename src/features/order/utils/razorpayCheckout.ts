@@ -1,6 +1,7 @@
 import { API_CONFIG } from "@/config/api.config";
 import { RequestError } from "@/services/api/requestError";
 import { colors } from "@/theme";
+import { toCustomerMessage } from "@/utils/customerMessage";
 
 import type { OrderPayment, VerifyPaymentInput } from "../types/order.types";
 
@@ -114,7 +115,7 @@ function stockMessage(message: string): string | null {
 
 export function razorpayErrorMessage(error: unknown): string {
   if (error instanceof RequestError) {
-    return stockMessage(error.message) ?? error.message;
+    return stockMessage(error.message) ?? toCustomerMessage(error);
   }
 
   if (isRecord(error)) {
@@ -135,7 +136,7 @@ export function razorpayErrorMessage(error: unknown): string {
   }
 
   if (error instanceof Error && error.message.trim()) {
-    return error.message;
+    return toCustomerMessage(error);
   }
 
   return "Payment was not completed.";
