@@ -54,4 +54,33 @@ describe("razorpay checkout", () => {
     );
     expect(razorpayErrorMessage(null)).toBe("Payment was not completed.");
   });
+
+  it("hides the raw Razorpay payload when the payment sheet closes", () => {
+    const payload = {
+      code: 0,
+      description:
+        '{"error":{"code":"BAD_REQUEST_ERROR","description":"undefined","source":"customer","step":"payment_authentication","reason":"payment_error","metadata":{}}}',
+      error: {
+        code: "BAD_REQUEST_ERROR",
+        description: "undefined",
+        source: "customer",
+        step: "payment_authentication",
+        reason: "payment_error",
+        metadata: {},
+      },
+    };
+
+    expect(razorpayErrorMessage(payload)).toBe("Payment was not completed.");
+  });
+
+  it("replaces an insufficient-stock id with the available quantity", () => {
+    expect(
+      razorpayErrorMessage(
+        new RequestError("Insufficient stock for wcfiT-LpmJ80v9_JIofXt. Available: 2", { status: 400 }),
+      ),
+    ).toBe("Only 2 are available for an item in your cart.");
+    expect(
+      razorpayErrorMessage(new RequestError("Insufficient stock for variant_1. Available: 1", { status: 400 })),
+    ).toBe("Only 1 is available for an item in your cart.");
+  });
 });
