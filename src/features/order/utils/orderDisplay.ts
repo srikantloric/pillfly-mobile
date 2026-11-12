@@ -99,3 +99,223 @@ export function formatOrderPlacedOn(value: string): string {
   const month = date.toLocaleDateString("en-IN", { month: "short" });
   return `${day} ${month}`;
 }
+
+export function formatOrderPlacedDetail(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const weekday = date.toLocaleDateString("en-IN", { weekday: "short" });
+  const day = date.getDate();
+  const month = date.toLocaleDateString("en-IN", { month: "short" });
+  return `${weekday}, ${day} ${month}`;
+}
+
+export function formatOrderDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const day = date.getDate();
+  const month = date.toLocaleDateString("en-IN", { month: "short" }).toUpperCase();
+  const year = date.getFullYear();
+  const time = date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${day} ${month} ${year}, ${time}`;
+}
+
+const SHIPMENT_STAGES = ["CONFIRMED", "PACKING", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
+
+export type ShipmentStage = (typeof SHIPMENT_STAGES)[number];
+
+export type ShipmentTrackerStep = {
+  stage: ShipmentStage;
+  label: string;
+  state: TimelineStepState;
+};
+
+const SHIPMENT_STAGE_LABELS: Record<ShipmentStage, string> = {
+  CONFIRMED: "Confirmed",
+  PACKING: "Packing",
+  OUT_FOR_DELIVERY: "Out for Delivery",
+  DELIVERED: "Delivered",
+};
+
+function shipmentStageIndex(status: string | null | undefined): number {
+  switch (status) {
+    case "PAID":
+    case "CONFIRMED":
+      return 0;
+    case "PROCESSING":
+      return 1;
+    case "SHIPPED":
+      return 2;
+    case "DELIVERED":
+      return 3;
+    default:
+      return -1;
+  }
+}
+
+export function buildShipmentTracker(status: string | null | undefined): ShipmentTrackerStep[] | null {
+  const currentIndex = shipmentStageIndex(status);
+  if (currentIndex < 0) {
+    return null;
+  }
+
+  return SHIPMENT_STAGES.map((stage, index) => ({
+    stage,
+    label: SHIPMENT_STAGE_LABELS[stage],
+    state: timelineState(index, currentIndex),
+  }));
+}
+
+export function isCancelledOrder(status: string | null | undefined): boolean {
+  return status === "CANCELLED" || status === "REFUND_PENDING" || status === "REFUNDED";
+}
+
+export function canCancelOrder(status: string | null | undefined): boolean {
+  return (
+    status === "PAYMENT_PENDING" ||
+    status === "PAYMENT_PROCESSING" ||
+    status === "PAID" ||
+    status === "CONFIRMED" ||
+    status === "PROCESSING" ||
+    status === "SHIPPED"
+  );
+}
+
+export function shipmentStatusCopy(status: string | null | undefined): {
+  eyebrow: string;
+  title: string;
+  badge: string;
+  badgeTone: "success" | "danger" | "neutral";
+  band: string;
+} {
+  if (status === "CANCELLED") {
+    return {
+      eyebrow: "CANCELLED",
+      title: formatOrderStatusLabel(status),
+      badge: "Cancelled",
+      badgeTone: "danger",
+      band: "This order was cancelled.",
+    };
+  }
+
+  if (status === "REFUND_PENDING") {
+    return {
+      eyebrow: "REFUND",
+      title: "Refund Pending",
+      badge: "Refund Pending",
+      badgeTone: "neutral",
+      band: "Your refund is being processed.",
+    };
+  }
+
+  if (status === "REFUNDED") {
+    return {
+      eyebrow: "REFUND",
+      title: "Refunded",
+      badge: "Refunded",
+      badgeTone: "success",
+      band: "Your refund has been completed.",
+    };
+  }
+
+  if (status === "DELIVERED") {
+    return {
+      eyebrow: "DELIVERED",
+      title: "Delivered",
+      badge: "Delivered",
+      badgeTone: "success",
+      band: "Your order has been delivered.",
+    };
+  }
+
+  if (status === "SHIPPED") {
+    return {
+      eyebrow: "SHIPPING",
+      title: "Out for delivery",
+      badge: "On Track",
+      badgeTone: "success",
+      band: "Your order is out for delivery.",
+    };
+  }
+
+  if (status === "PROCESSING") {
+    return {
+      eyebrow: "PACKING",
+      title: "Being packed",
+      badge: "On Track",
+      badgeTone: "success",
+      band: "Items in your order are being packed.",
+    };
+  }
+
+  if (status === "PAID" || status === "CONFIRMED") {
+    return {
+      eyebrow: "ARRIVING",
+      title: "Order confirmed",
+      badge: "On Track",
+      badgeTone: "success",
+      band: "Items in your order are being prepared for dispatch.",
+    };
+  }
+
+  return {
+    eyebrow: "ORDER",
+    title: formatOrderStatusLabel(status) || "Order",
+    badge: formatOrderStatusLabel(status) || "Order",
+    badgeTone: "neutral",
+    band: "We are updating this order.",
+  };
+}
+
+export type OrderBillLine = {
+  mrpTotal: number;
+  discountTotal: number;
+  subtotal: number;
+  totalAmount: number;
+  savings: number;
+};
+
+export type OrderBillItem = {
+  mrp: number;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+};
+
+export function buildOrderBill(
+  items: readonly OrderBillItem[],
+  subtotal: number,
+  totalAmount: number,
+): OrderBillLine {
+  const mrpTotal = items.reduce((sum, item) => sum + item.mrp * item.quantity, 0);
+  const soldTotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+  const discountTotal = Math.max(0, mrpTotal - soldTotal);
+  const savings = Math.max(0, mrpTotal - totalAmount);
+
+  return {
+    mrpTotal,
+    discountTotal,
+    subtotal,
+    totalAmount,
+    savings,
+  };
+}
+
+export function shipmentItemSummary(items: readonly { title: string; quantity: number }[]): {
+  count: number;
+  titles: string;
+} {
+  const count = items.length;
+  const firstTitle = items[0]?.title?.trim() ?? "";
+  const extra = items.length > 1 ? ` + ${items.length - 1} more` : "";
+  return { count, titles: firstTitle ? `${firstTitle}${extra}` : "" };
+}

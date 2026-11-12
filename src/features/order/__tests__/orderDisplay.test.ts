@@ -1,4 +1,14 @@
-import { buildOrderTimeline, canReorderOrder, formatOrderStatusLabel } from "../utils/orderDisplay";
+import {
+  buildOrderBill,
+  buildOrderTimeline,
+  buildShipmentTracker,
+  canCancelOrder,
+  canReorderOrder,
+  formatOrderStatusLabel,
+  isCancelledOrder,
+  shipmentItemSummary,
+  shipmentStatusCopy,
+} from "../utils/orderDisplay";
 
 describe("formatOrderStatusLabel", () => {
   it.each([
@@ -120,5 +130,101 @@ describe("canReorderOrder", () => {
     expect(canReorderOrder("REFUNDED")).toBe(false);
     expect(canReorderOrder("PAYMENT_PENDING")).toBe(false);
     expect(canReorderOrder(null)).toBe(false);
+  });
+});
+
+describe("buildShipmentTracker", () => {
+  it("maps paid and confirmed to the confirmed stage", () => {
+    expect(buildShipmentTracker("PAID")?.map((step) => [step.label, step.state])).toEqual([
+      ["Confirmed", "current"],
+      ["Packing", "pending"],
+      ["Out for Delivery", "pending"],
+      ["Delivered", "pending"],
+    ]);
+    expect(buildShipmentTracker("CONFIRMED")?.[0]?.state).toBe("current");
+  });
+
+  it("marks packing through delivered from the order status", () => {
+    expect(buildShipmentTracker("PROCESSING")?.map((step) => step.state)).toEqual([
+      "completed",
+      "current",
+      "pending",
+      "pending",
+    ]);
+    expect(buildShipmentTracker("SHIPPED")?.map((step) => step.state)).toEqual([
+      "completed",
+      "completed",
+      "current",
+      "pending",
+    ]);
+    expect(buildShipmentTracker("DELIVERED")?.map((step) => step.state)).toEqual([
+      "completed",
+      "completed",
+      "completed",
+      "current",
+    ]);
+  });
+
+  it("hides the shipment tracker for cancelled and payment-pending orders", () => {
+    expect(buildShipmentTracker("CANCELLED")).toBeNull();
+    expect(buildShipmentTracker("REFUND_PENDING")).toBeNull();
+    expect(buildShipmentTracker("PAYMENT_PENDING")).toBeNull();
+  });
+});
+
+describe("buildOrderBill", () => {
+  it("sums MRP, discount, and savings from the order items", () => {
+    expect(
+      buildOrderBill(
+        [
+          { mrp: 55, quantity: 1, unitPrice: 44, totalPrice: 44 },
+          { mrp: 50, quantity: 2, unitPrice: 40, totalPrice: 80 },
+        ],
+        124,
+        124,
+      ),
+    ).toEqual({
+      mrpTotal: 155,
+      discountTotal: 31,
+      subtotal: 124,
+      totalAmount: 124,
+      savings: 31,
+    });
+  });
+
+  it("does not invent a negative discount or savings", () => {
+    expect(buildOrderBill([{ mrp: 40, quantity: 1, unitPrice: 44, totalPrice: 44 }], 44, 50)).toEqual({
+      mrpTotal: 40,
+      discountTotal: 0,
+      subtotal: 44,
+      totalAmount: 50,
+      savings: 0,
+    });
+  });
+});
+
+describe("shipment helpers", () => {
+  it("labels cancelled orders and keeps cancel off those statuses", () => {
+    expect(isCancelledOrder("CANCELLED")).toBe(true);
+    expect(isCancelledOrder("REFUNDED")).toBe(true);
+    expect(isCancelledOrder("PROCESSING")).toBe(false);
+    expect(canCancelOrder("PROCESSING")).toBe(true);
+    expect(canCancelOrder("CANCELLED")).toBe(false);
+    expect(canCancelOrder("DELIVERED")).toBe(false);
+    expect(shipmentStatusCopy("PROCESSING").badge).toBe("On Track");
+    expect(shipmentStatusCopy("CANCELLED").badgeTone).toBe("danger");
+  });
+
+  it("summarizes shipment line count with the first title only", () => {
+    expect(
+      shipmentItemSummary([
+        { title: "Dolo 650", quantity: 1 },
+        { title: "Liveasy Powder", quantity: 2 },
+        { title: "Thermometer", quantity: 1 },
+      ]),
+    ).toEqual({
+      count: 3,
+      titles: "Dolo 650 + 2 more",
+    });
   });
 });
