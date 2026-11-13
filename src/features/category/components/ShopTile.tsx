@@ -1,5 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, Text, View, type ImageSourcePropType } from 'react-native';
+
+function isRemoteUriSource(icon: ImageSourcePropType): icon is { uri: string } {
+  return (
+    typeof icon === 'object' &&
+    icon !== null &&
+    !Array.isArray(icon) &&
+    'uri' in icon &&
+    typeof (icon as { uri?: unknown }).uri === 'string'
+  );
+}
 
 export function ShopTile({
   title,
@@ -11,19 +21,43 @@ export function ShopTile({
   title: string;
   subtitle: string;
   bg: string;
-  icon: string | ImageSourcePropType;
+  icon?: string | ImageSourcePropType;
   width?: number;
 }) {
-  const graphic =
-    typeof icon === 'string' ? (
-      <Text className="text-[36px]">{icon}</Text>
-    ) : (
-      <Image
-        source={icon}
-        className="h-[88px] w-full max-w-[112px]"
-        resizeMode="contain"
-      />
-    );
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [icon]);
+
+  let graphic: React.ReactNode = null;
+
+  if (typeof icon === 'string') {
+    graphic = <Text className="text-[36px]">{icon}</Text>;
+  } else if (icon != null && !imageFailed) {
+    if (isRemoteUriSource(icon)) {
+      const uri = icon.uri.trim();
+      if (uri.length > 0) {
+        graphic = (
+          <Image
+            source={{ uri }}
+            className="h-[88px] w-full max-w-[112px]"
+            resizeMode="contain"
+            onError={() => setImageFailed(true)}
+          />
+        );
+      }
+    } else {
+      graphic = (
+        <Image
+          source={icon}
+          className="h-[88px] w-full max-w-[112px]"
+          resizeMode="contain"
+          onError={() => setImageFailed(true)}
+        />
+      );
+    }
+  }
 
   return (
     <View

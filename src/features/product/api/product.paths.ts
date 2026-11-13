@@ -5,5 +5,9 @@ export const PRODUCT_PATHS = {
 } as const;
 
 export function isPublicProductPath(path: string): boolean {
-  return /\/products\/store(?:\/|$)/.test(path) || /\/products\/search(?:\/|$)/.test(path);
+  return (
+    /\/products\/store(?:\/|$)/.test(path) ||
+    /\/products\/search(?:\/|$)/.test(path) ||
+    /\/catalog\/categories(?:\/|$)/.test(path)
+  );
 }

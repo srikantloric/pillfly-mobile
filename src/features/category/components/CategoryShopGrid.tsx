@@ -21,7 +21,7 @@ export function CategoryShopGrid({
           title={row.title}
           subtitle={row.subtitle ?? ''}
           bg={row.tileBg}
-          icon={row.image}
+          icon={row.image ?? undefined}
           width={tileWidth}
         />
       ))}

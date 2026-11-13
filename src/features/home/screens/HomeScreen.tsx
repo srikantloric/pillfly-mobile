@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Image,
   Pressable,
@@ -17,11 +18,12 @@ import { Ionicons } from '@react-native-vector-icons/ionicons';
 import DeliveryBoy from '@/assets/icons/deliveryBoy.svg';
 import { useCartSummary } from '@/features/cart';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
-import { CategoryShopGrid, categoryGridTileWidth, CATEGORIES } from '@/features/category';
-import { HomePromoBanner, SectionTitle, homePromoBannerAssets } from '@/components/ui';
+import { CategoryShopGrid, categoryGridTileWidth, useCategories } from '@/features/category';
+import { HomePromoBanner, PrimaryButton, SectionTitle, homePromoBannerAssets } from '@/components/ui';
 import { productLog } from '@/features/product/api/productLog';
 import { colors } from '@/theme';
 import type { MainTabParamList } from '@/types/navigation.types';
+import { toCustomerMessage } from '@/utils/customerMessage';
 import { openSupportPhone, openSupportWhatsApp } from '@/utils/supportContact';
 
 import { homeScreenStyles } from './homeScreen.styles';
@@ -53,6 +55,12 @@ export function HomeScreen() {
   }, [navigation]);
 
   const categoryGridTileW = categoryGridTileWidth(windowWidth);
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    retry: retryCategories,
+  } = useCategories();
 
   const homeScrollContentStyle = useMemo(
     () => [
@@ -61,7 +69,6 @@ export function HomeScreen() {
     ],
     [insets.bottom],
   );
-
 
   return (
     <View className="flex-1 bg-pillfly-background">
@@ -158,9 +165,32 @@ export function HomeScreen() {
         </ScrollView>
 
         <SectionTitle title="SHOP BY CATEGORY" />
-        <CategoryShopGrid categories={CATEGORIES} tileWidth={categoryGridTileW} />
+        {categoriesLoading && categories.length === 0 ? (
+          <View className="mb-8 items-center py-8">
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : categoriesError && categories.length === 0 ? (
+          <View className="mb-8 rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-5">
+            <Text className="text-center text-[14px] text-pillfly-promo-red">
+              {toCustomerMessage(categoriesError)}
+            </Text>
+            <View className="mt-4">
+              <PrimaryButton
+                label="Retry"
+                accessibilityLabel="Retry loading categories"
+                onPress={retryCategories}
+              />
+            </View>
+          </View>
+        ) : categories.length === 0 ? (
+          <Text className="mb-8 text-center text-[14px] text-pillfly-muted">
+            No categories available
+          </Text>
+        ) : (
+          <CategoryShopGrid categories={categories} tileWidth={categoryGridTileW} />
+        )}
 
-        <SectionTitle title="HEALTH ARTICLES" /> 
+        <SectionTitle title="HEALTH ARTICLES" />
 
       </Animated.ScrollView>
     </View>

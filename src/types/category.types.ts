@@ -19,9 +19,9 @@ export type PromoCategoryId = "must-have" | "summer-store" | "explore-more";
 export type CategoryId = ProductCategory | PromoCategoryId;
 
 export interface Category {
-  id: CategoryId;
+  id: string;
   title: string;
-  image: ImageSourcePropType;
+  image?: ImageSourcePropType;
   tileBg: string;
   subtitle?: string;
   description?: string;
