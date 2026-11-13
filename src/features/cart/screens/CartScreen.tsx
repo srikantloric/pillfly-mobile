@@ -20,11 +20,13 @@ import {
   CartFooter,
   CartHeader,
   CartItemRow,
+  QuantitySelectorSheet,
 } from "../components";
 
 import { useCartActions } from "../hooks/useCartActions";
 import { useCartSummary } from "../hooks/useCartSummary";
 import { useCartStore } from "../store/cart.store";
+import type { ResolvedCartLine } from "../types/cart.types";
 
 const CART_FOOTER_SCROLL_PADDING = 112;
 const SELECTED_ADDRESS_SCROLL_PADDING = 188;
@@ -42,6 +44,7 @@ export function CartScreen({ navigation }: Props) {
   const listError = useAddressListStore((state) => state.error);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | undefined>();
+  const [quantityLine, setQuantityLine] = useState<ResolvedCartLine | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -51,9 +54,18 @@ export function CartScreen({ navigation }: Props) {
     }, []),
   );
 
-  const { removeFromCart } = useCartActions();
+  const { removeFromCart, setQuantity } = useCartActions();
   const { resolvedLines, bill, hasPersistedItems, isResolving, persistHydrated, retryResolve } =
     useCartSummary();
+
+  const quantityTarget =
+    quantityLine == null
+      ? null
+      : (resolvedLines.find(
+          (line) =>
+            line.productId === quantityLine.productId &&
+            line.variantId === quantityLine.variantId,
+        ) ?? null);
 
   const onPressBack = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -143,6 +155,35 @@ export function CartScreen({ navigation }: Props) {
     billOffsetRef.current = y;
   }, []);
 
+  const onPressQuantity = useCallback((line: ResolvedCartLine) => {
+    setQuantityLine(line);
+  }, []);
+
+  const onCloseQuantitySheet = useCallback(() => {
+    setQuantityLine(null);
+  }, []);
+
+  const onSelectQuantity = useCallback(
+    (nextQuantity: number) => {
+      if (!quantityTarget) {
+        return;
+      }
+
+      setQuantity(quantityTarget.productId, nextQuantity, quantityTarget.variantId);
+      setQuantityLine(null);
+    },
+    [quantityTarget, setQuantity],
+  );
+
+  const onRemoveQuantityTarget = useCallback(() => {
+    if (!quantityTarget) {
+      return;
+    }
+
+    removeFromCart(quantityTarget.productId, quantityTarget.variantId);
+    setQuantityLine(null);
+  }, [quantityTarget, removeFromCart]);
+
   if (!persistHydrated || (hasPersistedItems && resolvedLines.length === 0 && isResolving)) {
     return (
       <View className="flex-1 bg-pillfly-background">
@@ -215,6 +256,7 @@ export function CartScreen({ navigation }: Props) {
               key={`${line.productId}:${line.variantId ?? ""}`}
               line={line}
               onRemove={removeFromCart}
+              onPressQuantity={onPressQuantity}
             />
           ))}
         </View>
@@ -276,6 +318,15 @@ export function CartScreen({ navigation }: Props) {
           navigation.navigate("AddressForm", { addressId: address.id });
         }}
         onDelete={onDeleteAddress}
+      />
+
+      <QuantitySelectorSheet
+        visible={quantityTarget != null}
+        quantity={quantityTarget?.quantity ?? 1}
+        productTitle={quantityTarget?.title}
+        onClose={onCloseQuantitySheet}
+        onSelect={onSelectQuantity}
+        onRemove={onRemoveQuantityTarget}
       />
     </View>
   );
