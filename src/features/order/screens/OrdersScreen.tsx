@@ -5,11 +5,14 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { NavigationProp, ParamListBase } from "@react-navigation/native";
 
+import { useSharedHeaderNavigation } from "@/components/header";
 import { BouncingDotsLoader, ProductImageWithPlaceholder } from "@/components/ui";
-import { navigateToSharedRoute } from "@/navigation/navigateShared";
+import { useCartSummary } from "@/features/cart";
 import { useCartStore } from "@/features/cart/store/cart.store";
+import { StoreProductsHeader } from "@/features/product/components/StoreProductsHeader";
 import { productService } from "@/features/product/services/product.service";
 import { getProductImageUrl, isHealthcareProduct } from "@/features/product/utils/productDisplay";
+import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import type { OrdersStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 import { toCustomerMessage } from "@/utils/customerMessage";
@@ -160,6 +163,10 @@ function OrderCard({
 
 export function OrdersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<OrdersStackParamList>>();
+  const { lineCount } = useCartSummary();
+  const { onPressSearch, onPressCart } = useSharedHeaderNavigation(
+    navigation as unknown as NavigationProp<ParamListBase>,
+  );
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -262,68 +269,88 @@ export function OrdersScreen() {
     [openCart, reorderingId],
   );
 
+  const header = (
+    <StoreProductsHeader
+      title="Orders"
+      cartBadgeCount={lineCount}
+      onPressSearch={onPressSearch}
+      onPressCart={onPressCart}
+    />
+  );
+
   if (shouldShowOrdersFullScreenLoader(status, refreshKind)) {
-    return <BouncingDotsLoader />;
+    return (
+      <View className="flex-1 bg-pillfly-background">
+        {header}
+        <BouncingDotsLoader />
+      </View>
+    );
   }
 
   if (status === "error") {
     return (
-      <View className="flex-1 items-center justify-center bg-pillfly-background px-8">
-        <Text className="text-center text-[16px] text-pillfly-ink">{error}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => load("initial")}
-          className="mt-4 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
-        >
-          <Text className="text-[15px] font-bold text-white">Retry</Text>
-        </Pressable>
+      <View className="flex-1 bg-pillfly-background">
+        {header}
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-center text-[16px] text-pillfly-ink">{error}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => load("initial")}
+            className="mt-4 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
+          >
+            <Text className="text-[15px] font-bold text-white">Retry</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
 
   return (
-    <FlatList
-      className="flex-1 bg-pillfly-background"
-      contentContainerClassName={orders.length === 0 ? "flex-1" : "pt-4"}
-      contentContainerStyle={{ paddingBottom: 96 }}
-      data={orders}
-      extraData={catalogTick}
-      keyExtractor={(order) => order.id}
-      ListEmptyComponent={
-        <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[18px] font-bold text-pillfly-ink">No orders yet</Text>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <OrderCard
-          order={item}
-          onPress={() => navigation.navigate("OrderDetail", { orderId: item.id })}
-          reorderDisabled={reorderingId != null}
-          reordering={reorderingId === item.id}
-          onReorder={() => onReorder(item)}
-        />
-      )}
-      ListFooterComponent={
-        cursor || error ? (
-          <View className="px-4 pb-4">
-            {error ? <Text className="mb-3 text-[13px] text-pillfly-ink">{error}</Text> : null}
-            {cursor ? (
-              <Pressable
-                accessibilityRole="button"
-                disabled={loadingMore}
-                onPress={() => load("more", cursor)}
-                className={`items-center rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-3 ${
-                  loadingMore ? "opacity-60" : "active:opacity-90"
-                }`}
-              >
-                <Text className="text-[14px] font-bold text-pillfly-ink">
-                  {loadingMore ? "Loading more..." : "Load more"}
-                </Text>
-              </Pressable>
-            ) : null}
+    <View className="flex-1 bg-pillfly-background">
+      {header}
+      <FlatList
+        className="flex-1"
+        contentContainerClassName={orders.length === 0 ? "flex-1" : "pt-4"}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        data={orders}
+        extraData={catalogTick}
+        keyExtractor={(order) => order.id}
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center px-8">
+            <Text className="text-[18px] font-bold text-pillfly-ink">No orders yet</Text>
           </View>
-        ) : null
-      }
-    />
+        }
+        renderItem={({ item }) => (
+          <OrderCard
+            order={item}
+            onPress={() => navigation.navigate("OrderDetail", { orderId: item.id })}
+            reorderDisabled={reorderingId != null}
+            reordering={reorderingId === item.id}
+            onReorder={() => onReorder(item)}
+          />
+        )}
+        ListFooterComponent={
+          cursor || error ? (
+            <View className="px-4 pb-4">
+              {error ? <Text className="mb-3 text-[13px] text-pillfly-ink">{error}</Text> : null}
+              {cursor ? (
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={loadingMore}
+                  onPress={() => load("more", cursor)}
+                  className={`items-center rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-3 ${
+                    loadingMore ? "opacity-60" : "active:opacity-90"
+                  }`}
+                >
+                  <Text className="text-[14px] font-bold text-pillfly-ink">
+                    {loadingMore ? "Loading more..." : "Load more"}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null
+        }
+      />
+    </View>
   );
 }

@@ -193,8 +193,13 @@ export function canCancelOrder(status: string | null | undefined): boolean {
 export function canRequestRefund(
   status: string | null | undefined,
   refundStatus?: string | null,
+  paymentStatus?: string | null,
 ): boolean {
   if (status === "REFUND_PENDING" || status === "REFUNDED") {
+    return false;
+  }
+
+  if (status === "PAYMENT_PENDING" || status === "PAYMENT_PROCESSING") {
     return false;
   }
 
@@ -202,7 +207,15 @@ export function canRequestRefund(
     return false;
   }
 
-  return true;
+  if (paymentStatus != null && paymentStatus !== "CAPTURED") {
+    return false;
+  }
+
+  if (canCancelOrder(status)) {
+    return false;
+  }
+
+  return status === "CANCELLED" || status === "DELIVERED";
 }
 
 export function formatRefundStatusLabel(status: string | null | undefined): string {

@@ -29,18 +29,23 @@ export const StoreProductsHeader = memo(function StoreProductsHeader({
   return (
     <View style={{ paddingTop: insets.top, backgroundColor: colors.brandTeal }}>
       <View className="flex-row items-center px-3 pb-2.5 pt-1">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={HEADER_HIT_SLOP}
-          onPress={onPressBack}
-          className={`${HEADER_ICON_SLOT_CLASS} items-center justify-center active:opacity-85`}
-          style={homeHeaderStyles.iconButtonOnTeal}
-        >
-          <Feather name="arrow-left" size={22} color="#FFFFFF" />
-        </Pressable>
+        {onPressBack ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={HEADER_HIT_SLOP}
+            onPress={onPressBack}
+            className={`${HEADER_ICON_SLOT_CLASS} items-center justify-center active:opacity-85`}
+            style={homeHeaderStyles.iconButtonOnTeal}
+          >
+            <Feather name="arrow-left" size={22} color="#FFFFFF" />
+          </Pressable>
+        ) : null}
 
-        <Text className="ml-3 min-w-0 flex-1 text-[17px] font-bold text-white" numberOfLines={1}>
+        <Text
+          className={`min-w-0 flex-1 text-[18px] font-bold text-white ${onPressBack ? "ml-3" : "ml-1"}`}
+          numberOfLines={1}
+        >
           {title}
         </Text>
 

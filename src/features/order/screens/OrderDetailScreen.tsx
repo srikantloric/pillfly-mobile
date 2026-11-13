@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { NavigationProp, ParamListBase } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useSharedHeaderNavigation } from "@/components/header";
 import { BouncingDotsLoader, ProductImageWithPlaceholder } from "@/components/ui";
+import { useCartSummary } from "@/features/cart";
+import { StoreProductsHeader } from "@/features/product/components/StoreProductsHeader";
 import { productService } from "@/features/product/services/product.service";
 import { getProductImageUrl, isHealthcareProduct, formatInr } from "@/features/product/utils/productDisplay";
 import { RequestError } from "@/services/api/requestError";
@@ -153,9 +157,13 @@ function ShipmentTracker({ status }: { status: string }) {
   );
 }
 
-export function OrderDetailScreen({ route }: Props) {
+export function OrderDetailScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { orderId } = route.params;
+  const { lineCount } = useCartSummary();
+  const { onPressSearch, onPressCart } = useSharedHeaderNavigation(
+    navigation as unknown as NavigationProp<ParamListBase>,
+  );
   const [order, setOrder] = useState<CustomerOrder | null>(null);
   const [refund, setRefund] = useState<OrderRefund | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -274,21 +282,39 @@ export function OrderDetailScreen({ route }: Props) {
     ]);
   }, [applyReconciledOrder, busy, orderId, refundDenied]);
 
+  const header = (
+    <StoreProductsHeader
+      title="Order Details"
+      cartBadgeCount={lineCount}
+      onPressBack={() => navigation.goBack()}
+      onPressSearch={onPressSearch}
+      onPressCart={onPressCart}
+    />
+  );
+
   if (shouldShowOrderDetailFullScreenLoader(status, order)) {
-    return <BouncingDotsLoader />;
+    return (
+      <View className="flex-1 bg-pillfly-background">
+        {header}
+        <BouncingDotsLoader />
+      </View>
+    );
   }
 
   if (!order) {
     return (
-      <View className="flex-1 items-center justify-center bg-pillfly-background px-8">
-        <Text className="text-center text-[16px] text-pillfly-ink">{error}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => load()}
-          className="mt-4 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
-        >
-          <Text className="text-[15px] font-bold text-white">Retry</Text>
-        </Pressable>
+      <View className="flex-1 bg-pillfly-background">
+        {header}
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-center text-[16px] text-pillfly-ink">{error}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => load()}
+            className="mt-4 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
+          >
+            <Text className="text-[15px] font-bold text-white">Retry</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -312,10 +338,11 @@ export function OrderDetailScreen({ route }: Props) {
     ? formatRefundStatusLabel(refund.status)
     : formatRefundStatusLabel(order.status);
   const showRequestRefund =
-    !refundDenied && canRequestRefund(order.status, refund?.status);
+    !refundDenied && canRequestRefund(order.status, refund?.status, order.paymentStatus);
 
   return (
     <View className="flex-1 bg-pillfly-background">
+      {header}
       <ScrollView
         className="flex-1"
         contentContainerClassName="px-4 pb-8 pt-4"

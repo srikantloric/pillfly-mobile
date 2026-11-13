@@ -237,14 +237,21 @@ describe("canRequestRefund", () => {
   it("hides request refund when refund is already pending or completed", () => {
     expect(canRequestRefund("REFUND_PENDING")).toBe(false);
     expect(canRequestRefund("REFUNDED")).toBe(false);
-    expect(canRequestRefund("CANCELLED", "pending")).toBe(false);
-    expect(canRequestRefund("CANCELLED", "processed")).toBe(false);
+    expect(canRequestRefund("CANCELLED", "pending", "CAPTURED")).toBe(false);
+    expect(canRequestRefund("CANCELLED", "processed", "CAPTURED")).toBe(false);
   });
 
-  it("keeps request refund available for cancelled orders until the refund API responds", () => {
-    expect(canRequestRefund("CANCELLED")).toBe(true);
-    expect(canRequestRefund("CANCELLED", "failed")).toBe(true);
-    expect(canRequestRefund("DELIVERED")).toBe(true);
+  it("hides request refund before payment is captured or while the order can still be cancelled", () => {
+    expect(canRequestRefund("PAYMENT_PENDING", null, "CREATED")).toBe(false);
+    expect(canRequestRefund("PAYMENT_PROCESSING", null, "AUTHORIZED")).toBe(false);
+    expect(canRequestRefund("PAID", null, "CAPTURED")).toBe(false);
+    expect(canRequestRefund("CANCELLED", null, "FAILED")).toBe(false);
+  });
+
+  it("keeps request refund for cancelled or delivered orders after payment capture", () => {
+    expect(canRequestRefund("CANCELLED", null, "CAPTURED")).toBe(true);
+    expect(canRequestRefund("CANCELLED", "failed", "CAPTURED")).toBe(true);
+    expect(canRequestRefund("DELIVERED", null, "CAPTURED")).toBe(true);
   });
 });
 

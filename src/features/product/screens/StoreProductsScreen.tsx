@@ -31,14 +31,6 @@ export function StoreProductsScreen() {
     return Math.floor(inner / 2);
   }, [windowWidth]);
 
-  const onPressBack = useCallback(() => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-      return;
-    }
-    navigation.navigate("Home" as never);
-  }, [navigation]);
-
   const onOpenProduct = useCallback(
     (product: Product) => {
       getAppStackNavigation(navigation).navigate("ProductDetail", { productId: product.id });
@@ -105,7 +97,6 @@ export function StoreProductsScreen() {
       <StoreProductsHeader
         title="Medicine"
         cartBadgeCount={lineCount}
-        onPressBack={onPressBack}
         onPressSearch={onPressSearch}
         onPressCart={onPressCart}
       />

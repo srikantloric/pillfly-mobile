@@ -19,7 +19,7 @@ export function CategoryScreen() {
   const tileW = categoryGridTileWidth(windowWidth);
 
   const scrollContentStyle = useMemo(
-    () => [categoryScreenStyles.scrollContentGutter, { paddingBottom: insets.bottom + 24 }],
+    () => [categoryScreenStyles.scrollContentGutter, { paddingBottom: insets.bottom + 96 }],
     [insets.bottom],
   );
 

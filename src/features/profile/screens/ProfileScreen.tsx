@@ -17,7 +17,6 @@ import {
   HelpContactSheet,
   PlusMembershipBanner,
   PROFILE_APP_VERSION,
-  ProfileHeader,
   ProfileMenuList,
   SHOW_PLUS_MEMBERSHIP_BANNER,
   UserInfoCard,
@@ -32,7 +31,9 @@ import { useAddressListStore } from '@/features/address/store/addressList.store'
 import { isCustomerAddress, type CustomerAddress } from '@/features/address/types/address.types';
 import { useCartStore } from '@/features/cart/store/cart.store';
 import { useCartSummary } from '@/features/cart';
+import { StoreProductsHeader } from '@/features/product/components/StoreProductsHeader';
 import { navigateToOrdersTab } from '@/navigation/navigateShared';
+import { colors } from '@/theme';
 import type { ProfileStackParamList } from '@/types/navigation.types';
 import { toCustomerMessage } from '@/utils/customerMessage';
 import { MOCK_PROFILE_USER } from '../mocks/profile.mock';
@@ -85,12 +86,6 @@ export function ProfileScreen({ navigation }: Props) {
       }
     }, []),
   );
-
-  const onPressBack = useCallback(() => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  }, [navigation]);
 
   const onPressEdit = useCallback(() => {
     Alert.alert('Edit profile', 'Profile editing will be available soon.');
@@ -170,15 +165,11 @@ export function ProfileScreen({ navigation }: Props) {
 
   return (
     <View className="flex-1" style={{ backgroundColor: profileColors.screenBg }}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={profileColors.statusBar}
-        translucent={false}
-      />
+      <StatusBar barStyle="light-content" backgroundColor={colors.brandTeal} translucent={false} />
 
-      <ProfileHeader
+      <StoreProductsHeader
+        title="Account"
         cartBadgeCount={lineCount}
-        onPressBack={onPressBack}
         onPressSearch={onPressSearch}
         onPressCart={onPressCart}
       />
@@ -189,7 +180,7 @@ export function ProfileScreen({ navigation }: Props) {
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 12,
-          paddingBottom: insets.bottom + 28,
+          paddingBottom: insets.bottom + 96,
         }}
       >
         <Animated.View style={{ opacity: fadeAnim }}>
