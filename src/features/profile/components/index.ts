@@ -4,5 +4,10 @@ export { ProfileHeader } from "./ProfileHeader";
 export { ProfileMenuItem } from "./ProfileMenuItem";
 export { ProfileMenuList } from "./ProfileMenuList";
 export { UserInfoCard } from "./UserInfoCard";
-export { PROFILE_APP_VERSION, PROFILE_MENU_ENTRIES } from "./profile.constants";
+export {
+  PROFILE_APP_VERSION,
+  PROFILE_MENU_ENTRIES,
+  PROFILE_MENU_VISIBLE_IDS,
+  SHOW_PLUS_MEMBERSHIP_BANNER,
+} from "./profile.constants";
 export { profileColors, profileCardShadow, PROFILE_CONTENT_PADDING } from "./profile.styles";

@@ -17,6 +17,7 @@ import {
   PROFILE_APP_VERSION,
   ProfileHeader,
   ProfileMenuList,
+  SHOW_PLUS_MEMBERSHIP_BANNER,
   UserInfoCard,
   profileColors,
 } from '../components';
@@ -130,9 +131,11 @@ export function ProfileScreen() {
             onPressEdit={onPressEdit}
           />
 
-          <View className="mt-3">
-            <PlusMembershipBanner onPress={onPressPlus} />
-          </View>
+          {SHOW_PLUS_MEMBERSHIP_BANNER ? (
+            <View className="mt-3">
+              <PlusMembershipBanner onPress={onPressPlus} />
+            </View>
+          ) : null}
 
           <ProfileMenuList
             dynamicBadges={MOCK_PROFILE_USER.dynamicMenuBadges}

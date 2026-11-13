@@ -2,6 +2,15 @@ import type { ProfileMenuEntryConfig } from '../types/profile.types';
 
 export const PROFILE_APP_VERSION = '1.0.0';
 
+export const SHOW_PLUS_MEMBERSHIP_BANNER = false;
+
+export const PROFILE_MENU_VISIBLE_IDS = [
+  'orders',
+  'prescriptions',
+  'help',
+  'address',
+] as const;
+
 export const PROFILE_MENU_ENTRIES: ProfileMenuEntryConfig[] = [
   {
     id: 'orders',
