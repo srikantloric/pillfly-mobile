@@ -14,6 +14,7 @@ import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  HelpContactSheet,
   PlusMembershipBanner,
   PROFILE_APP_VERSION,
   ProfileHeader,
@@ -65,6 +66,7 @@ export function ProfileScreen({ navigation }: Props) {
   const addresses = useAddressListStore((state) => state.addresses);
   const listError = useAddressListStore((state) => state.error);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -135,6 +137,11 @@ export function ProfileScreen({ navigation }: Props) {
 
       if (entry.id === 'address') {
         setPickerOpen(true);
+        return;
+      }
+
+      if (entry.id === 'help') {
+        setHelpOpen(true);
         return;
       }
 
@@ -248,6 +255,8 @@ export function ProfileScreen({ navigation }: Props) {
         }}
         onDelete={onDeleteAddress}
       />
+
+      <HelpContactSheet visible={helpOpen} onClose={() => setHelpOpen(false)} />
     </View>
   );
 }

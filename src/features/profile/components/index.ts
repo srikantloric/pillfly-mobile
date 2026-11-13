@@ -1,3 +1,4 @@
+export { HelpContactSheet } from "./HelpContactSheet";
 export { PlusMembershipBanner } from "./PlusMembershipBanner";
 export { ProfileBadge } from "./ProfileBadge";
 export { ProfileHeader } from "./ProfileHeader";

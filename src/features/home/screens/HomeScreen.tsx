@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import {
   Animated,
   Image,
-  Linking,
   Pressable,
   ScrollView,
   Text,
@@ -24,12 +23,9 @@ import { productLog } from '@/features/product/api/productLog';
 import { getAppStackNavigation } from '@/navigation/navigateShared';
 import { colors } from '@/theme';
 import type { MainTabParamList } from '@/types/navigation.types';
+import { openSupportPhone, openSupportWhatsApp } from '@/utils/supportContact';
 
 import { homeScreenStyles } from './homeScreen.styles';
-
-
-const PLACEHOLDER_WHATSAPP = 'https://wa.me/911234567890';
-const PLACEHOLDER_PHONE = 'tel:+912212345678';
 
 function DividerLabel({ label }: { label: string }) {
   return (
@@ -129,16 +125,12 @@ export function HomeScreen() {
           <OutlineAction
             icon={<Ionicons name="logo-whatsapp" size={22} color="#16A34A" />}
             label="WhatsApp"
-            onPress={() => {
-              Linking.openURL(PLACEHOLDER_WHATSAPP).catch(() => {});
-            }}
+            onPress={openSupportWhatsApp}
           />
           <OutlineAction
             icon={<Feather name="phone" size={20} color={colors.textPrimary} />}
             label="Call"
-            onPress={() => {
-              Linking.openURL(PLACEHOLDER_PHONE).catch(() => {});
-            }}
+            onPress={openSupportPhone}
           />
         </View>
 
