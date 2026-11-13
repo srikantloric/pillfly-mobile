@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BouncingDotsLoader, ProductImageWithPlaceholder } from "@/components/ui";
 import { productService } from "@/features/product/services/product.service";
 import { getProductImageUrl, isHealthcareProduct, formatInr } from "@/features/product/utils/productDisplay";
+import { RequestError } from "@/services/api/requestError";
 import type { ProfileStackParamList } from "@/types/navigation.types";
 import { toCustomerMessage } from "@/utils/customerMessage";
 
@@ -15,15 +16,31 @@ import {
   buildOrderBill,
   buildShipmentTracker,
   canCancelOrder,
+  canRequestRefund,
   formatOrderDateTime,
   formatOrderLabel,
   formatOrderPlacedDetail,
-  formatOrderStatusLabel,
+  formatRefundStatusLabel,
   isCancelledOrder,
   shipmentItemSummary,
   shipmentStatusCopy,
   type TimelineStepState,
 } from "../utils/orderDisplay";
+import {
+  reconcileOrderAfterMutation,
+  shouldShowOrderDetailFullScreenLoader,
+} from "../utils/orderRefresh";
+
+function isRefundClientRejection(error: unknown): boolean {
+  return (
+    error instanceof RequestError &&
+    error.kind === "http" &&
+    typeof error.status === "number" &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    error.status !== 401
+  );
+}
 
 type Props = NativeStackScreenProps<ProfileStackParamList, "OrderDetail">;
 
@@ -144,12 +161,14 @@ export function OrderDetailScreen({ route }: Props) {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"cancel" | "refund" | null>(null);
+  const [refundDenied, setRefundDenied] = useState(false);
   const [itemsOpen, setItemsOpen] = useState(false);
   const [catalogTick, setCatalogTick] = useState(0);
 
   const load = useCallback(() => {
     setStatus("loading");
     setError(null);
+    setRefundDenied(false);
     return getCustomerOrder(orderId)
       .then((next) => {
         setOrder(next);
@@ -164,6 +183,11 @@ export function OrderDetailScreen({ route }: Props) {
         setStatus("error");
       });
   }, [orderId]);
+
+  const applyReconciledOrder = useCallback((next: CustomerOrder) => {
+    setOrder(next);
+    setStatus("ready");
+  }, []);
 
   useEffect(() => {
     load();
@@ -182,9 +206,20 @@ export function OrderDetailScreen({ route }: Props) {
         onPress: () => {
           setBusy("cancel");
           setError(null);
-          cancelCustomerOrder(orderId)
-            .then((result) => {
+          reconcileOrderAfterMutation({
+            orderId,
+            mutate: () => cancelCustomerOrder(orderId),
+            getOrder: getCustomerOrder,
+            onMutation: (result) => {
               setOrder(result.order);
+              setRefundDenied(false);
+            },
+          })
+            .then(({ order: next, reconcileError }) => {
+              applyReconciledOrder(next);
+              if (reconcileError != null) {
+                setError(errorMessage(reconcileError));
+              }
             })
             .catch((caught: unknown) => {
               setError(errorMessage(caught));
@@ -195,10 +230,10 @@ export function OrderDetailScreen({ route }: Props) {
         },
       },
     ]);
-  }, [busy, orderId]);
+  }, [applyReconciledOrder, busy, orderId]);
 
   const onRefund = useCallback(() => {
-    if (busy) {
+    if (busy || refundDenied) {
       return;
     }
 
@@ -209,13 +244,27 @@ export function OrderDetailScreen({ route }: Props) {
         onPress: () => {
           setBusy("refund");
           setError(null);
-          refundCustomerOrder(orderId)
-            .then((result) => {
+          reconcileOrderAfterMutation({
+            orderId,
+            mutate: () => refundCustomerOrder(orderId),
+            getOrder: getCustomerOrder,
+            onMutation: (result) => {
               setOrder(result.order);
               setRefund(result.refund);
+              setRefundDenied(false);
+            },
+          })
+            .then(({ order: next, reconcileError }) => {
+              applyReconciledOrder(next);
+              if (reconcileError != null) {
+                setError(errorMessage(reconcileError));
+              }
             })
             .catch((caught: unknown) => {
               setError(errorMessage(caught));
+              if (isRefundClientRejection(caught)) {
+                setRefundDenied(true);
+              }
             })
             .finally(() => {
               setBusy(null);
@@ -223,9 +272,9 @@ export function OrderDetailScreen({ route }: Props) {
         },
       },
     ]);
-  }, [busy, orderId]);
+  }, [applyReconciledOrder, busy, orderId, refundDenied]);
 
-  if (status === "loading" && !order) {
+  if (shouldShowOrderDetailFullScreenLoader(status, order)) {
     return <BouncingDotsLoader />;
   }
 
@@ -254,8 +303,16 @@ export function OrderDetailScreen({ route }: Props) {
   const summary = shipmentItemSummary(order.items);
   const bill = buildOrderBill(order.items, order.subtotal, order.totalAmount);
   const refundAmount = refund?.amount ?? order.refundAmount;
-  const showRefundSummary = refund != null || order.refundAmount != null;
-  const showRequestRefund = order.status !== "REFUNDED";
+  const showRefundSummary =
+    refund != null ||
+    order.refundAmount != null ||
+    order.status === "REFUND_PENDING" ||
+    order.status === "REFUNDED";
+  const refundStatusLabel = refund
+    ? formatRefundStatusLabel(refund.status)
+    : formatRefundStatusLabel(order.status);
+  const showRequestRefund =
+    !refundDenied && canRequestRefund(order.status, refund?.status);
 
   return (
     <View className="flex-1 bg-pillfly-background">
@@ -264,10 +321,6 @@ export function OrderDetailScreen({ route }: Props) {
         contentContainerClassName="px-4 pb-8 pt-4"
         showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-pillfly-muted">
-          Shipment 1 of 1
-        </Text>
-
         <View className="overflow-hidden rounded-2xl border border-pillfly-line bg-pillfly-surface">
           <View className="flex-row items-start justify-between px-4 pb-3 pt-4">
             <View className="mr-3 flex-1">
@@ -322,18 +375,21 @@ export function OrderDetailScreen({ route }: Props) {
                 {order.items.map((item) => (
                   <View
                     key={`${item.productId}:${item.variantId}`}
-                    className="flex-row items-center gap-3"
+                    className="flex-row items-start gap-3"
                   >
-                    <View className="h-14 w-14 overflow-hidden rounded-lg border border-pillfly-line bg-pillfly-surface">
+                    <View className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-pillfly-line bg-pillfly-surface">
                       <ProductImageWithPlaceholder uri={itemImage(item)} className="h-full w-full" />
                     </View>
-                    <View className="min-w-0 flex-1">
-                      <Text className="text-[14px] font-semibold text-pillfly-ink" numberOfLines={2}>
+                    <View className="min-w-0 flex-1 justify-center py-0.5">
+                      <Text
+                        className="text-[14px] font-semibold leading-5 text-pillfly-ink"
+                        numberOfLines={1}
+                      >
                         {item.title}
                       </Text>
-                      <View className="mt-1 flex-row items-center justify-between">
+                      <View className="mt-1.5 flex-row items-center justify-between gap-3">
                         <Text className="text-[13px] text-pillfly-muted">Qty {item.quantity}</Text>
-                        <Text className="text-[14px] font-semibold text-pillfly-ink">
+                        <Text className="shrink-0 text-[14px] font-semibold text-pillfly-ink">
                           {formatInr(item.totalPrice)}
                         </Text>
                       </View>
@@ -414,10 +470,8 @@ export function OrderDetailScreen({ route }: Props) {
               <View className="my-3 border-t border-pillfly-line" />
               <Text className="text-[12px] text-pillfly-muted">Refund status</Text>
               <View className="mt-1 flex-row items-center justify-between">
-                <Text className="text-[14px] font-semibold text-pillfly-ink">
-                  {refund ? formatOrderLabel(refund.status) : formatOrderStatusLabel(order.status)}
-                </Text>
-                {refund?.status === "processed" ? (
+                <Text className="text-[14px] font-semibold text-pillfly-ink">{refundStatusLabel}</Text>
+                {refund?.status === "processed" || order.status === "REFUNDED" ? (
                   <Text className="text-[12px] font-semibold text-[#16A34A]">Successful</Text>
                 ) : null}
               </View>

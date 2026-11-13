@@ -41,7 +41,7 @@ export function formatOrderStatusLabel(status: string | null | undefined): strin
 }
 
 export function canReorderOrder(status: string | null | undefined): boolean {
-  return status === "DELIVERED" || status === "CANCELLED";
+  return status === "DELIVERED" || status === "CANCELLED" || status === "REFUNDED";
 }
 
 function timelineState(index: number, currentIndex: number): TimelineStepState {
@@ -190,6 +190,37 @@ export function canCancelOrder(status: string | null | undefined): boolean {
   );
 }
 
+export function canRequestRefund(
+  status: string | null | undefined,
+  refundStatus?: string | null,
+): boolean {
+  if (status === "REFUND_PENDING" || status === "REFUNDED") {
+    return false;
+  }
+
+  if (refundStatus === "pending" || refundStatus === "processed") {
+    return false;
+  }
+
+  return true;
+}
+
+export function formatRefundStatusLabel(status: string | null | undefined): string {
+  if (status === "pending" || status === "REFUND_PENDING") {
+    return "Refund Processing";
+  }
+
+  if (status === "processed" || status === "REFUNDED") {
+    return "Refund Completed";
+  }
+
+  if (status === "failed") {
+    return "Refund Failed";
+  }
+
+  return formatOrderStatusLabel(status);
+}
+
 export function shipmentStatusCopy(status: string | null | undefined): {
   eyebrow: string;
   title: string;
@@ -210,8 +241,8 @@ export function shipmentStatusCopy(status: string | null | undefined): {
   if (status === "REFUND_PENDING") {
     return {
       eyebrow: "REFUND",
-      title: "Refund Pending",
-      badge: "Refund Pending",
+      title: "Refund Processing",
+      badge: "Refund Processing",
       badgeTone: "neutral",
       band: "Your refund is being processed.",
     };
@@ -220,8 +251,8 @@ export function shipmentStatusCopy(status: string | null | undefined): {
   if (status === "REFUNDED") {
     return {
       eyebrow: "REFUND",
-      title: "Refunded",
-      badge: "Refunded",
+      title: "Refund Completed",
+      badge: "Refund Completed",
       badgeTone: "success",
       band: "Your refund has been completed.",
     };
