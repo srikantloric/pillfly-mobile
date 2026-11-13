@@ -20,7 +20,6 @@ import { HomeHeader } from '@/features/home/components/HomeHeader';
 import { CategoryShopGrid, categoryGridTileWidth, CATEGORIES } from '@/features/category';
 import { HomePromoBanner, SectionTitle, homePromoBannerAssets } from '@/components/ui';
 import { productLog } from '@/features/product/api/productLog';
-import { getAppStackNavigation } from '@/navigation/navigateShared';
 import { colors } from '@/theme';
 import type { MainTabParamList } from '@/types/navigation.types';
 import { openSupportPhone, openSupportWhatsApp } from '@/utils/supportContact';
@@ -46,13 +45,11 @@ export function HomeScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const onPressDiagBogo = useCallback(() => {
-    navigation.navigate('Offer');
-  }, [navigation]);
+  const onPressDiagBogo = useCallback(() => {}, []);
 
   const onPressMedicines = useCallback(() => {
     productLog('medicines.press');
-    getAppStackNavigation(navigation).navigate('StoreProducts');
+    navigation.navigate('Medicines');
   }, [navigation]);
 
   const categoryGridTileW = categoryGridTileWidth(windowWidth);

@@ -21,9 +21,6 @@ export type CartBill = {
   mrpTotal: number;
   discountTotal: number;
   discountedValue: number;
-  deliveryFee: number;
-  deliveryFeeMrp: number;
-  platformFee: number;
   amountToPay: number;
   savingsTotal: number;
   lines: CartBillLine[];

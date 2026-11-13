@@ -6,8 +6,7 @@ import {
   View,
   type ListRenderItemInfo,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useNavigation, type NavigationProp, type ParamListBase } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -17,7 +16,6 @@ import {
   offerColors,
 } from '../components';
 import { OFFER_PACKAGES, type OfferPackage } from '../mocks/offers.mock';
-import type { MainTabParamList } from '@/types/navigation.types';
 
 const TRUST_BADGES_ROW_ID = 'trust-badges';
 const TRUST_BADGES_INSERT_INDEX = 2;
@@ -41,7 +39,7 @@ function buildOfferListData(packages: OfferPackage[]): OfferListRow[] {
 }
 
 export function OfferScreen() {
-  const navigation = useNavigation<BottomTabNavigationProp<MainTabParamList, 'Offer'>>();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const insets = useSafeAreaInsets();
 
   const listData = useMemo(() => buildOfferListData(OFFER_PACKAGES), []);
@@ -49,9 +47,7 @@ export function OfferScreen() {
   const onPressBack = useCallback(() => {
     if (navigation.canGoBack()) {
       navigation.goBack();
-      return;
     }
-    navigation.navigate('Home');
   }, [navigation]);
 
   const onBookPress = useCallback((pkg: OfferPackage) => {

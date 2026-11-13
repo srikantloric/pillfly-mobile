@@ -6,7 +6,6 @@ import { ProductImageWithPlaceholder } from "@/components/ui";
 import { formatInr } from "@/features/product/utils/productDisplay";
 import { colors } from "@/theme";
 
-import { CART_DELIVERY_ETA_LABEL } from "../mocks/cartFees.mock";
 import type { ResolvedCartLine } from "../types/cart.types";
 
 type Props = {
@@ -65,7 +64,6 @@ export const CartItemRow = memo(function CartItemRow({ line, onRemove }: Props) 
             </View>
           </View>
 
-          <Text className="mt-2 text-[12px] text-pillfly-muted">{CART_DELIVERY_ETA_LABEL}</Text>
         </View>
       </View>
     </View>

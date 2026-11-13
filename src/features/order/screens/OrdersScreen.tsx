@@ -10,7 +10,7 @@ import { navigateToSharedRoute } from "@/navigation/navigateShared";
 import { useCartStore } from "@/features/cart/store/cart.store";
 import { productService } from "@/features/product/services/product.service";
 import { getProductImageUrl, isHealthcareProduct } from "@/features/product/utils/productDisplay";
-import type { ProfileStackParamList } from "@/types/navigation.types";
+import type { OrdersStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 import { toCustomerMessage } from "@/utils/customerMessage";
 
@@ -159,7 +159,7 @@ function OrderCard({
 }
 
 export function OrdersScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<OrdersStackParamList>>();
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | undefined>();
@@ -285,6 +285,7 @@ export function OrdersScreen() {
     <FlatList
       className="flex-1 bg-pillfly-background"
       contentContainerClassName={orders.length === 0 ? "flex-1" : "pt-4"}
+      contentContainerStyle={{ paddingBottom: 96 }}
       data={orders}
       extraData={catalogTick}
       keyExtractor={(order) => order.id}

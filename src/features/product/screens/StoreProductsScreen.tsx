@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { ActivityIndicator, FlatList, Text, View, useWindowDimensions } from "react-native";
-import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useNavigation, type NavigationProp, type ParamListBase } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useSharedHeaderNavigation } from "@/components/header";
@@ -10,16 +10,16 @@ import { StoreProductCard } from "@/features/product/components/StoreProductCard
 import { StoreProductsHeader } from "@/features/product/components/StoreProductsHeader";
 import { useProducts } from "@/features/product/hooks/useProducts";
 import type { Product } from "@/features/product/types/product";
-import type { AppStackParamList } from "@/types/navigation.types";
+import { getAppStackNavigation } from "@/navigation/navigateShared";
 import { colors } from "@/theme";
 import { toCustomerMessage } from "@/utils/customerMessage";
 
-type Props = NativeStackScreenProps<AppStackParamList, "StoreProducts">;
-
 const GRID_GAP = 12;
 const GRID_PADDING = 16;
+const TAB_BAR_CLEARANCE = 88;
 
-export function StoreProductsScreen({ navigation }: Props) {
+export function StoreProductsScreen() {
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { products, loading, loadingMore, error, hasMore, loadMore, retry } = useProducts();
@@ -32,12 +32,16 @@ export function StoreProductsScreen({ navigation }: Props) {
   }, [windowWidth]);
 
   const onPressBack = useCallback(() => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    navigation.navigate("Home" as never);
   }, [navigation]);
 
   const onOpenProduct = useCallback(
     (product: Product) => {
-      navigation.navigate("ProductDetail", { productId: product.id });
+      getAppStackNavigation(navigation).navigate("ProductDetail", { productId: product.id });
     },
     [navigation],
   );
@@ -129,7 +133,7 @@ export function StoreProductsScreen({ navigation }: Props) {
           onEndReachedThreshold={0.4}
           contentContainerStyle={{
             paddingTop: GRID_GAP,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom + TAB_BAR_CLEARANCE,
             gap: GRID_GAP,
             flexGrow: products.length === 0 ? 1 : undefined,
           }}

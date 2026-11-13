@@ -7,7 +7,7 @@ import { BouncingDotsLoader, ProductImageWithPlaceholder } from "@/components/ui
 import { productService } from "@/features/product/services/product.service";
 import { getProductImageUrl, isHealthcareProduct, formatInr } from "@/features/product/utils/productDisplay";
 import { RequestError } from "@/services/api/requestError";
-import type { ProfileStackParamList } from "@/types/navigation.types";
+import type { OrdersStackParamList } from "@/types/navigation.types";
 import { toCustomerMessage } from "@/utils/customerMessage";
 
 import { cancelCustomerOrder, getCustomerOrder, refundCustomerOrder } from "../api/order.api";
@@ -42,7 +42,7 @@ function isRefundClientRejection(error: unknown): boolean {
   );
 }
 
-type Props = NativeStackScreenProps<ProfileStackParamList, "OrderDetail">;
+type Props = NativeStackScreenProps<OrdersStackParamList, "OrderDetail">;
 
 function errorMessage(error: unknown): string {
   return toCustomerMessage(error);
@@ -522,7 +522,7 @@ export function OrderDetailScreen({ route }: Props) {
           </Pressable>
         ) : null}
 
-        <View style={{ height: insets.bottom + 8 }} />
+        <View style={{ height: insets.bottom + 90 }} />
       </ScrollView>
     </View>
   );

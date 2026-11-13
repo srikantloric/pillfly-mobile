@@ -4,18 +4,22 @@ export type AuthStackParamList = {
   LoginScreen: undefined;
 };
 
-export type MainTabParamList = {
-  Home: undefined;
-  Categories: undefined;
-  Offer: undefined;
-  Savings: undefined;
+export type OrdersStackParamList = {
+  OrdersList: undefined;
+  OrderDetail: { orderId: string };
 };
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
-  Orders: undefined;
-  OrderDetail: { orderId: string };
   AddressForm: { addressId?: string } | undefined;
+};
+
+export type MainTabParamList = {
+  Home: undefined;
+  Categories: undefined;
+  Medicines: undefined;
+  Orders: NavigatorScreenParams<OrdersStackParamList> | undefined;
+  Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };
 
 export type SearchStackParamList = {
@@ -31,11 +35,9 @@ export type CartStackParamList = {
 
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
-  Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
   Search: NavigatorScreenParams<SearchStackParamList> | undefined;
   Cart: NavigatorScreenParams<CartStackParamList> | undefined;
   ProductDetail: { productId: string };
-  StoreProducts: undefined;
 };
 
 export type RootStackParamList = {

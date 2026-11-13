@@ -32,6 +32,7 @@ import { useAddressListStore } from '@/features/address/store/addressList.store'
 import { isCustomerAddress, type CustomerAddress } from '@/features/address/types/address.types';
 import { useCartStore } from '@/features/cart/store/cart.store';
 import { useCartSummary } from '@/features/cart';
+import { navigateToOrdersTab } from '@/navigation/navigateShared';
 import type { ProfileStackParamList } from '@/types/navigation.types';
 import { toCustomerMessage } from '@/utils/customerMessage';
 import { MOCK_PROFILE_USER } from '../mocks/profile.mock';
@@ -131,7 +132,7 @@ export function ProfileScreen({ navigation }: Props) {
   const onPressMenu = useCallback(
     (entry: ProfileMenuEntry) => {
       if (entry.id === 'orders') {
-        navigation.navigate('Orders');
+        navigateToOrdersTab(navigation, { screen: 'OrdersList' });
         return;
       }
 
