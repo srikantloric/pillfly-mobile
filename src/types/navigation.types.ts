@@ -15,6 +15,7 @@ export type ProfileStackParamList = {
   ProfileMain: undefined;
   Orders: undefined;
   OrderDetail: { orderId: string };
+  AddressForm: { addressId?: string } | undefined;
 };
 
 export type SearchStackParamList = {

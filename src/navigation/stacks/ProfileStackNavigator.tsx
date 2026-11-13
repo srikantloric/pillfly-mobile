@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { ProfileStackParamList } from '../../types/navigation.types';
+import { AddressFormScreen } from '@/features/address';
 import { ProfileScreen } from '@/features/profile';
 import { OrderDetailScreen } from '@/features/order/screens/OrderDetailScreen';
 import { OrdersScreen } from '@/features/order/screens/OrdersScreen';
@@ -17,6 +18,7 @@ export function ProfileStackNavigator() {
         component={OrderDetailScreen}
         options={{ headerShown: true, title: 'Order Details' }}
       />
+      <Stack.Screen name="AddressForm" component={AddressFormScreen} />
     </Stack.Navigator>
   );
 }

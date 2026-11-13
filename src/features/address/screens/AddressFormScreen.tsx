@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCartStore } from "@/features/cart/store/cart.store";
 import { PrimaryButton } from "@/components/ui";
 import { HEADER_HIT_SLOP } from "@/components/header/appHeader.constants";
-import type { CartStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 import { RequestError } from "@/services/api/requestError";
 import { toCustomerMessage } from "@/utils/customerMessage";
@@ -42,7 +41,11 @@ function formErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-type Props = NativeStackScreenProps<CartStackParamList, "AddressForm">;
+type AddressFormParamList = {
+  AddressForm: { addressId?: string } | undefined;
+};
+
+type Props = NativeStackScreenProps<AddressFormParamList, "AddressForm">;
 
 export function AddressFormScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
