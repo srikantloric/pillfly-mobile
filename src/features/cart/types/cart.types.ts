@@ -1,15 +1,12 @@
+import type { CustomerAddress } from "@/features/address/types/address.types";
+
 export type CartLineItem = {
   productId: string;
+  variantId?: string;
   quantity: number;
 };
 
-export type DeliveryAddress = {
-  id: string;
-  label: string;
-  line1: string;
-  city: string;
-  pincode: string;
-};
+export type DeliveryAddress = CustomerAddress;
 
 export type CartBillLine = {
   id: string;
@@ -34,6 +31,7 @@ export type CartBill = {
 
 export type ResolvedCartLine = {
   productId: string;
+  variantId?: string;
   quantity: number;
   title: string;
   subtitle?: string;

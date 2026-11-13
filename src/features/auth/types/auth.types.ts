@@ -9,5 +9,12 @@ export type Customer = {
 
 export type AuthTokens = {
   accessToken: string;
-  idToken: string;
+  refreshToken: string;
+  idToken?: string;
+};
+
+export type RefreshTokenUpdate = {
+  accessToken: string;
+  refreshToken?: string;
+  idToken?: string;
 };

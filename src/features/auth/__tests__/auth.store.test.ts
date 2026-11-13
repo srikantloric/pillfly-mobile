@@ -35,10 +35,16 @@ import { resetAuthStoreForTests, useAuthStore } from "../store/auth.store";
 
 const leftoverCartAddress = {
   id: "addr_1",
-  label: "Home",
-  line1: "12 MG Road",
+  label: "HOME" as const,
+  recipientName: "Priya",
+  phoneNumber: "+919876543210",
+  addressLine1: "12 MG Road",
   city: "Bengaluru",
-  pincode: "560001",
+  state: "Karnataka",
+  postalCode: "560001",
+  countryCode: "IN",
+  createdAt: "2026-08-26T10:00:00.000Z",
+  updatedAt: "2026-08-26T10:00:00.000Z",
 };
 
 const activeUser = {
@@ -81,7 +87,7 @@ describe("auth store", () => {
   it("keeps refreshed tokens after restore profile succeeds", async () => {
     mockLoadAuthTokens.mockResolvedValue({ accessToken: "old-access", idToken: "old-id" });
     mockGetCurrentCustomer.mockImplementation(async () => {
-      await persistSessionTokens({ accessToken: "new-access", idToken: "new-id" });
+      await persistSessionTokens({ accessToken: "new-access", refreshToken: "new-refresh", idToken: "new-id" });
       return activeUser;
     });
 
@@ -159,7 +165,7 @@ describe("auth store", () => {
       otpChallenge: { mobile: "9876543210", session: "cognito-session-token" },
     });
     mockVerifyCustomerOtp.mockImplementation(async () => {
-      setMemoryTokens({ accessToken: "access", idToken: "id" });
+      setMemoryTokens({ accessToken: "access", refreshToken: "refresh", idToken: "id" });
       return { accessToken: "access", idToken: "id" };
     });
     mockGetCurrentCustomer.mockRejectedValue(
@@ -183,7 +189,7 @@ describe("auth store", () => {
   });
 
   it("signs out locally even when logout API fails", async () => {
-    setMemoryTokens({ accessToken: "access", idToken: "id" });
+    setMemoryTokens({ accessToken: "access", refreshToken: "refresh", idToken: "id" });
     useAuthStore.setState({
       user: activeUser,
       isAuthenticated: true,
@@ -216,6 +222,31 @@ describe("auth store", () => {
 
     expect(useCartStore.getState().items).toEqual([]);
     expect(useCartStore.getState().deliveryAddress).toBeNull();
+  });
+
+  it("keeps the Cognito session when resend succeeds", async () => {
+    const challenge = { mobile: "9876543210", session: "cognito-session-token" };
+    useAuthStore.setState({ otpChallenge: challenge });
+    mockResendCustomerOtp.mockResolvedValue(undefined);
+
+    await useAuthStore.getState().resendOtp();
+
+    expect(mockResendCustomerOtp).toHaveBeenCalledWith("9876543210");
+    expect(useAuthStore.getState().otpChallenge).toEqual(challenge);
+    expect(useAuthStore.getState().isSubmitting).toBe(false);
+    expect(useAuthStore.getState().authError).toBeNull();
+  });
+
+  it("replaces the Cognito session when resend returns one", async () => {
+    useAuthStore.setState({ otpChallenge: { mobile: "9876543210", session: "old-session" } });
+    mockResendCustomerOtp.mockResolvedValue({ session: "next-session" });
+
+    await useAuthStore.getState().resendOtp();
+
+    expect(useAuthStore.getState().otpChallenge).toEqual({
+      mobile: "9876543210",
+      session: "next-session",
+    });
   });
 
   it("rejects an invalid mobile before calling send-otp", async () => {
@@ -271,7 +302,7 @@ describe("auth store", () => {
   it("clears the session when a BLOCKED customer verifies", async () => {
     useAuthStore.setState({ otpChallenge: { mobile: "9876543210", session: "s" } });
     mockVerifyCustomerOtp.mockImplementation(async () => {
-      setMemoryTokens({ accessToken: "access", idToken: "id" });
+      setMemoryTokens({ accessToken: "access", refreshToken: "refresh", idToken: "id" });
       return { accessToken: "access", idToken: "id" };
     });
     mockGetCurrentCustomer.mockResolvedValue({ ...activeUser, status: "BLOCKED" });
@@ -292,8 +323,7 @@ describe("auth store", () => {
   it("logs out when tokens are cleared outside the store", async () => {
     useAuthStore.setState({ user: activeUser, isAuthenticated: true, hasHydrated: true });
 
-    // e.g. the interceptor's refresh failed
-    await persistSessionTokens({ accessToken: "a", idToken: "i" });
+    await persistSessionTokens({ accessToken: "a", refreshToken: "r", idToken: "i" });
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
 
     const { clearSessionTokens } = jest.requireActual("../api/authSession");

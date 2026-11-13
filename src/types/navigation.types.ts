@@ -13,6 +13,8 @@ export type MainTabParamList = {
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
+  Orders: undefined;
+  OrderDetail: { orderId: string };
 };
 
 export type SearchStackParamList = {
@@ -22,6 +24,7 @@ export type SearchStackParamList = {
 
 export type CartStackParamList = {
   CartMain: undefined;
+  AddressForm: { addressId?: string } | undefined;
   Checkout: undefined;
 };
 
@@ -31,6 +34,7 @@ export type AppStackParamList = {
   Search: NavigatorScreenParams<SearchStackParamList> | undefined;
   Cart: NavigatorScreenParams<CartStackParamList> | undefined;
   ProductDetail: { productId: string };
+  StoreProducts: undefined;
 };
 
 export type RootStackParamList = {

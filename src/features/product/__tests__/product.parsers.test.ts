@@ -181,8 +181,15 @@ describe("store product parsers", () => {
 
   it("parses list pagination and skips malformed products", () => {
     const parsed = parseStoreProductListResponse({
-      data: [medicinePayload(), { id: "broken" }, healthcarePayload()],
-      nextCursor: "eyJpZCI6InByb2RfMTIzIn0=",
+      success: true,
+      data: {
+        items: [medicinePayload(), { id: "broken" }, healthcarePayload()],
+        pagination: {
+          hitsPerPage: 20,
+          nextCursor: "eyJpZCI6InByb2RfMTIzIn0=",
+          hasMore: true,
+        },
+      },
     });
 
     expect(parsed.data.map((product) => product.id)).toEqual(["prod_123", "prod_h1"]);
@@ -190,14 +197,165 @@ describe("store product parsers", () => {
   });
 
   it("omits nextCursor when the backend does not send one", () => {
-    const parsed = parseStoreProductListResponse({ data: [] });
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [],
+        pagination: { hitsPerPage: 20, hasMore: false },
+      },
+    });
     expect(parsed.data).toEqual([]);
     expect(parsed.nextCursor).toBeUndefined();
   });
 
-  it("parses a detail payload and rejects missing products", () => {
-    expect(parseStoreProductResponse({ data: medicinePayload() }).data.id).toBe("prod_123");
-    expect(() => parseStoreProductResponse({ data: { id: "prod_123" } })).toThrow(RequestError);
+  it("treats a null nextCursor as the end of the list", () => {
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [medicinePayload()],
+        pagination: { hitsPerPage: 20, nextCursor: null, hasMore: false },
+      },
+    });
+
+    expect(parsed.data).toHaveLength(1);
+    expect(parsed.nextCursor).toBeUndefined();
+  });
+
+  it("keeps a short page when the backend filtered products and still sent a cursor", () => {
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [medicinePayload()],
+        pagination: {
+          hitsPerPage: 20,
+          nextCursor: "eyJuZXh0IjoxfQ==",
+          hasMore: true,
+        },
+      },
+    });
+
+    expect(parsed.data).toHaveLength(1);
+    expect(parsed.nextCursor).toBe("eyJuZXh0IjoxfQ==");
+  });
+
+  it("rejects a list body that is missing the documented envelope", () => {
+    expect(() => parseStoreProductListResponse({ data: [medicinePayload()] })).toThrow(RequestError);
+    expect(() =>
+      parseStoreProductListResponse({
+        success: false,
+        data: { items: [], pagination: { hitsPerPage: 20, hasMore: false } },
+      }),
+    ).toThrow(RequestError);
+  });
+
+  it("parses a medicine detail payload and rejects a medicine that has variant options", () => {
+    const parsed = parseStoreProductResponse({ success: true, data: medicinePayload() });
+    expect(parsed.data.id).toBe("prod_123");
+    expect(parsed.data.productType).toBe("MEDICINE");
+    if (parsed.data.productType === "MEDICINE") {
+      expect(parsed.data.variantOptions).toEqual([]);
+    }
+
+    expect(
+      parseStoreProduct(
+        medicinePayload({
+          variantOptions: [{ id: "size", name: "Size", values: [{ id: "10", value: "10" }] }],
+        }),
+      ),
+    ).toBeNull();
+    expect(() =>
+      parseStoreProductResponse({
+        success: true,
+        data: medicinePayload({
+          variantOptions: [{ id: "size", name: "Size", values: [{ id: "10", value: "10" }] }],
+        }),
+      }),
+    ).toThrow(RequestError);
+  });
+
+  it("parses healthcare detail options and rejects a broken option", () => {
+    const parsed = parseStoreProductResponse({ success: true, data: healthcarePayload() });
+    expect(parsed.data.productType).toBe("HEALTHCARE");
+    if (parsed.data.productType === "HEALTHCARE") {
+      expect(parsed.data.variantOptions).toEqual([
+        {
+          id: "size",
+          name: "Size",
+          values: [
+            { id: "50ml", value: "50ml" },
+            { id: "100ml", value: "100ml" },
+          ],
+        },
+      ]);
+    }
+
+    expect(
+      parseStoreProduct({
+        ...healthcarePayload(),
+        variantOptions: [{ id: "size", values: [] }],
+      }),
+    ).toBeNull();
+  });
+
+  it("parses a detail body when success is omitted and rejects an unsuccessful body", () => {
+    const parsed = parseStoreProductResponse({ data: medicinePayload() });
+
+    expect(parsed.data.id).toBe("prod_123");
+    expect(() => parseStoreProductResponse({ success: false, data: medicinePayload() })).toThrow(
+      RequestError,
+    );
+    expect(() => parseStoreProductResponse({ success: true, data: { id: "prod_123" } })).toThrow(
+      RequestError,
+    );
+  });
+
+  it("keeps gallery images on a medicine detail response", () => {
+    const parsed = parseStoreProductResponse({
+      data: medicinePayload({
+        variants: [
+          {
+            ...medicinePayload().variants[0],
+            images: [
+              {
+                key: "products/prod_123/primary.jpg",
+                url: "https://cdn.example.com/products/primary.jpg",
+                type: "PRIMARY",
+                order: 0,
+              },
+              {
+                key: "products/prod_123/gallery.jpg",
+                url: "https://cdn.example.com/products/gallery.jpg",
+                type: "GALLERY",
+                order: 1,
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    expect(parsed.data.variants[0]?.images.map((image) => image.type)).toEqual([
+      "PRIMARY",
+      "GALLERY",
+    ]);
+  });
+
+  it("skips an invalid medicine in a store list and keeps the valid products", () => {
+    const parsed = parseStoreProductListResponse({
+      success: true,
+      data: {
+        items: [
+          healthcarePayload(),
+          medicinePayload({
+            variantOptions: [{ id: "size", name: "Size", values: [{ id: "10", value: "10" }] }],
+          }),
+        ],
+        pagination: { hitsPerPage: 20, hasMore: false },
+      },
+    });
+
+    expect(parsed.data.map((product) => product.id)).toEqual(["prod_h1"]);
+    expect(parsed.nextCursor).toBeUndefined();
   });
 
   it("parses search hits and pagination metadata", () => {

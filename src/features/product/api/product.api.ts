@@ -14,6 +14,7 @@ import {
   parseStoreProductListResponse,
   parseStoreProductResponse,
 } from "./product.parsers";
+import { productLog } from "./productLog";
 import { isPublicProductPath, PRODUCT_PATHS } from "./product.paths";
 
 attachAuthInterceptors(productClient, { skipRefresh: isPublicProductPath });
@@ -56,9 +57,68 @@ export async function listStoreProducts(
   }
 
   return request(async () => {
-    const response = await productClient.get<unknown>(PRODUCT_PATHS.storeList, { params: query });
-    return parseStoreProductListResponse(response.data);
+    productLog("storeList.start", {
+      limit: query.limit,
+      hasCursor: typeof query.cursor === "string",
+      cursorLength: typeof query.cursor === "string" ? query.cursor.length : 0,
+    });
+
+    try {
+      const response = await productClient.get<unknown>(PRODUCT_PATHS.storeList, { params: query });
+      productLog("storeList.response", summarizeStoreListBody(response.data));
+      const parsed = parseStoreProductListResponse(response.data);
+      productLog("storeList.ok", {
+        count: parsed.data.length,
+        ids: parsed.data.map((product) => product.id),
+        productTypes: parsed.data.map((product) => product.productType),
+        hasNextCursor: Boolean(parsed.nextCursor),
+        nextCursorLength: parsed.nextCursor?.length ?? 0,
+      });
+      return parsed;
+    } catch (error) {
+      productLog("storeList.fail", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        status: error instanceof RequestError ? error.status : undefined,
+        kind: error instanceof RequestError ? error.kind : undefined,
+      });
+      throw error;
+    }
   });
+}
+
+function summarizeStoreListBody(data: unknown): Record<string, unknown> {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return { body: typeof data };
+  }
+
+  const body = data as Record<string, unknown>;
+  const payload =
+    typeof body.data === "object" && body.data !== null && !Array.isArray(body.data)
+      ? (body.data as Record<string, unknown>)
+      : undefined;
+  const items = payload && Array.isArray(payload.items) ? payload.items : undefined;
+  const pagination =
+    payload &&
+    typeof payload.pagination === "object" &&
+    payload.pagination !== null &&
+    !Array.isArray(payload.pagination)
+      ? (payload.pagination as Record<string, unknown>)
+      : undefined;
+  const nextCursor = pagination ? pagination.nextCursor : undefined;
+
+  return {
+    success: body.success,
+    itemCount: items?.length,
+    paginationKeys: pagination ? Object.keys(pagination) : undefined,
+    nextCursor:
+      nextCursor == null
+        ? nextCursor
+        : typeof nextCursor === "string"
+          ? `string(${nextCursor.length})`
+          : typeof nextCursor,
+    hasMore: pagination?.hasMore,
+    hitsPerPage: pagination?.hitsPerPage,
+  };
 }
 
 export async function getStoreProduct(productId: string): Promise<StoreProductResponse> {

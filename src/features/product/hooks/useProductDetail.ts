@@ -22,7 +22,7 @@ export function useProductDetail(productId: string) {
 
     async function loadProduct() {
       try {
-        const loaded = await productService.fetchProductById(productId);
+        const loaded = await productService.fetchProductById(productId, { fresh: true });
 
         if (cancelled) {
           return;

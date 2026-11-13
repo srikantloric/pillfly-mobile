@@ -18,6 +18,8 @@ function toError(e: unknown): Error {
 export function useProductSearch(query: string, limit = DEFAULT_SEARCH_LIMIT) {
   const trimmedQuery = query.trim();
   const [items, setItems] = useState<ProductSearchHit[]>([]);
+  // The query `items` belong to; differs from `trimmedQuery` until that query's first page settles.
+  const [resultQuery, setResultQuery] = useState("");
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -39,6 +41,7 @@ export function useProductSearch(query: string, limit = DEFAULT_SEARCH_LIMIT) {
 
     if (!trimmedQuery) {
       setItems([]);
+      setResultQuery("");
       setHasMore(false);
       setLoading(false);
       return;
@@ -56,11 +59,13 @@ export function useProductSearch(query: string, limit = DEFAULT_SEARCH_LIMIT) {
         paging.current.page = result.page;
         paging.current.nbPages = result.nbPages;
         setItems(result.items);
+        setResultQuery(trimmedQuery);
         setHasMore(hasMoreSearchPages(result.page, result.nbPages));
       })
       .catch((e: unknown) => {
         if (paging.current.generation === generation) {
           setItems([]);
+          setResultQuery(trimmedQuery);
           setHasMore(false);
           setError(toError(e));
         }
@@ -108,5 +113,5 @@ export function useProductSearch(query: string, limit = DEFAULT_SEARCH_LIMIT) {
     }
   }, [limit, loading, trimmedQuery]);
 
-  return { items, hasMore, loading, loadingMore, error, loadMore, retry };
+  return { items, resultQuery, hasMore, loading, loadingMore, error, loadMore, retry };
 }

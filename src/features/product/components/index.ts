@@ -2,10 +2,12 @@ export { ProductDetailAccordionSections } from "./ProductDetailAccordionSections
 export { ProductDetailFooterSections } from "./ProductDetailFooterSections";
 export { ProductDetailHeader } from "./ProductDetailHeader";
 export { ProductDetailMedicalContent } from "./ProductDetailMedicalContent";
-export { ProductDetailMembershipBanner } from "./ProductDetailMembershipBanner";
 export { ProductDetailMetaSections } from "./ProductDetailMetaSections";
 export { ProductDetailProductCarousels } from "./ProductDetailProductCarousels";
 export { ProductDetailPromoCarousel } from "./ProductDetailPromoCarousel";
 export { ProductImageCarousel, getPdpHeroImageHeight } from "./ProductImageCarousel";
 export { ProductInformationCard } from "./ProductInformationCard";
 export { ProductListRow } from "./ProductListRow";
+export { StoreProductCard } from "./StoreProductCard";
+export { StoreProductsHeader } from "./StoreProductsHeader";
+export { VariantPickerSheet } from "./VariantPickerSheet";

@@ -44,11 +44,9 @@ export function SearchHomeScreen({ navigation }: Props) {
   const trimmedQuery = query.trim();
   const isSearching = trimmedQuery.length > 0;
   const debouncedQuery = useDebouncedValue(trimmedQuery, 300);
-  const { items: productSuggestions, loading: suggestionsLoading } = useProductSearch(
-    debouncedQuery,
-    6,
-  );
-  const waitingForSuggestions = trimmedQuery !== debouncedQuery || suggestionsLoading;
+  const { items: productSuggestions, resultQuery } = useProductSearch(debouncedQuery, 6);
+  // Covers the debounce window and the in-flight request, with no frame where both look idle.
+  const waitingForSuggestions = resultQuery !== trimmedQuery;
 
   const keywordSuggestions = useMemo(() => {
     const seen = new Set<string>();

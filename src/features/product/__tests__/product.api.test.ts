@@ -68,7 +68,17 @@ describe("product.api", () => {
 
   it("lists store products with limit and an opaque cursor", async () => {
     mockGet.mockResolvedValue({
-      data: { data: [medicineProduct], nextCursor: "eyJpZCI6InByb2RfMTIzIn0=" },
+      data: {
+        success: true,
+        data: {
+          items: [medicineProduct],
+          pagination: {
+            hitsPerPage: 20,
+            nextCursor: "eyJpZCI6InByb2RfMTIzIn0=",
+            hasMore: true,
+          },
+        },
+      },
     });
 
     const result = await listStoreProducts({
@@ -84,7 +94,15 @@ describe("product.api", () => {
   });
 
   it("does not send a cursor on the first list page", async () => {
-    mockGet.mockResolvedValue({ data: { data: [] } });
+    mockGet.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          items: [],
+          pagination: { hitsPerPage: 20, hasMore: false },
+        },
+      },
+    });
 
     const result = await listStoreProducts();
 
@@ -96,7 +114,9 @@ describe("product.api", () => {
   });
 
   it("fetches a store product by id", async () => {
-    mockGet.mockResolvedValue({ data: { data: medicineProduct } });
+    mockGet.mockResolvedValue({
+      data: { success: true, data: medicineProduct },
+    });
 
     const result = await getStoreProduct("prod_123");
 
@@ -182,6 +202,27 @@ describe("product.api", () => {
   it("rejects an empty product id before calling the API", async () => {
     await expect(getStoreProduct("  ")).rejects.toBeInstanceOf(RequestError);
     expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it("keeps a short page when fewer products than limit are eligible", async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          items: [medicineProduct],
+          pagination: {
+            hitsPerPage: 20,
+            nextCursor: "eyJuZXh0IjoxfQ==",
+            hasMore: true,
+          },
+        },
+      },
+    });
+
+    const result = await listStoreProducts({ limit: 20 });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.nextCursor).toBe("eyJuZXh0IjoxfQ==");
   });
 
   it("rejects a malformed list envelope", async () => {

@@ -1,25 +1,37 @@
 import { clearAuthTokens, saveAuthTokens } from "../storage/tokenStorage";
 import type { AuthTokens } from "../types/auth.types";
 
-/**
- * Single in-memory holder of the session tokens. The interceptors read from here,
- * and listeners (auth store, cart) are told when tokens are replaced or cleared.
- */
 type AuthTokensListener = (tokens: AuthTokens | null) => void;
 
-let accessToken: string | null = null;
+let sessionTokens: AuthTokens | null = null;
 const listeners = new Set<AuthTokensListener>();
 
 export function getAccessToken(): string | null {
-  return accessToken;
+  return sessionTokens?.accessToken ?? null;
+}
+
+export function getRefreshToken(): string | null {
+  return sessionTokens?.refreshToken ?? null;
+}
+
+export function getSessionTokens(): AuthTokens | null {
+  if (!sessionTokens) {
+    return null;
+  }
+
+  return { ...sessionTokens };
 }
 
 export function setMemoryTokens(tokens: AuthTokens): void {
-  accessToken = tokens.accessToken;
+  sessionTokens = {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    ...(tokens.idToken ? { idToken: tokens.idToken } : {}),
+  };
 }
 
 export function clearMemoryTokens(): void {
-  accessToken = null;
+  sessionTokens = null;
 }
 
 function notify(tokens: AuthTokens | null): void {

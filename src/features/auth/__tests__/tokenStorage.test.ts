@@ -22,6 +22,7 @@ import {
 
 const VALID_TOKENS = {
   accessToken: "header.payload.signature",
+  refreshToken: "refresh.token.value",
   idToken: "id.header.payload",
 };
 
@@ -48,13 +49,28 @@ describe("tokenStorage", () => {
   });
 
   it("rejects malformed tokens before writing", async () => {
-    await expect(saveAuthTokens({ accessToken: "", idToken: "id" } as typeof VALID_TOKENS)).rejects.toThrow(
-      "Invalid auth tokens.",
-    );
     await expect(
-      saveAuthTokens({ accessToken: "access", idToken: "   " } as unknown as typeof VALID_TOKENS),
+      saveAuthTokens({ accessToken: "", refreshToken: "refresh", idToken: "id" } as typeof VALID_TOKENS),
+    ).rejects.toThrow("Invalid auth tokens.");
+    await expect(
+      saveAuthTokens({ accessToken: "access", refreshToken: "   " } as unknown as typeof VALID_TOKENS),
     ).rejects.toThrow("Invalid auth tokens.");
     expect(mockSetGenericPassword).not.toHaveBeenCalled();
+  });
+
+  it("omits a blank id token instead of storing it", async () => {
+    mockSetGenericPassword.mockResolvedValue({ service: TOKEN_SERVICE, storage: "KeystoreAESGCM" });
+
+    await saveAuthTokens({ accessToken: "access", refreshToken: "refresh", idToken: "   " });
+
+    expect(mockSetGenericPassword).toHaveBeenCalledWith(
+      TOKEN_ACCOUNT,
+      JSON.stringify({ accessToken: "access", refreshToken: "refresh" }),
+      {
+        service: TOKEN_SERVICE,
+        accessible: "AccessibleAfterFirstUnlockThisDeviceOnly",
+      },
+    );
   });
 
   it("loads valid stored credentials", async () => {
@@ -102,6 +118,16 @@ describe("tokenStorage", () => {
 
     await expect(loadAuthTokens()).resolves.toBeNull();
     expect(mockResetGenericPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it("loads access and refresh tokens when the optional id token is blank", async () => {
+    mockGetGenericPassword.mockResolvedValue({
+      username: TOKEN_ACCOUNT,
+      password: JSON.stringify({ accessToken: "access", refreshToken: "refresh", idToken: "" }),
+    });
+
+    await expect(loadAuthTokens()).resolves.toEqual({ accessToken: "access", refreshToken: "refresh" });
+    expect(mockResetGenericPassword).not.toHaveBeenCalled();
   });
 
   it("does not confuse cleanup failures with parse errors", async () => {

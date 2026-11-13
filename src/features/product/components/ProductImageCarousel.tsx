@@ -19,6 +19,7 @@ const FAB_SIZE = 40;
 type Props = {
   product: Product;
   headerOverlayHeight?: number;
+  imageUrls?: string[];
   onPressWishlist?: () => void;
   onPressShare?: () => void;
 };
@@ -30,6 +31,7 @@ export function getPdpHeroImageHeight(windowWidth: number): number {
 export const ProductImageCarousel = memo(function ProductImageCarousel({
   product,
   headerOverlayHeight = 0,
+  imageUrls: imageUrlsOverride,
   onPressWishlist,
   onPressShare,
 }: Props) {
@@ -38,7 +40,10 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
   const imageHeight = getPdpHeroImageHeight(windowWidth);
   const imageContentWidth = slideWidth - PDP_HERO_IMAGE_HORIZONTAL_PADDING * 2;
 
-  const imageUrls = useMemo(() => getProductImages(product), [product]);
+  const imageUrls = useMemo(
+    () => (imageUrlsOverride && imageUrlsOverride.length > 0 ? imageUrlsOverride : getProductImages(product)),
+    [imageUrlsOverride, product],
+  );
   const slides = imageUrls.length > 0 ? imageUrls : [undefined];
   const inStock = isProductInStock(product);
 

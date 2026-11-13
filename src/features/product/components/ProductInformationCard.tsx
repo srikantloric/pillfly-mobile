@@ -2,7 +2,7 @@ import React, { memo, useCallback } from "react";
 import { Text, View } from "react-native";
 
 import { OutlineButton, PrimaryButton } from "@/components/ui";
-import type { Product } from "@/features/product/types/product";
+import type { Product, ProductVariant } from "@/features/product/types/product";
 import {
   formatInr,
   getProductManufacturerLabel,
@@ -11,6 +11,7 @@ import {
   getProductUnitPriceDetail,
   isProductInStock,
 } from "@/features/product/utils/productDisplay";
+import { isVariantAvailable } from "@/features/product/utils/variantSelection";
 
 import {
   PDP_HORIZONTAL_PADDING,
@@ -22,17 +23,27 @@ import {
 
 type Props = {
   product: Product;
+  variant?: ProductVariant;
   onAddToCart?: (product: Product) => void;
   onNotify?: (product: Product) => void;
 };
 
 export const ProductInformationCard = memo(function ProductInformationCard({
   product,
+  variant,
   onAddToCart,
   onNotify,
 }: Props) {
-  const inStock = isProductInStock(product);
-  const pricing = getProductPricing(product);
+  const inStock = variant ? isVariantAvailable(variant) : isProductInStock(product);
+  const pricing = variant
+    ? inStock
+      ? {
+          mrp: variant.mrp,
+          salePrice: variant.sellingPrice ?? variant.mrp,
+          discountPercent: variant.discount ?? 0,
+        }
+      : null
+    : getProductPricing(product);
   const manufacturer = getProductManufacturerLabel(product);
   const packLabel = getProductPackLabelDisplay(product);
   const unitPriceDetail = getProductUnitPriceDetail(product);
@@ -105,6 +116,19 @@ export const ProductInformationCard = memo(function ProductInformationCard({
                 className="min-w-[108px] rounded-xl px-4"
               />
             )}
+          </View>
+        </View>
+      ) : variant && !inStock ? (
+        <View className={`mt-4 border border-pillfly-line ${PDP_SURFACE_RADIUS} p-3`}>
+          <Text className="text-[15px] font-bold text-pillfly-promo-red">Out of stock</Text>
+          <View className="mt-3">
+            <OutlineButton
+              label="Notify"
+              size="sm"
+              accessibilityLabel={`Notify when ${product.title} is available`}
+              onPress={handlePrimaryAction}
+              className="min-w-[108px] rounded-xl px-4"
+            />
           </View>
         </View>
       ) : null}

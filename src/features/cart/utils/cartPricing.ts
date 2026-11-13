@@ -1,10 +1,16 @@
 import { productService } from "@/features/product/services/product.service";
+import type { ProductVariant } from "@/features/product/types/product";
 import {
   formatInr,
   getProductImageUrl,
   getProductPackLabel,
   getProductPricing,
+  isHealthcareProduct,
 } from "@/features/product/utils/productDisplay";
+import {
+  getSelectedOptionLabel,
+  isVariantAvailable,
+} from "@/features/product/utils/variantSelection";
 
 import {
   DELIVERY_FEE,
@@ -18,23 +24,58 @@ function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+function variantPricing(variant: ProductVariant) {
+  const salePrice = variant.sellingPrice ?? variant.mrp;
+  if (!isVariantAvailable(variant) && variant.mrp === 0 && salePrice === 0) {
+    return null;
+  }
+
+  return {
+    mrp: variant.mrp,
+    salePrice,
+    discountPercent: variant.discount ?? 0,
+  };
+}
+
 export function resolveCartLines(items: readonly CartLineItem[]): ResolvedCartLine[] {
   const lines: ResolvedCartLine[] = [];
 
   for (const item of items) {
     const product = productService.getProductById(item.productId);
-    const pricing = product ? getProductPricing(product) : null;
+    if (!product) {
+      continue;
+    }
 
-    if (!product || !pricing) {
+    let pricing = getProductPricing(product);
+    let subtitle = getProductPackLabel(product);
+    let imageUrl = getProductImageUrl(product);
+
+    if (isHealthcareProduct(product) && item.variantId) {
+      const variant = product.variants.find((entry) => entry.id === item.variantId);
+      if (variant) {
+        const selectedPricing = variantPricing(variant);
+        if (!selectedPricing) {
+          continue;
+        }
+
+        pricing = selectedPricing;
+        const label = getSelectedOptionLabel(product, variant);
+        subtitle = label ? `${label.name}: ${label.value}` : subtitle;
+        imageUrl = variant.images[0]?.url ?? imageUrl;
+      }
+    }
+
+    if (!pricing) {
       continue;
     }
 
     lines.push({
       productId: item.productId,
+      variantId: item.variantId,
       quantity: item.quantity,
       title: product.title,
-      subtitle: getProductPackLabel(product),
-      imageUrl: getProductImageUrl(product),
+      subtitle,
+      imageUrl,
       mrp: pricing.mrp,
       salePrice: pricing.salePrice,
       lineTotal: roundMoney(pricing.salePrice * item.quantity),

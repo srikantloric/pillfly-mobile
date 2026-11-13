@@ -8,15 +8,15 @@ export function useCartActions() {
   const setQuantity = useCartStore((state) => state.setQuantity);
 
   const addToCart = useCallback(
-    (productId: string) => {
-      addItem(productId);
+    (productId: string, variantId?: string) => {
+      addItem(productId, variantId);
     },
     [addItem],
   );
 
   const removeFromCart = useCallback(
-    (productId: string) => {
-      removeItem(productId);
+    (productId: string, variantId?: string) => {
+      removeItem(productId, variantId);
     },
     [removeItem],
   );

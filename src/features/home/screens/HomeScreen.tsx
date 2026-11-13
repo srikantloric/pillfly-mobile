@@ -20,6 +20,8 @@ import { useCartSummary } from '@/features/cart';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
 import { CategoryShopGrid, categoryGridTileWidth, CATEGORIES } from '@/features/category';
 import { HomePromoBanner, SectionTitle, homePromoBannerAssets } from '@/components/ui';
+import { productLog } from '@/features/product/api/productLog';
+import { getAppStackNavigation } from '@/navigation/navigateShared';
 import { colors } from '@/theme';
 import type { MainTabParamList } from '@/types/navigation.types';
 
@@ -50,6 +52,11 @@ export function HomeScreen() {
 
   const onPressDiagBogo = useCallback(() => {
     navigation.navigate('Offer');
+  }, [navigation]);
+
+  const onPressMedicines = useCallback(() => {
+    productLog('medicines.press');
+    getAppStackNavigation(navigation).navigate('StoreProducts');
   }, [navigation]);
 
   const categoryGridTileW = categoryGridTileWidth(windowWidth);
@@ -92,6 +99,7 @@ export function HomeScreen() {
             subtitle="Extra Rs.50 Credits"
             accent="bg-rose-50"
             footerTextClass="text-rose-700 font-bold"
+            onPress={onPressMedicines}
             icon={
               <Image
                 source={require('@/assets/icons/branded_09092025.png')}
@@ -176,14 +184,16 @@ function ServiceCard({
   accent,
   footerTextClass,
   icon,
+  onPress,
 }: {
   title: string;
   subtitle: string;
   accent: string;
   footerTextClass: string;
   icon: string | React.ReactNode;
+  onPress?: () => void;
 }) {
-  return (
+  const card = (
     <View className="native:shadow-sm flex-1 overflow-hidden rounded-2xl bg-pillfly-surface shadow-sm">
       <View className="border-b border-pillfly-line px-3 pb-2 pt-3">
         <Text className="text-[15px] font-bold text-pillfly-ink">{title}</Text>
@@ -199,6 +209,21 @@ function ServiceCard({
         <Text className={`text-center text-[12px] ${footerTextClass}`}>{subtitle}</Text>
       </View>
     </View>
+  );
+
+  if (!onPress) {
+    return card;
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      onPress={onPress}
+      className="flex-1 active:opacity-95"
+    >
+      {card}
+    </Pressable>
   );
 }
 

@@ -18,13 +18,15 @@ export function isAuthTokens(value: unknown): value is AuthTokens {
     return false;
   }
 
-  return isNonEmptyString(value.accessToken) && isNonEmptyString(value.idToken);
+  return isNonEmptyString(value.accessToken) && isNonEmptyString(value.refreshToken);
 }
 
 function toStoredTokens(tokens: AuthTokens): AuthTokens {
+  const idToken = isNonEmptyString(tokens.idToken) ? tokens.idToken.trim() : undefined;
   return {
-    accessToken: tokens.accessToken,
-    idToken: tokens.idToken,
+    accessToken: tokens.accessToken.trim(),
+    refreshToken: tokens.refreshToken.trim(),
+    ...(idToken ? { idToken } : {}),
   };
 }
 

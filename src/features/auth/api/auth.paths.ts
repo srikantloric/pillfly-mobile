@@ -1,15 +1,14 @@
 export const AUTH_PATHS = {
-  sendOtp: "/customer/send-otp",
-  verifyOtp: "/customer/verify-otp",
-  resendOtp: "/customer/resend-otp",
-  refresh: "/customer/refresh",
-  logout: "/customer/logout",
+  sendOtp: "/auth/send-otp",
+  verifyOtp: "/auth/app/verify-otp",
+  resendOtp: "/auth/resend-otp",
+  refresh: "/auth/app/refresh",
+  logout: "/auth/app/logout",
   me: "/customer/me",
 } as const;
 
 const PUBLIC_PATHS: readonly string[] = [AUTH_PATHS.sendOtp, AUTH_PATHS.verifyOtp, AUTH_PATHS.resendOtp];
 
-/** Request URLs here are relative constants; strip the query and trailing slash for matching. */
 export function getRequestPath(url: string | undefined): string {
   return (url ?? "").split("?")[0].replace(/\/+$/, "");
 }

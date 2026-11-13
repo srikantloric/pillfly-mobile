@@ -175,6 +175,7 @@ export function mapStoreProduct(product: StoreProduct): Product {
       images: mapImages(variant?.images ?? [], product.thumbnailUrl),
       sku: variant?.sku ?? "",
       isPrescriptionRequired: product.details.prescriptionRequired,
+      variantId: variant?.id,
       medicineDetails: {
         manufacturer: "",
         dosageForm: mapDosageForm(product.details.dosageForm),

@@ -37,6 +37,8 @@ type Props = {
   onPressCart?: () => void;
   onAddToCart?: () => void;
   onNotify?: () => void;
+  selectedInStock?: boolean;
+  selectedSalePrice?: number;
 };
 
 export const ProductDetailHeader = memo(function ProductDetailHeader({
@@ -50,11 +52,14 @@ export const ProductDetailHeader = memo(function ProductDetailHeader({
   onPressCart,
   onAddToCart,
   onNotify,
+  selectedInStock,
+  selectedSalePrice,
 }: Props) {
   const insets = useSafeAreaInsets();
   const showBadge = cartBadgeCount > 0;
   const pricing = product ? getProductPricing(product) : null;
-  const inStock = product ? isProductInStock(product) : true;
+  const inStock = selectedInStock ?? (product ? isProductInStock(product) : true);
+  const salePrice = selectedSalePrice ?? (inStock ? pricing?.salePrice : undefined);
 
   const headerSurfaceOpacity = scrollY.interpolate({
     inputRange: [0, PDP_HEADER_COLLAPSE_END],
@@ -186,9 +191,9 @@ export const ProductDetailHeader = memo(function ProductDetailHeader({
             <Text className="text-[14px] font-bold text-pillfly-ink" numberOfLines={1}>
               {product?.title ?? ""}
             </Text>
-            {pricing ? (
+            {salePrice != null && inStock ? (
               <Text className="text-[13px] font-bold text-pillfly-ink">
-                {formatInr(pricing.salePrice)}
+                {formatInr(salePrice)}
               </Text>
             ) : null}
           </View>
