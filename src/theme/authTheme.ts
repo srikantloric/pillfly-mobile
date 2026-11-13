@@ -22,10 +22,10 @@ export const authSpacing = {
   subtitleTop: 4,
   heroTop: 12,
   heroBottom: 8,
-  sectionVertical: 20,
-  inputHeight: 70,
-  buttonHeight: 64,
-  footerTop: 24,
+  sectionVertical: 16,
+  inputHeight: 54,
+  buttonHeight: 52,
+  footerTop: 20,
   footerBottom: 16,
   badgeOverlap: 28,
 } as const;
@@ -34,18 +34,18 @@ export const authTypography = {
   skip: 15,
   brand: 28,
   subtitle: 14,
-  dividerTitle: 16,
-  countryCode: 17,
+  dividerTitle: 15,
+  countryCode: 16,
   input: 16,
-  button: 17,
+  button: 16,
   badge: 13,
   footer: 12,
   footerLinks: 13,
 } as const;
 
 export const authRadii = {
-  input: 22,
-  button: 20,
+  input: 16,
+  button: 16,
   badge: 999,
   glow: 999,
 } as const;

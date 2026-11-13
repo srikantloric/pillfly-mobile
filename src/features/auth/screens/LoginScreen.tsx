@@ -28,7 +28,8 @@ import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 const LOGO_SOURCE = require('@/assets/splash/logo.png') as ImageSourcePropType;
 const DOCTOR_SOURCE = require('@/assets/icons/icon_doctor.webp') as ImageSourcePropType;
 
-const KEYBOARD_FLOAT_EXTRA = 16;
+
+const KEYBOARD_GAP = 20;
 
 type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'LoginScreen'>;
 
@@ -42,6 +43,7 @@ function LoginScreen(_props: LoginScreenProps) {
 
   const keyboardProgress = useRef(new Animated.Value(0)).current;
   const formTranslateY = useRef(new Animated.Value(0)).current;
+  const footerHeightRef = useRef(0);
 
   const handlePhoneChange = useCallback(
     (value: string) => {
@@ -63,11 +65,21 @@ function LoginScreen(_props: LoginScreenProps) {
     }
   }, [phone, sendOtp]);
 
+  const handleFooterLayout = useCallback((nextHeight: number) => {
+    if (nextHeight > 0) {
+      footerHeightRef.current = nextHeight;
+    }
+  }, []);
+
   useKeyboardHeight((keyboardHeight, duration) => {
     const visible = keyboardHeight > 0;
-    const formBaseBottom = insets.bottom + 12;
-    const lift = Math.max(0, keyboardHeight - formBaseBottom + KEYBOARD_FLOAT_EXTRA);
-    const targetTranslate = -Math.min(lift + KEYBOARD_FLOAT_EXTRA, height * 0.42);
+    const formPaddingBottom = insets.bottom + 8;
+    // Keep footer mounted (fade only) so layout doesn't jump. Lift less so Continue
+    // sits near the keyboard while the invisible footer sits under it.
+    const footerLift = Math.max(0, footerHeightRef.current + formPaddingBottom - KEYBOARD_GAP);
+    const targetTranslate = visible
+      ? -(Math.max(0, keyboardHeight - insets.bottom) - footerLift)
+      : 0;
     const easing = Easing.out(Easing.ease);
 
     setIsKeyboardVisible(visible);
@@ -79,7 +91,7 @@ function LoginScreen(_props: LoginScreenProps) {
         useNativeDriver: true,
       }),
       Animated.timing(formTranslateY, {
-        toValue: visible ? targetTranslate : 0,
+        toValue: targetTranslate,
         duration,
         easing,
         useNativeDriver: true,
@@ -217,7 +229,13 @@ function LoginScreen(_props: LoginScreenProps) {
               />
             </View>
 
-            <LoginFooter containerStyle={{ opacity: opacity.footer }} />
+            <Animated.View
+              pointerEvents={isKeyboardVisible ? 'none' : 'auto'}
+              style={{ opacity: opacity.footer }}
+              onLayout={(event) => handleFooterLayout(event.nativeEvent.layout.height)}
+            >
+              <LoginFooter />
+            </Animated.View>
           </Animated.View>
         </Animated.View>
 

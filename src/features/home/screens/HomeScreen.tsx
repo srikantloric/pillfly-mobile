@@ -109,7 +109,7 @@ export function HomeScreen() {
             }
           />
           <ServiceCard
-            title="4 Hours Delivery"
+            title="Faster Delivery"
             subtitle="Fast & Reliable"
             accent="bg-rose-50"
             footerTextClass="text-rose-700 font-bold"
