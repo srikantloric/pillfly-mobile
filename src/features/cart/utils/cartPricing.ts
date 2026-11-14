@@ -12,12 +12,6 @@ import {
   isVariantAvailable,
 } from "@/features/product/utils/variantSelection";
 
-import {
-  DELIVERY_FEE,
-  DELIVERY_FEE_MRP,
-  FREE_DELIVERY_MRP_THRESHOLD,
-  PLATFORM_FEE,
-} from "../mocks/cartFees.mock";
 import type { CartBill, CartLineItem, ResolvedCartLine } from "../types/cart.types";
 
 function roundMoney(value: number): number {
@@ -99,12 +93,8 @@ export function buildCartBill(items: readonly CartLineItem[]): CartBill | null {
     resolved.reduce((sum, line) => sum + line.lineTotal, 0),
   );
   const discountTotal = roundMoney(mrpTotal - discountedValue);
-
-  const deliveryFee = mrpTotal >= FREE_DELIVERY_MRP_THRESHOLD ? 0 : DELIVERY_FEE;
-  const deliveryFeeMrp = mrpTotal >= FREE_DELIVERY_MRP_THRESHOLD ? 0 : DELIVERY_FEE_MRP;
-  const platformFee = PLATFORM_FEE;
-  const amountToPay = roundMoney(discountedValue + deliveryFee + platformFee);
-  const savingsTotal = roundMoney(discountTotal + (deliveryFeeMrp - deliveryFee));
+  const amountToPay = discountedValue;
+  const savingsTotal = discountTotal;
 
   const lines: CartBill["lines"] = [
     { id: "mrp", label: "MRP", amount: mrpTotal, tone: "default" },
@@ -115,14 +105,6 @@ export function buildCartBill(items: readonly CartLineItem[]): CartBill | null {
       tone: "discount",
     },
     { id: "discounted", label: "Discounted Value", amount: discountedValue, tone: "default" },
-    {
-      id: "delivery",
-      label: "Delivery Fee",
-      amount: deliveryFee,
-      strikethroughAmount: deliveryFeeMrp > deliveryFee ? deliveryFeeMrp : undefined,
-      tone: "default",
-    },
-    { id: "platform", label: "Platform Fee", amount: platformFee, tone: "default" },
     {
       id: "total",
       label: "Amount to be paid",
@@ -135,9 +117,6 @@ export function buildCartBill(items: readonly CartLineItem[]): CartBill | null {
     mrpTotal,
     discountTotal,
     discountedValue,
-    deliveryFee,
-    deliveryFeeMrp,
-    platformFee,
     amountToPay,
     savingsTotal,
     lines,

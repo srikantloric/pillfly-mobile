@@ -31,10 +31,10 @@ export function AuthGradientButton({ label, onPress, disabled, busy }: Props) {
         },
         {
           shadowColor: authColors.primaryGreen,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.28,
-          shadowRadius: 10,
-          elevation: 6,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.18,
+          shadowRadius: 8,
+          elevation: 4,
         },
       ]}
     >
@@ -61,7 +61,7 @@ export function AuthGradientButton({ label, onPress, disabled, busy }: Props) {
             >
               {label}
             </Text>
-            <Feather name="arrow-right" size={22} color={authColors.white} />
+            <Feather name="arrow-right" size={20} color={authColors.white} />
           </>
         )}
       </LinearGradient>

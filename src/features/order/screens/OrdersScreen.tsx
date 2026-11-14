@@ -1,22 +1,30 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, FlatList, Pressable, Text, View } from "react-native";
 import { Feather } from "@react-native-vector-icons/feather";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { NavigationProp, ParamListBase } from "@react-navigation/native";
 
+import { useSharedHeaderNavigation } from "@/components/header";
 import { BouncingDotsLoader, ProductImageWithPlaceholder } from "@/components/ui";
-import { navigateToSharedRoute } from "@/navigation/navigateShared";
+import { useCartSummary } from "@/features/cart";
 import { useCartStore } from "@/features/cart/store/cart.store";
+import { StoreProductsHeader } from "@/features/product/components/StoreProductsHeader";
 import { productService } from "@/features/product/services/product.service";
 import { getProductImageUrl, isHealthcareProduct } from "@/features/product/utils/productDisplay";
-import type { ProfileStackParamList } from "@/types/navigation.types";
+import { navigateToSharedRoute } from "@/navigation/navigateShared";
+import type { OrdersStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 import { toCustomerMessage } from "@/utils/customerMessage";
 
 import { listCustomerOrders } from "../api/order.api";
 import type { CustomerOrder, OrderItem } from "../types/order.types";
 import { canReorderOrder, formatOrderPlacedOn, formatOrderStatusLabel } from "../utils/orderDisplay";
+import {
+  planOrdersRefresh,
+  shouldShowOrdersFullScreenLoader,
+  type OrdersRefreshKind,
+} from "../utils/orderRefresh";
 import { prepareReorder, type ReorderAddition } from "../utils/reorderAvailability";
 
 const VISIBLE_TITLES = 2; 
@@ -47,14 +55,12 @@ function itemImage(item: OrderItem): string | undefined {
   return getProductImageUrl(product);
 }
 
-function titleLines(items: OrderItem[]): string[] {
+function titlePreview(items: OrderItem[]): { titles: string[]; extra: number } {
   const shown = items.slice(0, VISIBLE_TITLES);
-  const extra = items.length - shown.length;
-
-  return shown.map((item, index) => {
-    const more = index === shown.length - 1 && extra > 0 ? ` + ${extra} more` : "";
-    return `${item.title}${more}`;
-  });
+  return {
+    titles: shown.map((item) => item.title),
+    extra: Math.max(0, items.length - shown.length),
+  };
 }
 
 function applyReorderAdditions(additions: readonly ReorderAddition[]): void {
@@ -85,6 +91,7 @@ function OrderCard({
   reordering: boolean;
 }) {
   const images = order.items.slice(0, VISIBLE_IMAGES);
+  const preview = titlePreview(order.items);
 
   return (
     <View className="mx-4 mb-4">
@@ -115,11 +122,20 @@ function OrderCard({
           </View>
 
           <View className="mt-3 gap-1">
-            {titleLines(order.items).map((line, index) => (
-              <Text key={`${order.id}-title-${index}`} className="text-[13px] text-pillfly-ink">
-                {"\u2022"} {line}
-              </Text>
+            {preview.titles.map((title, index) => (
+              <View key={`${order.id}-title-${index}`} className="flex-row items-start gap-1.5">
+                <Text className="text-[13px] leading-5 text-pillfly-ink">{"\u2022"}</Text>
+                <Text
+                  className="min-w-0 flex-1 text-[13px] leading-5 text-pillfly-ink"
+                  numberOfLines={1}
+                >
+                  {title}
+                </Text>
+              </View>
             ))}
+            {preview.extra > 0 ? (
+              <Text className="pl-4 text-[12px] text-pillfly-muted">+ {preview.extra} more</Text>
+            ) : null}
           </View>
         </Pressable>
 
@@ -146,31 +162,45 @@ function OrderCard({
 }
 
 export function OrdersScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<OrdersStackParamList>>();
+  const { lineCount } = useCartSummary();
+  const { onPressSearch, onPressCart } = useSharedHeaderNavigation(
+    navigation as unknown as NavigationProp<ParamListBase>,
+  );
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | undefined>();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [catalogTick, setCatalogTick] = useState(0);
+  const [refreshKind, setRefreshKind] = useState<OrdersRefreshKind>("initial");
+  const skipNextFocusRefresh = useRef(true);
 
-  const load = useCallback((nextCursor?: string) => {
-    if (nextCursor) {
+  const load = useCallback((kind: OrdersRefreshKind = "initial", nextCursor?: string) => {
+    const plan = planOrdersRefresh(kind, nextCursor);
+    setRefreshKind(kind);
+
+    if (plan.loadingMore) {
       setLoadingMore(true);
-    } else {
+    } else if (plan.fullScreenLoader) {
       setStatus("loading");
     }
 
-    return listCustomerOrders(nextCursor ? { cursor: nextCursor } : {})
+    return listCustomerOrders(plan.cursor ? { cursor: plan.cursor } : {})
       .then((page) => {
-        setOrders((current) => (nextCursor ? appendOrders(current, page.data) : page.data));
+        setOrders((current) => (plan.replaceList ? page.data : appendOrders(current, page.data)));
         setCursor(page.nextCursor);
         setStatus("ready");
         setError(null);
+        const productIds = page.data.flatMap((order) => order.items.map((item) => item.productId));
+        void productService.ensureProductsByIds(productIds).then(() => {
+          setCatalogTick((current) => current + 1);
+        });
       })
       .catch((caught: unknown) => {
         setError(errorMessage(caught));
-        if (!nextCursor) {
+        if (plan.fullScreenLoader) {
           setStatus("error");
         }
       })
@@ -180,8 +210,19 @@ export function OrdersScreen() {
   }, []);
 
   useEffect(() => {
-    load();
+    load("initial");
   }, [load]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (skipNextFocusRefresh.current) {
+        skipNextFocusRefresh.current = false;
+        return;
+      }
+
+      void load("focus");
+    }, [load]),
+  );
 
   const openCart = useCallback(() => {
     navigateToSharedRoute(navigation as NavigationProp<ParamListBase>, "Cart");
@@ -228,66 +269,88 @@ export function OrdersScreen() {
     [openCart, reorderingId],
   );
 
-  if (status === "loading") {
-    return <BouncingDotsLoader />;
+  const header = (
+    <StoreProductsHeader
+      title="Orders"
+      cartBadgeCount={lineCount}
+      onPressSearch={onPressSearch}
+      onPressCart={onPressCart}
+    />
+  );
+
+  if (shouldShowOrdersFullScreenLoader(status, refreshKind)) {
+    return (
+      <View className="flex-1 bg-pillfly-background">
+        {header}
+        <BouncingDotsLoader />
+      </View>
+    );
   }
 
   if (status === "error") {
     return (
-      <View className="flex-1 items-center justify-center bg-pillfly-background px-8">
-        <Text className="text-center text-[16px] text-pillfly-ink">{error}</Text>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => load()}
-          className="mt-4 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
-        >
-          <Text className="text-[15px] font-bold text-white">Retry</Text>
-        </Pressable>
+      <View className="flex-1 bg-pillfly-background">
+        {header}
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-center text-[16px] text-pillfly-ink">{error}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => load("initial")}
+            className="mt-4 rounded-xl bg-pillfly-primary px-5 py-3 active:opacity-90"
+          >
+            <Text className="text-[15px] font-bold text-white">Retry</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
 
   return (
-    <FlatList
-      className="flex-1 bg-pillfly-background"
-      contentContainerClassName={orders.length === 0 ? "flex-1" : "pt-4"}
-      data={orders}
-      keyExtractor={(order) => order.id}
-      ListEmptyComponent={
-        <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-[18px] font-bold text-pillfly-ink">No orders yet</Text>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <OrderCard
-          order={item}
-          onPress={() => navigation.navigate("OrderDetail", { orderId: item.id })}
-          reorderDisabled={reorderingId != null}
-          reordering={reorderingId === item.id}
-          onReorder={() => onReorder(item)}
-        />
-      )}
-      ListFooterComponent={
-        cursor || error ? (
-          <View className="px-4 pb-4">
-            {error ? <Text className="mb-3 text-[13px] text-pillfly-ink">{error}</Text> : null}
-            {cursor ? (
-              <Pressable
-                accessibilityRole="button"
-                disabled={loadingMore}
-                onPress={() => load(cursor)}
-                className={`items-center rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-3 ${
-                  loadingMore ? "opacity-60" : "active:opacity-90"
-                }`}
-              >
-                <Text className="text-[14px] font-bold text-pillfly-ink">
-                  {loadingMore ? "Loading more..." : "Load more"}
-                </Text>
-              </Pressable>
-            ) : null}
+    <View className="flex-1 bg-pillfly-background">
+      {header}
+      <FlatList
+        className="flex-1"
+        contentContainerClassName={orders.length === 0 ? "flex-1" : "pt-4"}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        data={orders}
+        extraData={catalogTick}
+        keyExtractor={(order) => order.id}
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center px-8">
+            <Text className="text-[18px] font-bold text-pillfly-ink">No orders yet</Text>
           </View>
-        ) : null
-      }
-    />
+        }
+        renderItem={({ item }) => (
+          <OrderCard
+            order={item}
+            onPress={() => navigation.navigate("OrderDetail", { orderId: item.id })}
+            reorderDisabled={reorderingId != null}
+            reordering={reorderingId === item.id}
+            onReorder={() => onReorder(item)}
+          />
+        )}
+        ListFooterComponent={
+          cursor || error ? (
+            <View className="px-4 pb-4">
+              {error ? <Text className="mb-3 text-[13px] text-pillfly-ink">{error}</Text> : null}
+              {cursor ? (
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={loadingMore}
+                  onPress={() => load("more", cursor)}
+                  className={`items-center rounded-xl border border-pillfly-line bg-pillfly-surface px-4 py-3 ${
+                    loadingMore ? "opacity-60" : "active:opacity-90"
+                  }`}
+                >
+                  <Text className="text-[14px] font-bold text-pillfly-ink">
+                    {loadingMore ? "Loading more..." : "Load more"}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null
+        }
+      />
+    </View>
   );
 }

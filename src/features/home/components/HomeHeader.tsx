@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Animated,
   Pressable,
@@ -7,6 +7,8 @@ import {
 } from 'react-native';
 import { Feather } from '@react-native-vector-icons/feather';
 
+import { isCustomerAddress } from '@/features/address/types/address.types';
+import { useCartStore } from '@/features/cart';
 import { navigateToSharedRoute } from '@/navigation/navigateShared';
 import { colors } from '@/theme';
 
@@ -21,6 +23,20 @@ export function HomeHeader({
   navigation,
   cartBadgeCount = 0,
 }: HomeHeaderProps) {
+  const deliveryAddress = useCartStore((state) => state.deliveryAddress);
+  const locationLabel = useMemo(() => {
+    if (!isCustomerAddress(deliveryAddress)) {
+      return 'Select location';
+    }
+
+    const place = [deliveryAddress.city, deliveryAddress.postalCode]
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(', ');
+
+    return place || 'Select location';
+  }, [deliveryAddress]);
+
   const go = useCallback(
     (route: 'Profile' | 'Search' | 'Cart') => {
       navigateToSharedRoute(navigation, route);
@@ -77,23 +93,15 @@ export function HomeHeader({
             <Feather name="user" size={22} color="#FFFFFF" />
           </Pressable>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityHint="Coming soon"
-            onPress={() => {}}
-            className="min-h-11 min-w-0 flex-1 flex-row items-center justify-center px-1 active:opacity-80"
-          >
+          <View className="min-h-11 min-w-0 flex-1 flex-row items-center justify-center px-1">
             <Feather name="map-pin" size={16} color="#FFFFFF" />
             <View className="ml-1.5 flex-1">
-              <Text className="text-[13px] font-bold text-white">4 Hours Delivery</Text>
-              <View className="mt-0.5 flex-row items-center">
-                <Text className="text-[12px] text-white/90" numberOfLines={1}>
-                  Mumbai, 400001
-                </Text>
-                <Feather name="chevron-right" size={16} color="#FFFFFF" />
-              </View>
+              <Text className="text-[13px] font-bold text-white">Faster Delivery</Text>
+              <Text className="mt-0.5 text-[12px] text-white/90" numberOfLines={1}>
+                {locationLabel}
+              </Text>
             </View>
-          </Pressable>
+          </View>
 
           <Pressable
             accessibilityRole="button"

@@ -1,4 +1,7 @@
-import { PROFILE_MENU_ENTRIES } from '../components/profile.constants';
+import {
+  PROFILE_MENU_ENTRIES,
+  PROFILE_MENU_VISIBLE_IDS,
+} from '../components/profile.constants';
 import type {
   ProfileMenuBadge,
   ProfileMenuBadgeConfig,
@@ -25,14 +28,18 @@ function resolveBadge(
 export function resolveProfileMenuEntries(
   dynamicBadges: ProfileMenuDynamicBadges = {},
 ): ProfileMenuEntry[] {
-  return PROFILE_MENU_ENTRIES.map((entry): ProfileMenuEntry => {
-    const { id, title, icon, badge: badgeConfig } = entry;
+  const visible = new Set<string>(PROFILE_MENU_VISIBLE_IDS);
 
-    if (!badgeConfig) {
-      return { id, title, icon };
-    }
+  return PROFILE_MENU_ENTRIES.filter((entry) => visible.has(entry.id)).map(
+    (entry): ProfileMenuEntry => {
+      const { id, title, icon, badge: badgeConfig } = entry;
 
-    const badge = resolveBadge(badgeConfig, dynamicBadges);
-    return badge ? { id, title, icon, badge } : { id, title, icon };
-  });
+      if (!badgeConfig) {
+        return { id, title, icon };
+      }
+
+      const badge = resolveBadge(badgeConfig, dynamicBadges);
+      return badge ? { id, title, icon, badge } : { id, title, icon };
+    },
+  );
 }

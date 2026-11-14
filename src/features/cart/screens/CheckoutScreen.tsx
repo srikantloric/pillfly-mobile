@@ -5,7 +5,7 @@ import { Feather } from "@react-native-vector-icons/feather";
 import RazorpayCheckout from "react-native-razorpay";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { navigateToSharedRoute } from "@/navigation/navigateShared";
+import { navigateToOrdersTab } from "@/navigation/navigateShared";
 import { addressLabelText, addressSummaryLine } from "@/features/address/utils/addressSelection";
 import { isCustomerAddress } from "@/features/address/types/address.types";
 import { createCustomerOrder, verifyOrderPayment } from "@/features/order/api/order.api";
@@ -123,7 +123,7 @@ export function CheckoutScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={() =>
-            navigateToSharedRoute(navigation, "Profile", {
+            navigateToOrdersTab(navigation, {
               screen: "OrderDetail",
               params: { orderId: paid.order.id },
             })

@@ -6,15 +6,19 @@ import { ProductImageWithPlaceholder } from "@/components/ui";
 import { formatInr } from "@/features/product/utils/productDisplay";
 import { colors } from "@/theme";
 
-import { CART_DELIVERY_ETA_LABEL } from "../mocks/cartFees.mock";
 import type { ResolvedCartLine } from "../types/cart.types";
 
 type Props = {
   line: ResolvedCartLine;
   onRemove?: (productId: string, variantId?: string) => void;
+  onPressQuantity?: (line: ResolvedCartLine) => void;
 };
 
-export const CartItemRow = memo(function CartItemRow({ line, onRemove }: Props) {
+export const CartItemRow = memo(function CartItemRow({
+  line,
+  onRemove,
+  onPressQuantity,
+}: Props) {
   const showStrike = line.mrp > line.salePrice;
 
   return (
@@ -59,13 +63,17 @@ export const CartItemRow = memo(function CartItemRow({ line, onRemove }: Props) 
               ) : null}
             </View>
 
-            <View className="flex-row items-center gap-1 rounded-lg border border-pillfly-line px-3 py-1.5">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Change quantity for ${line.title}, currently ${line.quantity}`}
+              disabled={!onPressQuantity}
+              onPress={() => onPressQuantity?.(line)}
+              className="flex-row items-center gap-1 rounded-lg border border-pillfly-line px-3 py-1.5 active:opacity-80"
+            >
               <Text className="text-[13px] font-semibold text-pillfly-ink">Qty {line.quantity}</Text>
               <Feather name="chevron-down" size={14} color={colors.textSecondary} />
-            </View>
+            </Pressable>
           </View>
-
-          <Text className="mt-2 text-[12px] text-pillfly-muted">{CART_DELIVERY_ETA_LABEL}</Text>
         </View>
       </View>
     </View>

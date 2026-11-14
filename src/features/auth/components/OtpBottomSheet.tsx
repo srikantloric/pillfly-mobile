@@ -22,6 +22,7 @@ import {
 import { AuthGradientButton } from './AuthGradientButton';
 
 const SHEET_ANIM_MS = 260;
+const OTP_LENGTH = 6;
 
 type Props = {
   visible: boolean;
@@ -42,9 +43,12 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
   const { isSubmitting, authError, verifyOtp, resendOtp, clearAuthError } = useAuth();
   const [otp, setOtp] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const overlay = useRef(new Animated.Value(0)).current;
   const sheetY = useRef(new Animated.Value(40)).current;
   const inputRef = useRef<TextInput>(null);
+
+  const activeIndex = Math.min(otp.length, OTP_LENGTH - 1);
 
   useEffect(() => {
     if (!visible) {
@@ -52,6 +56,7 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
     }
 
     setOtp('');
+    setIsInputFocused(false);
     overlay.setValue(0);
     sheetY.setValue(48);
 
@@ -76,13 +81,14 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
   useEffect(() => {
     if (!visible) {
       setKeyboardHeight(0);
+      setIsInputFocused(false);
     }
   }, [visible]);
   useKeyboardHeight(setKeyboardHeight, visible);
 
   const handleChangeOtp = useCallback(
     (value: string) => {
-      setOtp(value.replace(/\D/g, '').slice(0, 6));
+      setOtp(value.replace(/\D/g, '').slice(0, OTP_LENGTH));
       if (authError) {
         clearAuthError();
       }
@@ -117,6 +123,10 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
       // authError is shown from the store
     }
   }, [resendOtp]);
+
+  const focusOtpInput = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const sheetPaddingBottom = Math.max(insets.bottom, 12) + (keyboardHeight > 0 ? 8 : 16);
 
@@ -171,32 +181,63 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
             We sent a 6-digit code to {formatMobile(mobile)}
           </Text>
 
-          <View
-            className="mt-5 border border-pillfly-auth-light bg-white"
-            style={{
-              height: authSpacing.inputHeight,
-              borderRadius: authRadii.input,
-              marginHorizontal: authSpacing.screenHorizontal,
-              paddingHorizontal: authSpacing.screenHorizontal - 4,
-              justifyContent: 'center',
-            }}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="One-time password"
+            onPress={focusOtpInput}
+            className="relative mt-5 flex-row items-center justify-between px-6"
           >
+            {Array.from({ length: OTP_LENGTH }, (_, index) => {
+              const digit = otp[index] ?? '';
+              const isActive = isInputFocused && index === activeIndex;
+
+              return (
+                <View
+                  key={`otp-box-${index}`}
+                  pointerEvents="none"
+                  className="items-center justify-center bg-white"
+                  style={{
+                    width: 48,
+                    height: authSpacing.inputHeight,
+                    borderRadius: authRadii.input,
+                    borderWidth: isActive ? 2 : 1,
+                    borderColor: isActive ? authColors.primaryGreen : authColors.lightGreen,
+                  }}
+                >
+                  <Text
+                    className="font-bold text-pillfly-auth-ink"
+                    style={{ fontSize: 22 }}
+                  >
+                    {digit}
+                  </Text>
+                </View>
+              );
+            })}
+
             <TextInput
               ref={inputRef}
               value={otp}
               onChangeText={handleChangeOtp}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               keyboardType="number-pad"
               textContentType="oneTimeCode"
               autoComplete="one-time-code"
-              maxLength={6}
+              maxLength={OTP_LENGTH}
               editable={!isSubmitting}
-              placeholder="------"
-              placeholderTextColor={authColors.mutedText}
-              className="text-center font-bold text-pillfly-auth-ink"
-              style={{ fontSize: 28, letterSpacing: 8, paddingVertical: 0 }}
+              caretHidden
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 24,
+                bottom: 0,
+                left: 24,
+                opacity: 0.01,
+                color: 'transparent',
+              }}
               accessibilityLabel="One-time password"
             />
-          </View>
+          </Pressable>
 
           {authError ? (
             <Text className="mx-6 mt-3 text-[13px] text-pillfly-promo-red">{authError}</Text>
@@ -206,7 +247,7 @@ export function OtpBottomSheet({ visible, mobile, onClose, onVerified }: Props) 
             <AuthGradientButton
               label="Verify OTP"
               onPress={handleVerify}
-              disabled={otp.length !== 6}
+              disabled={otp.length !== OTP_LENGTH}
               busy={isSubmitting}
             />
           </View>

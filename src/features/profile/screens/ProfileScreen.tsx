@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -8,24 +8,38 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  HelpContactSheet,
   PlusMembershipBanner,
   PROFILE_APP_VERSION,
-  ProfileHeader,
   ProfileMenuList,
+  SHOW_PLUS_MEMBERSHIP_BANNER,
   UserInfoCard,
   profileColors,
 } from '../components';
 import { useSharedHeaderNavigation } from '@/components/header';
-import { useAuth } from '@/features/auth';
+import { normalizeIndianMobile, useAuth } from '@/features/auth';
+import { getAccessToken } from '@/features/auth/api/authSession';
+import { AddressPickerSheet } from '@/features/address/components/AddressPickerSheet';
+import { deleteCustomerAddress } from '@/features/address/api/address.api';
+import { useAddressListStore } from '@/features/address/store/addressList.store';
+import { isCustomerAddress, type CustomerAddress } from '@/features/address/types/address.types';
+import { useCartStore } from '@/features/cart/store/cart.store';
 import { useCartSummary } from '@/features/cart';
+import { StoreProductsHeader } from '@/features/product/components/StoreProductsHeader';
+import { navigateToOrdersTab } from '@/navigation/navigateShared';
+import { colors } from '@/theme';
+import type { ProfileStackParamList } from '@/types/navigation.types';
+import { toCustomerMessage } from '@/utils/customerMessage';
 import { MOCK_PROFILE_USER } from '../mocks/profile.mock';
 import type { ProfileMenuEntry } from '../types/profile.types';
-import { normalizeIndianMobile } from '@/features/auth';
+
+type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileMain'>;
 
 function formatProfilePhone(phoneNumber: string | undefined): string {
   if (!phoneNumber) {
@@ -40,13 +54,22 @@ function formatProfilePhone(phoneNumber: string | undefined): string {
   return `+91 ${normalized.mobile.slice(0, 5)} ${normalized.mobile.slice(5)}`;
 }
 
-export function ProfileScreen() {
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+export function ProfileScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const { onPressSearch, onPressCart } = useSharedHeaderNavigation(navigation);
+  const { onPressSearch, onPressCart } = useSharedHeaderNavigation(
+    navigation as unknown as NavigationProp<ParamListBase>,
+  );
   const { user, signOut, isSubmitting } = useAuth();
   const { lineCount } = useCartSummary();
+  const deliveryAddress = useCartStore((state) => state.deliveryAddress);
+  const selectedAddress = isCustomerAddress(deliveryAddress) ? deliveryAddress : null;
+  const listStatus = useAddressListStore((state) => state.status);
+  const addresses = useAddressListStore((state) => state.addresses);
+  const listError = useAddressListStore((state) => state.error);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | undefined>();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -56,11 +79,13 @@ export function ProfileScreen() {
     }).start();
   }, [fadeAnim]);
 
-  const onPressBack = useCallback(() => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
-  }, [navigation]);
+  useFocusEffect(
+    useCallback(() => {
+      if (useAddressListStore.getState().status === 'idle' && getAccessToken()) {
+        useAddressListStore.getState().load().catch(() => undefined);
+      }
+    }, []),
+  );
 
   const onPressEdit = useCallback(() => {
     Alert.alert('Edit profile', 'Profile editing will be available soon.');
@@ -70,10 +95,49 @@ export function ProfileScreen() {
     Alert.alert('Plus membership', 'Membership details will open here.');
   }, []);
 
+  const onSelectAddress = useCallback((address: CustomerAddress) => {
+    useCartStore.getState().setDeliveryAddress(address);
+    setPickerOpen(false);
+  }, []);
+
+  const onDeleteAddress = useCallback(
+    (address: CustomerAddress) => {
+      if (deletingId) {
+        return;
+      }
+
+      setDeletingId(address.id);
+      void deleteCustomerAddress(address.id)
+        .then(() => {
+          useAddressListStore.getState().remove(address.id);
+          if (useCartStore.getState().deliveryAddress?.id === address.id) {
+            useCartStore.getState().setDeliveryAddress(null);
+          }
+        })
+        .catch((error: unknown) => {
+          Alert.alert('Unable to delete address', toCustomerMessage(error));
+        })
+        .finally(() => {
+          setDeletingId(undefined);
+        });
+    },
+    [deletingId],
+  );
+
   const onPressMenu = useCallback(
     (entry: ProfileMenuEntry) => {
       if (entry.id === 'orders') {
-        navigation.navigate('Orders');
+        navigateToOrdersTab(navigation, { screen: 'OrdersList' });
+        return;
+      }
+
+      if (entry.id === 'address') {
+        setPickerOpen(true);
+        return;
+      }
+
+      if (entry.id === 'help') {
+        setHelpOpen(true);
         return;
       }
 
@@ -101,15 +165,11 @@ export function ProfileScreen() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: profileColors.screenBg }}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor={profileColors.statusBar}
-        translucent={false}
-      />
+      <StatusBar barStyle="light-content" backgroundColor={colors.brandTeal} translucent={false} />
 
-      <ProfileHeader
+      <StoreProductsHeader
+        title="Account"
         cartBadgeCount={lineCount}
-        onPressBack={onPressBack}
         onPressSearch={onPressSearch}
         onPressCart={onPressCart}
       />
@@ -120,7 +180,7 @@ export function ProfileScreen() {
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 12,
-          paddingBottom: insets.bottom + 28,
+          paddingBottom: insets.bottom + 96,
         }}
       >
         <Animated.View style={{ opacity: fadeAnim }}>
@@ -130,9 +190,11 @@ export function ProfileScreen() {
             onPressEdit={onPressEdit}
           />
 
-          <View className="mt-3">
-            <PlusMembershipBanner onPress={onPressPlus} />
-          </View>
+          {SHOW_PLUS_MEMBERSHIP_BANNER ? (
+            <View className="mt-3">
+              <PlusMembershipBanner onPress={onPressPlus} />
+            </View>
+          ) : null}
 
           <ProfileMenuList
             dynamicBadges={MOCK_PROFILE_USER.dynamicMenuBadges}
@@ -164,6 +226,29 @@ export function ProfileScreen() {
           </View>
         </Animated.View>
       </ScrollView>
+
+      <AddressPickerSheet
+        visible={pickerOpen}
+        addresses={addresses}
+        status={listStatus}
+        error={listError}
+        selectedId={selectedAddress?.id}
+        deletingId={deletingId}
+        onClose={() => setPickerOpen(false)}
+        onRetry={() => void useAddressListStore.getState().retry()}
+        onAdd={() => {
+          setPickerOpen(false);
+          navigation.navigate('AddressForm');
+        }}
+        onSelect={onSelectAddress}
+        onEdit={(address) => {
+          setPickerOpen(false);
+          navigation.navigate('AddressForm', { addressId: address.id });
+        }}
+        onDelete={onDeleteAddress}
+      />
+
+      <HelpContactSheet visible={helpOpen} onClose={() => setHelpOpen(false)} />
     </View>
   );
 }
