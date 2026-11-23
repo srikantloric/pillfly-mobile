@@ -5,7 +5,7 @@ export type SharedAppRoute = keyof Pick<AppStackParamList, 'Search' | 'Cart'> | 
 
 type AppNavigation = NavigationProp<AppStackParamList>;
 
-const APP_STACK_ROUTE_MARKERS = ['MainTabs', 'Cart', 'ProductDetail'] as const;
+const APP_STACK_ROUTE_MARKERS = ['MainTabs', 'Cart', 'ProductDetail', 'CategoryProducts'] as const;
 
 function isAppStackNavigation(navigation: NavigationProp<ParamListBase>): boolean {
   const routeNames = navigation.getState().routeNames;

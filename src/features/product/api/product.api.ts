@@ -56,11 +56,17 @@ export async function listStoreProducts(
     query.cursor = params.cursor;
   }
 
+  const categoryId = params.categoryId?.trim();
+  if (categoryId) {
+    query.categoryId = categoryId;
+  }
+
   return request(async () => {
     productLog("storeList.start", {
       limit: query.limit,
       hasCursor: typeof query.cursor === "string",
       cursorLength: typeof query.cursor === "string" ? query.cursor.length : 0,
+      categoryId: typeof query.categoryId === "string" ? query.categoryId : undefined,
     });
 
     try {

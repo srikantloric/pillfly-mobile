@@ -90,8 +90,14 @@ export const productService = {
     return { ...response, items: mergeUniqueBy([], response.items, (hit) => hit.productId) };
   },
 
-  async listStorePage(params: { limit?: number; cursor?: string } = {}): Promise<StoreProductPage> {
-    const response = await listStoreProducts({ limit: params.limit, cursor: params.cursor });
+  async listStorePage(
+    params: { limit?: number; cursor?: string; categoryId?: string } = {},
+  ): Promise<StoreProductPage> {
+    const response = await listStoreProducts({
+      limit: params.limit,
+      cursor: params.cursor,
+      ...(params.categoryId ? { categoryId: params.categoryId } : {}),
+    });
     const products = mergeUniqueBy(
       [],
       response.data.map((product) => remember(mapStoreProduct(product))),

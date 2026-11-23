@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { ProductDetailScreen } from '@/features/product';
+import { CategoryProductsScreen, ProductDetailScreen } from '@/features/product';
 import type { AppStackParamList } from '../types/navigation.types';
 import { MainTabNavigator } from './MainTabNavigator';
 import { CartStackNavigator } from './stacks/CartStackNavigator';
@@ -20,6 +20,7 @@ export function AppStackNavigator() {
         component={ProductDetailScreen}
         options={{ animation: 'fade', animationDuration: 250 }}
       />
+      <Stack.Screen name="CategoryProducts" component={CategoryProductsScreen} />
     </Stack.Navigator>
   );
 }

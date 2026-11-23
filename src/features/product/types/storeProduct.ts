@@ -127,6 +127,7 @@ export interface ProductSearchResponse {
 export interface ListStoreProductsParams {
   limit?: number;
   cursor?: string;
+  categoryId?: string;
 }
 
 export interface SearchStoreProductsParams {
