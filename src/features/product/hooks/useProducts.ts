@@ -8,7 +8,15 @@ import { RequestError } from "@/services/api/requestError";
 
 const DEFAULT_PAGE_LIMIT = 20;
 
-export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
+export type UseProductsOptions = {
+  limit?: number;
+  categoryId?: string;
+};
+
+export function useProducts(options: UseProductsOptions = {}) {
+  const limit = options.limit ?? DEFAULT_PAGE_LIMIT;
+  const categoryId = options.categoryId?.trim() || undefined;
+
   const [products, setProducts] = useState<Product[]>([]);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
@@ -28,12 +36,12 @@ export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
     nextCursorRef.current = undefined;
 
     async function loadFirstPage() {
-      productLog("list.first.start", { limit });
+      productLog("list.first.start", { limit, categoryId });
       try {
         setLoading(true);
         setError(null);
 
-        const page = await productService.listStorePage({ limit });
+        const page = await productService.listStorePage({ limit, categoryId });
 
         if (cancelled) {
           productLog("list.first.cancelled");
@@ -47,6 +55,7 @@ export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
           count: page.products.length,
           ids: page.products.map((product) => product.id),
           hasNextCursor: Boolean(page.nextCursor),
+          categoryId,
         });
       } catch (e) {
         if (!cancelled) {
@@ -68,7 +77,7 @@ export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
     return () => {
       cancelled = true;
     };
-  }, [limit, reloadToken]);
+  }, [limit, categoryId, reloadToken]);
 
   const loadMore = useCallback(async () => {
     const cursor = nextCursorRef.current;
@@ -82,10 +91,10 @@ export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
 
     loadMoreLock.current = true;
     setLoadingMore(true);
-    productLog("list.more.start", { limit, cursorLength: cursor.length });
+    productLog("list.more.start", { limit, categoryId, cursorLength: cursor.length });
 
     try {
-      const page = await productService.listStorePage({ limit, cursor });
+      const page = await productService.listStorePage({ limit, cursor, categoryId });
       let total = 0;
       setProducts((current) => {
         const merged = mergeUniqueBy(current, page.products, (product) => product.id);
@@ -96,6 +105,7 @@ export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
         received: page.products.length,
         total,
         hasNextCursor: Boolean(page.nextCursor),
+        categoryId,
       });
       setNextCursor(page.nextCursor);
       nextCursorRef.current = page.nextCursor;
@@ -107,7 +117,7 @@ export function useProducts(limit = DEFAULT_PAGE_LIMIT) {
       loadMoreLock.current = false;
       setLoadingMore(false);
     }
-  }, [limit, loading]);
+  }, [limit, categoryId, loading]);
 
   return {
     products,

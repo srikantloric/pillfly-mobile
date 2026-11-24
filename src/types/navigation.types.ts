@@ -38,6 +38,7 @@ export type AppStackParamList = {
   Search: NavigatorScreenParams<SearchStackParamList> | undefined;
   Cart: NavigatorScreenParams<CartStackParamList> | undefined;
   ProductDetail: { productId: string };
+  CategoryProducts: { categoryId: string; categoryTitle: string };
 };
 
 export type RootStackParamList = {

@@ -113,6 +113,28 @@ describe("product.api", () => {
     expect(result.nextCursor).toBeUndefined();
   });
 
+  it("lists store products filtered by categoryId", async () => {
+    mockGet.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          items: [medicineProduct],
+          pagination: { hitsPerPage: 20, hasMore: false },
+        },
+      },
+    });
+
+    const result = await listStoreProducts({
+      limit: 20,
+      categoryId: "cat_root_1",
+    });
+
+    expect(mockGet).toHaveBeenCalledWith(PRODUCT_PATHS.storeList, {
+      params: { limit: 20, categoryId: "cat_root_1" },
+    });
+    expect(result.data[0]?.id).toBe("prod_123");
+  });
+
   it("fetches a store product by id", async () => {
     mockGet.mockResolvedValue({
       data: { success: true, data: medicineProduct },

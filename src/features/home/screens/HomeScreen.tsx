@@ -21,7 +21,9 @@ import { HomeHeader } from '@/features/home/components/HomeHeader';
 import { CategoryShopGrid, categoryGridTileWidth, useCategories } from '@/features/category';
 import { HomePromoBanner, PrimaryButton, SectionTitle, homePromoBannerAssets } from '@/components/ui';
 import { productLog } from '@/features/product/api/productLog';
+import { getAppStackNavigation } from '@/navigation/navigateShared';
 import { colors } from '@/theme';
+import type { Category } from '@/types/category.types';
 import type { MainTabParamList } from '@/types/navigation.types';
 import { toCustomerMessage } from '@/utils/customerMessage';
 import { openSupportPhone, openSupportWhatsApp } from '@/utils/supportContact';
@@ -53,6 +55,16 @@ export function HomeScreen() {
     productLog('medicines.press');
     navigation.navigate('Medicines');
   }, [navigation]);
+
+  const onCategoryPress = useCallback(
+    (category: Category) => {
+      getAppStackNavigation(navigation).navigate('CategoryProducts', {
+        categoryId: category.id,
+        categoryTitle: category.title,
+      });
+    },
+    [navigation],
+  );
 
   const categoryGridTileW = categoryGridTileWidth(windowWidth);
   const {
@@ -187,7 +199,11 @@ export function HomeScreen() {
             No categories available
           </Text>
         ) : (
-          <CategoryShopGrid categories={categories} tileWidth={categoryGridTileW} />
+          <CategoryShopGrid
+            categories={categories}
+            tileWidth={categoryGridTileW}
+            onCategoryPress={onCategoryPress}
+          />
         )}
 
         <SectionTitle title="HEALTH ARTICLES" />

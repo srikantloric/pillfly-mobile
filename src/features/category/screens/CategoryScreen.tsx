@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ActivityIndicator, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '@/components/ui';
 import { useCartSummary } from '@/features/cart';
+import { getAppStackNavigation } from '@/navigation/navigateShared';
 import { colors } from '@/theme';
+import type { Category } from '@/types/category.types';
 import { toCustomerMessage } from '@/utils/customerMessage';
 
 import { CategoriesHeader } from '../components/CategoriesHeader';
@@ -22,6 +24,16 @@ export function CategoryScreen() {
   const { lineCount } = useCartSummary();
   const { categories, loading, error, retry } = useCategories();
   const tileW = categoryGridTileWidth(windowWidth);
+
+  const onCategoryPress = useCallback(
+    (category: Category) => {
+      getAppStackNavigation(navigation).navigate('CategoryProducts', {
+        categoryId: category.id,
+        categoryTitle: category.title,
+      });
+    },
+    [navigation],
+  );
 
   const scrollContentStyle = useMemo(
     () => [categoryScreenStyles.scrollContentGutter, { paddingBottom: insets.bottom + 96 }],
@@ -60,7 +72,11 @@ export function CategoryScreen() {
           ) : categories.length === 0 ? (
             <Text className="text-center text-[14px] text-pillfly-muted">No categories available</Text>
           ) : (
-            <CategoryShopGrid categories={categories} tileWidth={tileW} />
+            <CategoryShopGrid
+              categories={categories}
+              tileWidth={tileW}
+              onCategoryPress={onCategoryPress}
+            />
           )}
         </ScrollView>
       )}

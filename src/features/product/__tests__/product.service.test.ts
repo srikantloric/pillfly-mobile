@@ -148,6 +148,21 @@ describe("product.service", () => {
     expect(page.nextCursor).toBe("cursor-2");
   });
 
+  it("passes categoryId through to the store list API", async () => {
+    mockListStoreProducts.mockResolvedValue({ data: [medicine] });
+
+    await productService.listStorePage({
+      limit: 20,
+      categoryId: "cat_root_1",
+    });
+
+    expect(mockListStoreProducts).toHaveBeenCalledWith({
+      limit: 20,
+      cursor: undefined,
+      categoryId: "cat_root_1",
+    });
+  });
+
   it("omits nextCursor when the backend has no further page", async () => {
     mockListStoreProducts.mockResolvedValue({ data: [] });
 
