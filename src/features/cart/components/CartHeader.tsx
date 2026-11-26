@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HEADER_HIT_SLOP } from "@/components/header/appHeader.constants";
 import { colors } from "@/theme";
 
+const SHOW_CART_SAVE_FOR_LATER = false;
+
 type Props = {
   onPressBack: () => void;
   onPressSearch: () => void;
@@ -31,15 +33,17 @@ export function CartHeader({ onPressBack, onPressSearch, onPressSaveForLater }: 
       </Pressable>
 
       <View className="flex-row items-center gap-1">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Saved for later"
-          hitSlop={HEADER_HIT_SLOP}
-          onPress={onPressSaveForLater}
-          className="h-11 w-11 items-center justify-center"
-        >
-          <Feather name="heart" size={22} color={colors.textPrimary} />
-        </Pressable>
+        {SHOW_CART_SAVE_FOR_LATER ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Saved for later"
+            hitSlop={HEADER_HIT_SLOP}
+            onPress={onPressSaveForLater}
+            className="h-11 w-11 items-center justify-center"
+          >
+            <Feather name="heart" size={22} color={colors.textPrimary} />
+          </Pressable>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Search"

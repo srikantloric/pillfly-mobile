@@ -22,6 +22,7 @@ export function HomeHeader({
   insets,
   navigation,
   cartBadgeCount = 0,
+  onPressLocation,
 }: HomeHeaderProps) {
   const deliveryAddress = useCartStore((state) => state.deliveryAddress);
   const locationLabel = useMemo(() => {
@@ -93,15 +94,21 @@ export function HomeHeader({
             <Feather name="user" size={22} color="#FFFFFF" />
           </Pressable>
 
-          <View className="min-h-11 min-w-0 flex-1 flex-row items-center justify-center px-1">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Delivery location, ${locationLabel}`}
+            onPress={onPressLocation}
+            disabled={!onPressLocation}
+            className="min-h-11 min-w-0 flex-1 flex-row items-center justify-center px-1 active:opacity-80"
+          >
             <Feather name="map-pin" size={16} color="#FFFFFF" />
-            <View className="ml-1.5 flex-1">
+            <View className="ml-1.5 min-w-0 flex-1">
               <Text className="text-[13px] font-bold text-white">Faster Delivery</Text>
               <Text className="mt-0.5 text-[12px] text-white/90" numberOfLines={1}>
                 {locationLabel}
               </Text>
             </View>
-          </View>
+          </Pressable>
 
           <Pressable
             accessibilityRole="button"

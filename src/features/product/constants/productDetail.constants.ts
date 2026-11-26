@@ -1,5 +1,9 @@
 import { colors } from "@/theme";
 
+export const SHOW_PDP_WISHLIST = false;
+export const SHOW_PDP_OFFER_HEADER = false;
+export const SHOW_PDP_SHARE = false;
+
 export const PDP_HORIZONTAL_PADDING = "px-4";
 
 export const PDP_SECTION_SPACING = "mt-4";
