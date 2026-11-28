@@ -1,18 +1,6 @@
 import type { ImageRequireSource } from "react-native";
 
-import type { CategoryId } from "@/types/category.types";
-
 import { homePromoBannerAssets } from "@/components/ui";
-
-export const TOP_SEARCH_CATEGORY_TILES: ReadonlyArray<{
-  id: CategoryId;
-  title: string;
-}> = [
-  { id: "diabetes-essentials", title: "diabetes" },
-  { id: "must-have", title: "Must Haves" },
-  { id: "vitamin-store", title: "Vitamin Store" },
-  { id: "sexual-wellness", title: "Sexual Wellness" },
-];
 
 export const RECENT_SEARCHES: readonly string[] = [
   "Flucos Itz Capsules",

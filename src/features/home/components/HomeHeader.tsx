@@ -143,7 +143,7 @@ export function HomeHeader({
             >
               <Feather name="search" size={20} color={colors.textSecondary} />
               <Text className="ml-2 flex-1 text-[15px] text-pillfly-muted" numberOfLines={1}>
-                Search for Medicines/Lab Test...
+                Search for Medicines/Healthcare...
               </Text>
             </Pressable>
             <Pressable

@@ -28,8 +28,8 @@ import { useCartSummary } from "../hooks/useCartSummary";
 import { useCartStore } from "../store/cart.store";
 import type { ResolvedCartLine } from "../types/cart.types";
 
-const CART_FOOTER_SCROLL_PADDING = 112;
-const SELECTED_ADDRESS_SCROLL_PADDING = 188;
+const FALLBACK_FOOTER_SCROLL_PADDING = 112;
+const FALLBACK_ADDRESS_SCROLL_PADDING = 188;
 
 type Props = NativeStackScreenProps<CartStackParamList, "CartMain">;
 
@@ -45,6 +45,7 @@ export function CartScreen({ navigation }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | undefined>();
   const [quantityLine, setQuantityLine] = useState<ResolvedCartLine | null>(null);
+  const [stickyFooterHeight, setStickyFooterHeight] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -155,6 +156,21 @@ export function CartScreen({ navigation }: Props) {
     billOffsetRef.current = y;
   }, []);
 
+  const onStickyFooterLayout = useCallback((height: number) => {
+    const next = Math.ceil(height);
+    if (next <= 0) {
+      return;
+    }
+    setStickyFooterHeight((current) => (current === next ? current : next));
+  }, []);
+
+  const scrollPaddingBottom =
+    stickyFooterHeight > 0
+      ? stickyFooterHeight
+      : selectedAddress
+        ? FALLBACK_ADDRESS_SCROLL_PADDING
+        : FALLBACK_FOOTER_SCROLL_PADDING;
+
   const onPressQuantity = useCallback((line: ResolvedCartLine) => {
     setQuantityLine(line);
   }, []);
@@ -245,7 +261,7 @@ export function CartScreen({ navigation }: Props) {
         ref={scrollRef}
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: selectedAddress ? SELECTED_ADDRESS_SCROLL_PADDING : CART_FOOTER_SCROLL_PADDING,
+          paddingBottom: scrollPaddingBottom,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -271,7 +287,10 @@ export function CartScreen({ navigation }: Props) {
       </ScrollView>
 
       {bill ? (
-        <View className="absolute bottom-0 left-0 right-0 bg-pillfly-surface">
+        <View
+          className="absolute bottom-0 left-0 right-0 bg-pillfly-surface"
+          onLayout={(event) => onStickyFooterLayout(event.nativeEvent.layout.height)}
+        >
           {selectedAddress ? (
             <SelectedAddressBar address={selectedAddress} onPressChange={() => setPickerOpen(true)} />
           ) : null}

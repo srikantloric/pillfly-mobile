@@ -18,13 +18,14 @@ import {
   SectionTitle,
 } from "@/components/ui";
 import { ProductListRow } from "@/features/product/components/ProductListRow";
-import { CATEGORIES, ShopTile } from "@/features/category";
+import { ShopTile, useCategories } from "@/features/category";
 import { SearchBar } from "@/features/search/components";
 import {
   RECENT_SEARCHES,
   SEARCH_PROMO_BANNER,
-  TOP_SEARCH_CATEGORY_TILES,
 } from "@/features/search/mocks/search.mock";
+import { getAppStackNavigation } from "@/navigation/navigateShared";
+import type { Category } from "@/types/category.types";
 import type { SearchStackParamList } from "@/types/navigation.types";
 import { colors } from "@/theme";
 
@@ -36,6 +37,7 @@ import { getPreviouslyBoughtProducts } from "@/features/search/utils/search.util
 type Props = NativeStackScreenProps<SearchStackParamList, "SearchHome">;
 
 const SUGGESTION_PLACEHOLDER_ROWS = 6;
+const TOP_CATEGORIES_COUNT = 4;
 
 export function SearchHomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -66,16 +68,11 @@ export function SearchHomeScreen({ navigation }: Props) {
   }, [productSuggestions]);
 
   const previouslyBought = useMemo(() => getPreviouslyBoughtProducts(), []);
-
-  const topCategories = useMemo(() => {
-    return TOP_SEARCH_CATEGORY_TILES.map((tile) => {
-      const category = CATEGORIES.find((c) => c.id === tile.id);
-      if (!category) {
-        return null;
-      }
-      return { ...category, title: tile.title };
-    }).filter((c): c is NonNullable<typeof c> => c != null);
-  }, []);
+  const { categories } = useCategories();
+  const topCategories = useMemo(
+    () => categories.slice(0, TOP_CATEGORIES_COUNT),
+    [categories],
+  );
 
   const goToResults = useCallback(
     (searchQuery: string, categoryId?: string) => {
@@ -112,10 +109,13 @@ export function SearchHomeScreen({ navigation }: Props) {
   );
 
   const onCategoryPress = useCallback(
-    (title: string) => {
-      goToResults(title);
+    (category: Category) => {
+      getAppStackNavigation(navigation).navigate("CategoryProducts", {
+        categoryId: category.id,
+        categoryTitle: category.title,
+      });
     },
-    [goToResults],
+    [navigation],
   );
 
   const hasSuggestions = keywordSuggestions.length > 0 || productSuggestions.length > 0;
@@ -252,24 +252,29 @@ export function SearchHomeScreen({ navigation }: Props) {
 
       <View className="mt-6 px-4">
         <SectionTitle title="Top categories" variant="plain" />
-        <HorizontalScrollRow contentClassName="pb-1" gapClassName="gap-3">
-          {topCategories.map((category) => (
-            <Pressable
-              key={category.id}
-              accessibilityRole="button"
-              onPress={() => onCategoryPress(category.title)}
-              className="active:opacity-90"
-            >
-              <ShopTile
-                title={category.title}
-                subtitle=""
-                bg={category.tileBg}
-                icon={category.image}
-                width={108}
-              />
-            </Pressable>
-          ))}
-        </HorizontalScrollRow>
+        {topCategories.length === 0 ? (
+          <Text className="text-[14px] text-pillfly-muted">No categories available</Text>
+        ) : (
+          <HorizontalScrollRow contentClassName="pb-1" gapClassName="gap-3">
+            {topCategories.map((category) => (
+              <Pressable
+                key={category.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Browse ${category.title}`}
+                onPress={() => onCategoryPress(category)}
+                className="active:opacity-90"
+              >
+                <ShopTile
+                  title={category.title}
+                  subtitle={category.subtitle ?? ""}
+                  bg={category.tileBg}
+                  icon={category.image}
+                  width={108}
+                />
+              </Pressable>
+            ))}
+          </HorizontalScrollRow>
+        )}
       </View>
 
       <View className="mt-6 px-4">

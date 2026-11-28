@@ -4,6 +4,7 @@ import { Feather } from "@react-native-vector-icons/feather";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { NavigationProp, ParamListBase } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useSharedHeaderNavigation } from "@/components/header";
 import { BouncingDotsLoader, ProductImageWithPlaceholder } from "@/components/ui";
@@ -27,8 +28,9 @@ import {
 } from "../utils/orderRefresh";
 import { prepareReorder, type ReorderAddition } from "../utils/reorderAvailability";
 
-const VISIBLE_TITLES = 2; 
+const VISIBLE_TITLES = 2;
 const VISIBLE_IMAGES = 3;
+const TAB_BAR_SCROLL_PADDING = 96;
 
 function appendOrders(current: CustomerOrder[], next: CustomerOrder[]): CustomerOrder[] {
   const seen = new Set(current.map((order) => order.id));
@@ -163,6 +165,7 @@ function OrderCard({
 
 export function OrdersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<OrdersStackParamList>>();
+  const insets = useSafeAreaInsets();
   const { lineCount } = useCartSummary();
   const { onPressSearch, onPressCart } = useSharedHeaderNavigation(
     navigation as unknown as NavigationProp<ParamListBase>,
@@ -311,7 +314,7 @@ export function OrdersScreen() {
       <FlatList
         className="flex-1"
         contentContainerClassName={orders.length === 0 ? "flex-1" : "pt-4"}
-        contentContainerStyle={{ paddingBottom: 96 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + TAB_BAR_SCROLL_PADDING }}
         data={orders}
         extraData={catalogTick}
         keyExtractor={(order) => order.id}
