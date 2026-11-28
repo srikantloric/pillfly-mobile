@@ -12,6 +12,8 @@ import {
   PDP_FAB_SHADOW,
   PDP_HERO_IMAGE_ASPECT,
   PDP_HERO_IMAGE_HORIZONTAL_PADDING,
+  SHOW_PDP_SHARE,
+  SHOW_PDP_WISHLIST,
 } from "../constants/productDetail.constants";
 
 const FAB_SIZE = 40;
@@ -88,50 +90,56 @@ export const ProductImageCarousel = memo(function ProductImageCarousel({
           )}
         </HorizontalPager>
 
-        <View
-          className="absolute right-4 gap-2.5"
-          style={{ top: imageHeight * 0.28 }}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Add to wishlist"
-            onPress={onPressWishlist}
-            className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
-            style={{
-              width: FAB_SIZE,
-              height: FAB_SIZE,
-              ...PDP_FAB_SHADOW,
-            }}
+        {SHOW_PDP_WISHLIST || SHOW_PDP_SHARE ? (
+          <View
+            className="absolute right-4 gap-2.5"
+            style={{ top: imageHeight * 0.28 }}
           >
-            <Feather
-              accessible={false}
-              importantForAccessibility="no-hide-descendants"
-              name="heart"
-              size={20}
-              color={colors.textSecondary}
-            />
-          </Pressable>
+            {SHOW_PDP_WISHLIST ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add to wishlist"
+                onPress={onPressWishlist}
+                className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
+                style={{
+                  width: FAB_SIZE,
+                  height: FAB_SIZE,
+                  ...PDP_FAB_SHADOW,
+                }}
+              >
+                <Feather
+                  accessible={false}
+                  importantForAccessibility="no-hide-descendants"
+                  name="heart"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </Pressable>
+            ) : null}
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Share product"
-            onPress={onPressShare}
-            className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
-            style={{
-              width: FAB_SIZE,
-              height: FAB_SIZE,
-              ...PDP_FAB_SHADOW,
-            }}
-          >
-            <Feather
-              accessible={false}
-              importantForAccessibility="no-hide-descendants"
-              name="share-2"
-              size={20}
-              color={colors.textSecondary}
-            />
-          </Pressable>
-        </View>
+            {SHOW_PDP_SHARE ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Share product"
+                onPress={onPressShare}
+                className="items-center justify-center rounded-full border border-pillfly-line bg-pillfly-surface active:opacity-90"
+                style={{
+                  width: FAB_SIZE,
+                  height: FAB_SIZE,
+                  ...PDP_FAB_SHADOW,
+                }}
+              >
+                <Feather
+                  accessible={false}
+                  importantForAccessibility="no-hide-descendants"
+                  name="share-2"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
     </View>
   );

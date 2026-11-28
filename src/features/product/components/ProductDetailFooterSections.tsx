@@ -14,6 +14,7 @@ import {
   PDP_HORIZONTAL_PADDING,
   PDP_SECTION_SPACING,
   PDP_SUBTITLE_CLASS,
+  SHOW_PDP_SHARE,
 } from "../constants/productDetail.constants";
 
 type Props = {
@@ -26,34 +27,36 @@ export const ProductDetailFooterSections = memo(function ProductDetailFooterSect
 }: Props) {
   return (
     <View>
-      <View className={`${PDP_SECTION_SPACING} bg-pillfly-background ${PDP_HORIZONTAL_PADDING} pb-2 pt-4`}>
-        <SectionHeaderRow title="Share with friends" className="mb-4" />
-        <View className="flex-row items-center gap-6 pb-2">
-          {PRODUCT_DETAIL_SHARE_CHANNELS.map((channel) => (
-            <Pressable
-              key={channel.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Share on ${channel.label}`}
-              onPress={() => onPressShareChannel?.(channel.id)}
-              className="items-center active:opacity-80"
-            >
-              <View
-                className="h-12 w-12 items-center justify-center rounded-xl"
-                style={{ backgroundColor: channel.backgroundColor }}
+      {SHOW_PDP_SHARE ? (
+        <View className={`${PDP_SECTION_SPACING} bg-pillfly-background ${PDP_HORIZONTAL_PADDING} pb-2 pt-4`}>
+          <SectionHeaderRow title="Share with friends" className="mb-4" />
+          <View className="flex-row items-center gap-6 pb-2">
+            {PRODUCT_DETAIL_SHARE_CHANNELS.map((channel) => (
+              <Pressable
+                key={channel.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Share on ${channel.label}`}
+                onPress={() => onPressShareChannel?.(channel.id)}
+                className="items-center active:opacity-80"
               >
-                <Ionicons
-                  accessible={false}
-                  importantForAccessibility="no-hide-descendants"
-                  name={channel.iconName}
-                  size={26}
-                  color="#FFFFFF"
-                />
-              </View>
-              <Text className="mt-1.5 text-[12px] font-medium text-pillfly-muted">{channel.label}</Text>
-            </Pressable>
-          ))}
+                <View
+                  className="h-12 w-12 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: channel.backgroundColor }}
+                >
+                  <Ionicons
+                    accessible={false}
+                    importantForAccessibility="no-hide-descendants"
+                    name={channel.iconName}
+                    size={26}
+                    color="#FFFFFF"
+                  />
+                </View>
+                <Text className="mt-1.5 text-[12px] font-medium text-pillfly-muted">{channel.label}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
-      </View>
+      ) : null}
 
       <View className={`bg-pillfly-background ${PDP_HORIZONTAL_PADDING} pb-4 pt-2`}>
         <Text className={`text-[11px] leading-[16px] ${PDP_SUBTITLE_CLASS}`}>
