@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Image,
   Pressable,
@@ -10,13 +11,18 @@ import {
   View,
   type ImageSourcePropType,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@react-native-vector-icons/feather';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import DeliveryBoy from '@/assets/icons/deliveryBoy.svg';
-import { useCartSummary } from '@/features/cart';
+import { getAccessToken } from '@/features/auth/api/authSession';
+import { AddressPickerSheet } from '@/features/address/components/AddressPickerSheet';
+import { deleteCustomerAddress } from '@/features/address/api/address.api';
+import { useAddressListStore } from '@/features/address/store/addressList.store';
+import { isCustomerAddress, type CustomerAddress } from '@/features/address/types/address.types';
+import { useCartStore, useCartSummary } from '@/features/cart';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
 import { CategoryShopGrid, categoryGridTileWidth, useCategories } from '@/features/category';
 import { HomePromoBanner, PrimaryButton, SectionTitle, homePromoBannerAssets } from '@/components/ui';
@@ -48,6 +54,21 @@ export function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const scrollY = useRef(new Animated.Value(0)).current;
+  const deliveryAddress = useCartStore((state) => state.deliveryAddress);
+  const selectedAddress = isCustomerAddress(deliveryAddress) ? deliveryAddress : null;
+  const listStatus = useAddressListStore((state) => state.status);
+  const addresses = useAddressListStore((state) => state.addresses);
+  const listError = useAddressListStore((state) => state.error);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | undefined>();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (useAddressListStore.getState().status === 'idle' && getAccessToken()) {
+        useAddressListStore.getState().load().catch(() => undefined);
+      }
+    }, []),
+  );
 
   const onPressDiagBogo = useCallback(() => {}, []);
 
@@ -55,6 +76,39 @@ export function HomeScreen() {
     productLog('medicines.press');
     navigation.navigate('Medicines');
   }, [navigation]);
+
+  const onPressLocation = useCallback(() => {
+    setPickerOpen(true);
+  }, []);
+
+  const onSelectAddress = useCallback((address: CustomerAddress) => {
+    useCartStore.getState().setDeliveryAddress(address);
+    setPickerOpen(false);
+  }, []);
+
+  const onDeleteAddress = useCallback(
+    (address: CustomerAddress) => {
+      if (deletingId) {
+        return;
+      }
+
+      setDeletingId(address.id);
+      void deleteCustomerAddress(address.id)
+        .then(() => {
+          useAddressListStore.getState().remove(address.id);
+          if (useCartStore.getState().deliveryAddress?.id === address.id) {
+            useCartStore.getState().setDeliveryAddress(null);
+          }
+        })
+        .catch((error: unknown) => {
+          Alert.alert('Unable to delete address', toCustomerMessage(error));
+        })
+        .finally(() => {
+          setDeletingId(undefined);
+        });
+    },
+    [deletingId],
+  );
 
   const onCategoryPress = useCallback(
     (category: Category) => {
@@ -89,6 +143,7 @@ export function HomeScreen() {
         insets={insets}
         navigation={navigation}
         cartBadgeCount={lineCount}
+        onPressLocation={onPressLocation}
       />
 
       <Animated.ScrollView
@@ -209,6 +264,27 @@ export function HomeScreen() {
         <SectionTitle title="HEALTH ARTICLES" />
 
       </Animated.ScrollView>
+
+      <AddressPickerSheet
+        visible={pickerOpen}
+        addresses={addresses}
+        status={listStatus}
+        error={listError}
+        selectedId={selectedAddress?.id}
+        deletingId={deletingId}
+        onClose={() => setPickerOpen(false)}
+        onRetry={() => void useAddressListStore.getState().retry()}
+        onAdd={() => {
+          setPickerOpen(false);
+          getAppStackNavigation(navigation).navigate('AddressForm');
+        }}
+        onSelect={onSelectAddress}
+        onEdit={(address) => {
+          setPickerOpen(false);
+          getAppStackNavigation(navigation).navigate('AddressForm', { addressId: address.id });
+        }}
+        onDelete={onDeleteAddress}
+      />
     </View>
   );
 }

@@ -27,6 +27,7 @@ export interface HomeHeaderProps {
   insets: EdgeInsets;
   navigation: NavigationProp<ParamListBase>;
   cartBadgeCount?: number;
+  onPressLocation?: () => void;
 }
 
 export interface SavingsHeaderProps {

@@ -24,6 +24,7 @@ import {
   PDP_HEADER_COLLAPSE_END,
   PDP_HEADER_COLLAPSE_START,
   PDP_HORIZONTAL_PADDING,
+  SHOW_PDP_OFFER_HEADER,
 } from "../constants/productDetail.constants";
 
 type Props = {
@@ -122,20 +123,22 @@ export const ProductDetailHeader = memo(function ProductDetailHeader({
           </Pressable>
 
           <View className="flex-row items-center">
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Offers"
-              hitSlop={HEADER_HIT_SLOP}
-              onPress={onPressOffers}
-              className={`${HEADER_ICON_SLOT_CLASS} items-center justify-center active:opacity-75`}
-            >
-              <OfferIcon
-                accessible={false}
-                importantForAccessibility="no-hide-descendants"
-                width={30}
-                height={30}
-              />
-            </Pressable>
+            {SHOW_PDP_OFFER_HEADER ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Offers"
+                hitSlop={HEADER_HIT_SLOP}
+                onPress={onPressOffers}
+                className={`${HEADER_ICON_SLOT_CLASS} items-center justify-center active:opacity-75`}
+              >
+                <OfferIcon
+                  accessible={false}
+                  importantForAccessibility="no-hide-descendants"
+                  width={30}
+                  height={30}
+                />
+              </Pressable>
+            ) : null}
             <HeaderIconButton
               accessibilityLabel="Search"
               icon="search"

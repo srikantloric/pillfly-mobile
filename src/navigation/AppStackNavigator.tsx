@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { AddressFormScreen } from '@/features/address';
 import { CategoryProductsScreen, ProductDetailScreen } from '@/features/product';
 import type { AppStackParamList } from '../types/navigation.types';
 import { MainTabNavigator } from './MainTabNavigator';
@@ -21,6 +22,7 @@ export function AppStackNavigator() {
         options={{ animation: 'fade', animationDuration: 250 }}
       />
       <Stack.Screen name="CategoryProducts" component={CategoryProductsScreen} />
+      <Stack.Screen name="AddressForm" component={AddressFormScreen} />
     </Stack.Navigator>
   );
 }
